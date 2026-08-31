@@ -55,7 +55,24 @@ export default async function DashboardPage() {
         .eq("id", userId);
     }
 
-    return <SeekerHome profileComplete={profileComplete} />;
+    const { data: area } = seekerProfile?.area_id
+      ? await supabaseServerAdmin
+          .from("areas")
+          .select("id, name, cities(name)")
+          .eq("id", seekerProfile.area_id)
+          .maybeSingle()
+      : { data: null };
+
+    return (
+      <SeekerHome
+        profileComplete={profileComplete}
+        areaId={area?.id ?? null}
+        areaName={area?.name ?? null}
+        cityName={
+          (Array.isArray(area?.cities) ? area?.cities[0]?.name : (area?.cities as { name: string } | undefined)?.name) ?? null
+        }
+      />
+    );
   }
 
   if (userRole === "provider") {
@@ -113,7 +130,52 @@ export default async function DashboardPage() {
         .eq("id", userId);
     }
 
-    return <ProviderHome profileComplete={profileComplete} providerType={providerProfile?.provider_type || null} />;
+    const areaNames = providerProfile
+      ? await (async () => {
+          const ids = [
+            ...(serviceAreas || []).map((a) => a.area_id),
+            ...(branches || []).map((b) => b.area_id).filter(Boolean),
+          ];
+          if (!ids.length) return [] as string[];
+          const { data } = await supabaseServerAdmin.from("areas").select("name").in("id", ids);
+          return (data || []).map((a) => a.name as string);
+        })()
+      : [];
+
+    const { data: category } = providerProfile?.provider_category_id
+      ? await supabaseServerAdmin
+          .from("provider_category_master")
+          .select("name")
+          .eq("id", providerProfile.provider_category_id)
+          .maybeSingle()
+      : { data: null };
+
+    return (
+      <ProviderHome
+        profileComplete={profileComplete}
+        provider={
+          providerProfile
+            ? {
+                id: providerProfile.id,
+                display_name: providerProfile.display_name,
+                provider_type: providerProfile.provider_type,
+                approved: providerProfile.approved,
+                is_suspended: providerProfile.is_suspended,
+                is_featured: providerProfile.is_featured,
+                fee_min: providerProfile.fee_min,
+                fee_max: providerProfile.fee_max,
+                fee_period: providerProfile.fee_period,
+                photo_url: providerProfile.photo_url,
+                categoryName: category?.name ?? null,
+                serviceCount: (providerProfile.service_category_ids || []).length,
+                areaNames: Array.from(new Set(areaNames)),
+                branchCount: (branches || []).length,
+                availabilityCount: (providerProfile.availability || []).length,
+              }
+            : null
+        }
+      />
+    );
   }
 
   return (
