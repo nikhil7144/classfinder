@@ -1,63 +1,269 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------
+   Charcoal & Coral — the approved ClassFinder design system.
+   https://claude.ai/code/artifact/03ec9968-92f5-4144-ab03-c044ea3fa035
+
+   A layered charcoal ground, one coral->gold gradient owning every primary
+   CTA, teal reserved strictly for approved/verified/success, and a taxonomy
+   palette kept clear of the CTA gradient so category dots never read as
+   buttons.
+
+   The app commits to this single dark look rather than shipping two themes,
+   so every colour is painted explicitly and nothing is left to inherit.
+   --------------------------------------------------------------------- */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #0c0e10;
+  --surface: #17191c;
+  --surface-2: #1f2226;
+  --surface-3: #24272b;
+  --border: #2b2f33;
+  --border-soft: #212427;
+
+  --ink: #f2f3f4;
+  --muted: #97a1a7;
+  --faint: #666e73;
+
+  --grad-1: #ff6b4d;
+  --grad-2: #ffb238;
+  --accent-ink: #ffd9a8;
+
+  --teal: #17b893;
+  --teal-soft: #12332c;
+
+  --danger: #f4655f;
+  --danger-soft: #35191b;
+  --warn: #f5c244;
+
+  /* Taxonomy — one colour per service group. Dance and music were added
+     after the original proposal; rose and violet extend the set without
+     colliding with the coral CTA or the teal success state. */
+  --sport: #5b8def;
+  --wellness: #3ecf8e;
+  --mind: #a78bfa;
+  --indoor: #f5c244;
+  --dance: #fb7cae;
+  --music: #8b93f8;
+  --subject: #4cc9f0;
+  --exam: #f472b6;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--border);
+  --color-line-soft: var(--border-soft);
+
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+
+  --color-coral: var(--grad-1);
+  --color-gold: var(--grad-2);
+  --color-accent-ink: var(--accent-ink);
+
+  --color-teal: var(--teal);
+  --color-teal-soft: var(--teal-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warn: var(--warn);
+
+  --color-sport: var(--sport);
+  --color-wellness: var(--wellness);
+  --color-mind: var(--mind);
+  --color-indoor: var(--indoor);
+  --color-dance: var(--dance);
+  --color-music: var(--music);
+  --color-subject: var(--subject);
+  --color-exam: var(--exam);
+
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-jakarta), var(--font-manrope), sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
 }
-.form-input {
+
+::selection {
+  background: var(--grad-1);
+  color: #1a0d06;
+}
+
+/* ---------------------------------------------------------------------
+   Primitives. Screens use these rather than repeating long class strings,
+   which is also what keeps the gradient owned by primary actions only.
+   --------------------------------------------------------------------- */
+
+.cf-eyebrow {
+  font-family: var(--font-jetbrains), ui-monospace, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--grad-2);
+}
+
+.cf-display {
+  font-family: var(--font-jakarta), sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.cf-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+}
+
+.cf-input {
   width: 100%;
-  border: 1px solid #e5e7eb;
-  padding: 10px 12px;
-  border-radius: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
-.input {
-  width:100%;
-  border:1px solid #e5e7eb;
-  padding:10px;
-  border-radius:8px;
+.cf-input::placeholder {
+  color: var(--faint);
+}
+.cf-input:focus {
+  border-color: var(--grad-1);
+  background: var(--surface-3);
+}
+.cf-input[aria-invalid="true"] {
+  border-color: var(--danger);
+  background: var(--danger-soft);
 }
 
-.pill {
-  padding:6px 12px;
-  border:1px solid #ddd;
-  border-radius:999px;
+/* The one gradient in the system. Reserved for the primary action on a
+   screen — if two things on a page use it, one of them is wrong. */
+.cf-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.8rem 1.5rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #1a0d06;
+  cursor: pointer;
+  background: linear-gradient(100deg, var(--grad-1), var(--grad-2));
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+.cf-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.07);
+}
+.cf-btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
-.pill-active {
-  background:black;
-  color:white;
+.cf-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  padding: 0.8rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+.cf-btn-ghost:hover:not(:disabled) {
+  border-color: var(--faint);
+  background: var(--surface-3);
 }
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+.cf-btn-ghost:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
-/* Hide scrollbar completely */
+
+.cf-pill {
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+  padding: 0.55rem 0.9rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.cf-pill:hover {
+  border-color: var(--faint);
+  color: var(--ink);
+}
+.cf-pill[data-selected="true"] {
+  background: var(--accent-ink);
+  border-color: var(--accent-ink);
+  color: #1a0d06;
+  font-weight: 600;
+}
+
+.cf-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.cf-badge-ok {
+  background: var(--teal-soft);
+  color: var(--teal);
+}
+.cf-badge-warn {
+  background: #3a2f12;
+  color: var(--warn);
+}
+.cf-badge-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.cf-badge-neutral {
+  background: var(--surface-3);
+  color: var(--muted);
+}
+
+:focus-visible {
+  outline: 2px solid var(--grad-2);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar,
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+.no-scrollbar,
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;

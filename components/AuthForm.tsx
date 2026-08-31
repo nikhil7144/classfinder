@@ -105,20 +105,20 @@ export default function AuthForm({ eyebrow, heading, subheading, intendedRole }:
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-6">
-      <div className="w-full max-w-md bg-white border border-gray-200 rounded-3xl p-8 shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
-        <p className="text-sm font-semibold uppercase tracking-[0.22em] text-indigo-600">
+    <div className="flex min-h-screen items-center justify-center bg-bg px-6 py-16">
+      <div className="cf-card w-full max-w-md p-8">
+        <p className="cf-eyebrow">
           {eyebrow}
         </p>
-        <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 mb-2">
+        <h1 className="cf-display mt-4 mb-2 text-3xl text-ink">
           {step === "email" ? heading : "Enter your code"}
         </h1>
-        <p className="text-sm text-gray-500 mb-6">
+        <p className="mb-6 text-sm text-muted">
           {step === "email" ? subheading : `We sent a 6-digit code to ${email.trim()}.`}
         </p>
 
         {formError && (
-          <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+          <div className="mb-4 rounded-2xl border border-danger/40 bg-danger-soft px-4 py-3 text-sm font-medium text-danger">
             {formError}
           </div>
         )}
@@ -128,9 +128,8 @@ export default function AuthForm({ eyebrow, heading, subheading, intendedRole }:
             <input
               type="email"
               placeholder="Email"
-              className={`w-full mb-1 px-4 py-3 border rounded-2xl outline-none focus:border-indigo-400 ${
-                emailError ? "border-rose-300" : "border-gray-200"
-              }`}
+              className="cf-input mb-1"
+              aria-invalid={Boolean(emailError)}
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -138,27 +137,27 @@ export default function AuthForm({ eyebrow, heading, subheading, intendedRole }:
               }}
               onKeyDown={(e) => e.key === "Enter" && sendCode()}
             />
-            {emailError && <p className="mb-3 mt-1 text-sm font-medium text-rose-600">{emailError}</p>}
+            {emailError && <p className="mb-3 mt-1 text-sm font-medium text-danger">{emailError}</p>}
             {!emailError && <div className="mb-3" />}
 
             <button
               onClick={sendCode}
               disabled={loading}
-              className="w-full rounded-full bg-slate-950 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
+              className="cf-btn-primary w-full"
             >
               {loading ? "Sending code..." : "Send code"}
             </button>
 
-            <div className="my-5 flex items-center gap-3 text-xs font-medium uppercase tracking-wide text-gray-400">
-              <div className="h-px flex-1 bg-gray-200" />
+            <div className="my-5 flex items-center gap-3 text-xs font-medium uppercase tracking-wide text-faint">
+              <div className="h-px flex-1 bg-line" />
               or
-              <div className="h-px flex-1 bg-gray-200" />
+              <div className="h-px flex-1 bg-line" />
             </div>
 
             <button
               onClick={continueWithGoogle}
               disabled={googleLoading}
-              className="w-full rounded-full border border-gray-200 bg-white px-5 py-3.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-70"
+              className="cf-btn-ghost w-full"
             >
               {googleLoading ? "Redirecting..." : "Continue with Google"}
             </button>
@@ -169,7 +168,7 @@ export default function AuthForm({ eyebrow, heading, subheading, intendedRole }:
               type="text"
               inputMode="numeric"
               placeholder="6-digit code"
-              className="w-full mb-4 px-4 py-3 border border-gray-200 rounded-2xl outline-none focus:border-indigo-400 tracking-[0.3em] text-center text-lg"
+              className="cf-input mb-4 text-center font-mono text-lg tracking-[0.35em]"
               value={otp}
               onChange={(e) => {
                 setOtp(e.target.value);
@@ -181,7 +180,7 @@ export default function AuthForm({ eyebrow, heading, subheading, intendedRole }:
             <button
               onClick={verifyCode}
               disabled={loading}
-              className="w-full rounded-full bg-slate-950 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
+              className="cf-btn-primary w-full"
             >
               {loading ? "Verifying..." : "Verify & continue"}
             </button>
@@ -192,7 +191,7 @@ export default function AuthForm({ eyebrow, heading, subheading, intendedRole }:
                 setOtp("");
                 setFormError("");
               }}
-              className="mt-4 w-full text-center text-sm font-semibold text-indigo-600 hover:text-indigo-700"
+              className="mt-4 w-full text-center text-sm font-semibold text-gold transition hover:text-accent-ink"
             >
               Use a different email
             </button>

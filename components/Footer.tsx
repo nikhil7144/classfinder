@@ -8,7 +8,7 @@ import { BRAND } from "@/lib/brand";
 import { usePathname } from "next/navigation";
 
 const footerLinkClass =
-  "text-sm text-slate-600 transition hover:text-slate-950";
+  "text-sm text-muted transition hover:text-ink";
 
 export default function Footer() {
   const [user, setUser] = useState<User | null>(null);
@@ -36,19 +36,19 @@ export default function Footer() {
   }
 
   return (
-    <footer className="border-t border-slate-200 bg-[linear-gradient(180deg,_#fffdf8_0%,_#f8fafc_100%)] px-6 py-12">
+    <footer className="border-t border-line bg-surface px-6 py-12">
       <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
           <Link href="/" className="inline-flex transition">
-            <span className="text-2xl font-bold tracking-tight text-slate-900">{BRAND.name}</span>
+            <span className="cf-display text-2xl text-ink">{BRAND.name}</span>
           </Link>
-          <p className="mt-4 max-w-xl text-sm leading-7 text-slate-600">{BRAND.legalName}</p>
-          <p className="mt-2 max-w-xl text-sm leading-7 text-slate-500">{BRAND.tagline}</p>
+          <p className="mt-4 max-w-xl text-sm leading-7 text-muted">{BRAND.legalName}</p>
+          <p className="mt-2 max-w-xl text-sm leading-7 text-faint">{BRAND.tagline}</p>
         </div>
 
         <div className="grid gap-8 sm:grid-cols-2">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+            <p className="cf-eyebrow">
               Explore
             </p>
             <div className="mt-4 flex flex-col gap-3">
@@ -65,7 +65,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+            <p className="cf-eyebrow">
               Account
             </p>
             <div className="mt-4 flex flex-col gap-3">

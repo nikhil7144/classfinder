@@ -7,13 +7,13 @@ import { BRAND } from "@/lib/brand";
 import { usePathname, useRouter } from "next/navigation";
 
 const baseNavPillClass =
-  "cursor-pointer rounded-full px-4 py-2 text-sm font-medium shadow-[0_8px_20px_rgba(15,23,42,0.08)] transition";
+  "cursor-pointer rounded-full px-4 py-2 text-sm font-medium transition";
 
 const activeNavPillClass =
-  "bg-slate-950 text-white shadow-[0_12px_28px_rgba(15,23,42,0.18)]";
+  "bg-surface-3 text-ink";
 
 const inactiveNavPillClass =
-  "bg-white/85 text-slate-700 hover:bg-white hover:text-slate-950";
+  "text-muted hover:bg-surface-2 hover:text-ink";
 
 export default function Navbar() {
   const router = useRouter();
@@ -65,14 +65,14 @@ export default function Navbar() {
     }`;
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-white/40 bg-slate-50/80 px-6 py-4 backdrop-blur">
+    <nav className="sticky top-0 z-50 border-b border-line bg-bg/85 px-6 py-4 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
         <button
           type="button"
           onClick={() => router.push("/")}
           className="cursor-pointer transition"
         >
-          <span className="text-2xl font-bold tracking-tight text-slate-900">{BRAND.name}</span>
+          <span className="cf-display text-2xl text-ink">{BRAND.name}</span>
         </button>
 
         <div className="hidden items-center gap-3 md:flex">
@@ -88,7 +88,7 @@ export default function Navbar() {
 
               <button
                 onClick={handleLogout}
-                className="cursor-pointer rounded-full bg-rose-500 px-4 py-2 text-sm font-medium text-white shadow-[0_8px_20px_rgba(244,63,94,0.22)] transition hover:bg-rose-600"
+                className="cursor-pointer rounded-full border border-line bg-surface-2 px-4 py-2 text-sm font-medium text-muted transition hover:border-danger hover:text-danger"
               >
                 Logout
               </button>
@@ -96,9 +96,7 @@ export default function Navbar() {
           ) : (
             <button
               onClick={() => navigate("/login")}
-              className={`${baseNavPillClass} px-5 py-2.5 font-semibold ${
-                isActivePath("/login") ? activeNavPillClass : "bg-white text-indigo-700 hover:bg-slate-100"
-              }`}
+              className="cf-btn-primary px-5 py-2.5"
             >
               Log In / Sign Up
             </button>
@@ -106,7 +104,7 @@ export default function Navbar() {
         </div>
 
         <button
-          className="cursor-pointer text-slate-700 md:hidden"
+          className="cursor-pointer text-muted md:hidden"
           onClick={() => setMenuOpen(!menuOpen)}
         >
           ☰
@@ -127,7 +125,7 @@ export default function Navbar() {
 
               <button
                 onClick={handleLogout}
-                className="cursor-pointer rounded-full bg-rose-500 px-4 py-2 text-sm font-medium text-white"
+                className="cursor-pointer rounded-full border border-line bg-surface-2 px-4 py-2 text-sm font-medium text-muted transition hover:border-danger hover:text-danger"
               >
                 Logout
               </button>
@@ -135,9 +133,7 @@ export default function Navbar() {
           ) : (
             <button
               onClick={() => navigate("/login")}
-              className={`${baseNavPillClass} px-5 py-2.5 font-semibold ${
-                isActivePath("/login") ? activeNavPillClass : "bg-white text-indigo-700"
-              }`}
+              className="cf-btn-primary px-5 py-2.5"
             >
               Log In / Sign Up
             </button>
