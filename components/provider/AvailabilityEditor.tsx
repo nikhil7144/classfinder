@@ -30,8 +30,8 @@ export default function AvailabilityEditor({ slots, places, onChange, invalid }:
   if (places.length === 0) {
     return (
       <p className="text-sm text-muted">
-        Choose how you run your classes first — then you can say when you&apos;re available at each
-        place.
+        Add where you teach first — your branches, or the areas you serve — then you can say when
+        you&apos;re available at each one.
       </p>
     );
   }

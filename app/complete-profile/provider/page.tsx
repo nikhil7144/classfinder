@@ -199,16 +199,26 @@ export default function CompleteProviderProfile() {
     [providerCategories, providerCategoryId]
   );
 
-  // Places for availability come from what the provider already told us:
-  // an institution's branches, or an individual's chosen class formats.
+  // Availability is place-wise, so these must be actual locations — not class
+  // formats. An institution's places are its branches. An individual's are
+  // their own premises (if they teach there) plus each area they travel to,
+  // which is what lets a home tutor say "Indirapuram on Monday, Vaishali on
+  // Saturday".
   const availabilityPlaces = useMemo(() => {
     if (isInstitution) {
       return branches.filter((b) => b.label.trim()).map((b) => b.label.trim());
     }
-    return teachingPlaces
-      .map((id) => teachingPlaceOptions.find((p) => p.id === id)?.label)
-      .filter((l): l is string => Boolean(l));
-  }, [isInstitution, branches, teachingPlaces, teachingPlaceOptions]);
+
+    const places: string[] = [];
+    if (teachingPlaces.includes("my_academy")) {
+      places.push("My place");
+    }
+    for (const id of serviceAreaIds) {
+      const area = areas.find((a) => a.id === id);
+      if (area) places.push(area.name);
+    }
+    return places;
+  }, [isInstitution, branches, teachingPlaces, serviceAreaIds, areas]);
 
   const formInput = {
     providerType,
