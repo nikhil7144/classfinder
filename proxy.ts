@@ -28,6 +28,9 @@ export async function proxy(request: NextRequest) {
     },
   });
 
+  // Refreshes the auth cookie. This is a network round-trip to the Supabase
+  // auth server, so the matcher below must stay narrow — running it per asset
+  // request made page loads take minutes in development.
   await supabase.auth.getUser();
 
   return response;
@@ -35,6 +38,13 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    /*
+     * Page navigations only. Everything below is excluded because it does not
+     * need a refreshed session cookie, and each match costs a round-trip:
+     *   _next/*      build output, HMR and prefetch traffic
+     *   api/*        route handlers, which authenticate from the Bearer token
+     *   static files and the SEO endpoints
+     */
+    "/((?!_next/|api/|favicon\\.ico|robots\\.txt|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff2?)$).*)",
   ],
 };
