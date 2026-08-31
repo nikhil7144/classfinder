@@ -391,11 +391,14 @@ export default function CompleteProviderProfile() {
     <div className="min-h-screen bg-bg py-12 pb-28">
       <div className="mx-auto max-w-3xl space-y-6 px-6">
         <header className="cf-card p-8">
-          <p className="cf-eyebrow">Provider profile</p>
-          <h1 className="cf-display mt-3 text-4xl text-ink">Set up your listing</h1>
+          <p className="cf-eyebrow">{hasExistingProfile ? "Edit listing" : "Provider profile"}</p>
+          <h1 className="cf-display mt-3 text-4xl text-ink">
+            {hasExistingProfile ? "Edit your listing" : "Set up your listing"}
+          </h1>
           <p className="mt-3 text-[15px] leading-relaxed text-muted">
-            Your profile is reviewed before parents and students can see it. You can keep editing it
-            any time after.
+            {hasExistingProfile
+              ? "Changes are saved when you press Save at the bottom. Your listing stays visible while you edit."
+              : "Your listing is reviewed before parents and students can see it. You can keep editing it any time after."}
           </p>
           {!isComplete && (
             <p className="mt-4 text-sm text-faint">
@@ -818,7 +821,7 @@ export default function CompleteProviderProfile() {
             disabled={isSaving}
             className="cf-btn-primary w-full"
           >
-            {isSaving ? "Saving…" : "Save & Continue"}
+            {isSaving ? "Saving…" : hasExistingProfile ? "Save changes" : "Save & Continue"}
           </button>
         </div>
       </div>
