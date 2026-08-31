@@ -1,11 +1,4 @@
+import LandingPage from "@/app/page";
 
-import GuestHome from "@/components/GuestHome";
-
-export default function HomePage() {
-  return (
-    <>
-      
-      <GuestHome />
-    </>
-  );
-}
+// /home is an alias of the landing page and shares its signed-in handling.
+export default LandingPage;

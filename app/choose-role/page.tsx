@@ -24,12 +24,33 @@ export default function ChooseRolePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  const destinationFor = (role: string) => {
+    if (role === "admin") return "/admin";
+    if (role === "provider") return "/complete-profile/provider";
+    return "/complete-profile/seeker";
+  };
+
   useEffect(() => {
     const check = async () => {
       const { data } = await supabase.auth.getUser();
 
       if (!data.user) {
         router.push("/login");
+        return;
+      }
+
+      // Someone who already has a role should never be asked to pick one —
+      // they can arrive here from a magic link, a stale tab, or the back
+      // button. Send them where they belong instead of offering a choice
+      // that would fail on the profiles primary key.
+      const { data: existing } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .maybeSingle();
+
+      if (existing?.role) {
+        router.replace(destinationFor(existing.role));
         return;
       }
 
@@ -46,19 +67,19 @@ export default function ChooseRolePage() {
     setSaving(true);
     setError("");
 
-    const { error: insertError } = await supabase.from("profiles").insert({
-      id: userId,
-      role,
-      profile_complete: false,
-    });
+    // upsert, not insert: two quick clicks or a concurrent tab would
+    // otherwise fail on the primary key with a raw Postgres error.
+    const { error: saveError } = await supabase
+      .from("profiles")
+      .upsert({ id: userId, role, profile_complete: false }, { onConflict: "id" });
 
-    if (insertError) {
-      setError(insertError.message);
+    if (saveError) {
+      setError(saveError.message);
       setSaving(false);
       return;
     }
 
-    router.push(role === "seeker" ? "/complete-profile/seeker" : "/complete-profile/provider");
+    router.push(destinationFor(role));
   };
 
   if (checking) {

@@ -43,14 +43,17 @@ export async function resolveProfileAndRedirect(
       return { error: "Something went wrong — try again." };
     }
 
-    const { error: insertError } = await supabase.from("profiles").insert({
-      id: userData.user.id,
-      role: intendedRole,
-      profile_complete: false,
-    });
+    // upsert so a retry, a double-submit, or a magic link opened twice can't
+    // fail on the profiles primary key.
+    const { error: saveError } = await supabase
+      .from("profiles")
+      .upsert(
+        { id: userData.user.id, role: intendedRole, profile_complete: false },
+        { onConflict: "id" }
+      );
 
-    if (insertError) {
-      return { error: insertError.message };
+    if (saveError) {
+      return { error: saveError.message };
     }
 
     router.push(intendedRole === "seeker" ? "/complete-profile/seeker" : "/complete-profile/provider");
