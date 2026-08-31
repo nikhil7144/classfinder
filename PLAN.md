@@ -164,8 +164,10 @@ coordinate this in WhatsApp — "anyone want to split a badminton coach for the
 kids?" — so this digitises an existing behaviour rather than teaching a new one.
 
 A group carries a service category, an area, a society, and how many students.
-The creator shares a link; others join. It reaches providers only once it has
-**at least 3 members**, which does double duty: it filters idle wishes from real
+The creator shares a link; others join — and a member must be a registered
+seeker with a **completed profile**, not merely an account, or three throwaway
+email addresses would activate a fake group. It reaches providers only once it
+has **at least 3 members**, which does double duty: it filters idle wishes from real
 demand, and it makes recruiting neighbours the activation step, so the growth
 loop and the quality gate are the same action.
 
@@ -286,5 +288,5 @@ is what makes it straightforward rather than a rewrite.
 | No group wall, 1:1 to the creator only | Keeps children out of conversations with strangers |
 | The pitch is the request | A parent judging a stranger needs to read what they said before deciding |
 | Only approved providers may pitch | That first message reaches a family before any vetting |
-| Joining a group needs an account | Otherwise the 3-member gate filters nothing |
+| Joining needs a *completed* seeker profile | An account is just a verified email; three throwaways would activate a fake group |
 | Groups expire after ~10 days | Stale demand poisons provider trust faster than no demand |

@@ -45,8 +45,12 @@ create index if not exists groups_area_idx on public.groups (area_id);
 create index if not exists groups_service_idx on public.groups (service_category_id);
 create index if not exists groups_creator_idx on public.groups (creator_id);
 
--- Members join via a shared link. Membership requires an account, otherwise
--- the three-member threshold could be faked and would filter nothing.
+-- Members join via a shared link, but must be registered seekers with a
+-- COMPLETED profile. An auth account alone is just a verified email address —
+-- three throwaway addresses would activate a fake group and the threshold
+-- would filter nothing. A completed profile carries a phone number, which is
+-- real friction, and matches the rule used everywhere else in the product:
+-- browse freely, complete a profile to participate.
 create table if not exists public.group_members (
   group_id uuid not null references public.groups(id) on delete cascade,
   user_id uuid not null references public.profiles(id) on delete cascade,
@@ -238,7 +242,20 @@ create policy "members read membership" on public.group_members for select
 
 drop policy if exists "join a group" on public.group_members;
 create policy "join a group" on public.group_members for insert
-  with check (user_id = auth.uid());
+  with check (
+    user_id = auth.uid()
+    and exists (
+      select 1 from public.profiles p
+      where p.id = auth.uid()
+        and p.role = 'seeker'          -- a group is parent demand
+        and p.profile_complete = true  -- so the member count means something
+    )
+    -- and only into a group that is still open
+    and exists (
+      select 1 from public.groups g
+      where g.id = group_id and g.expires_at > now() and g.closed_at is null
+    )
+  );
 
 drop policy if exists "leave a group" on public.group_members;
 create policy "leave a group" on public.group_members for delete
