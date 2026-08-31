@@ -189,11 +189,23 @@ when — the most sensitive object in the product.
 
 ### Contact
 
-No group wall. A provider contacts the **creator one-to-one**, via the
-request → accept → chat pipeline ported from MentBridge
-(`association_requests` / `associations` / `messages`). This keeps children and
-other members out of any conversation with a stranger, and means Groups pulls
-messaging forward from Phase 4 rather than building a comment system.
+No group wall. A provider reaches the **creator one-to-one**, adapted from
+MentBridge's association pipeline. This keeps children and other members out of
+any conversation with a stranger, and pulls messaging forward from Phase 4
+rather than building a comment system.
+
+**The pitch is the request.** MentBridge asked to connect first and talked
+after, but there a veteran was approaching a business. Here a coach is
+approaching a family, and a parent judging a stranger needs to read what they
+actually said before deciding. So a provider's first message *is* the request;
+the parent reads it, then chooses whether a conversation opens.
+
+Because that message reaches a family unvetted, three things guard it:
+
+- the pitch is required and substantive — a bare "hi" is rejected
+- only an **approved, unsuspended** provider may send one, enforced in RLS
+  rather than the UI
+- one request per provider per group, so a declined coach cannot try again
 
 
 ---
@@ -272,4 +284,7 @@ is what makes it straightforward rather than a rewrite.
 | Groups need 3 members to activate | Quality gate and growth loop in one action |
 | Society name hidden from the public | It describes where children gather; approved providers only |
 | No group wall, 1:1 to the creator only | Keeps children out of conversations with strangers |
+| The pitch is the request | A parent judging a stranger needs to read what they said before deciding |
+| Only approved providers may pitch | That first message reaches a family before any vetting |
+| Joining a group needs an account | Otherwise the 3-member gate filters nothing |
 | Groups expire after ~10 days | Stale demand poisons provider trust faster than no demand |

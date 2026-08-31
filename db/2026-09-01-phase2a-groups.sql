@@ -143,22 +143,34 @@ as $$
 $$;
 
 -- ---------------------------------------------------------------------
--- 4. request -> accept -> chat, ported from MentBridge
+-- 4. pitch -> accept -> chat, adapted from MentBridge
 --
--- startup_id/veteran_id become provider_id/creator, and unlike MentBridge
--- this runs under RLS: only the two participants can read a thread.
+-- MentBridge asked to connect first and talked after, but there a veteran was
+-- approaching a business. Here a coach is approaching a family, and a parent
+-- judging a stranger needs to read what they actually said. So the provider's
+-- first message IS the request: the parent sees the pitch, then decides
+-- whether a conversation opens.
+--
+-- The safeguards that makes necessary:
+--   * the pitch is required and substantive — no bare "hi"
+--   * only an approved, unsuspended provider may send one (RLS, below)
+--   * one request per provider per group, so a declined coach cannot try again
+--
+-- Unlike MentBridge this runs under RLS: only the two participants can read a
+-- thread, and replies are refused until the parent accepts.
 -- ---------------------------------------------------------------------
 
 create table if not exists public.group_requests (
   id uuid primary key default gen_random_uuid(),
   group_id uuid not null references public.groups(id) on delete cascade,
   provider_id uuid not null references public.providers(id) on delete cascade,
-  message text,
+  -- the pitch itself, not an optional note
+  message text not null,
   status text not null default 'pending' check (status in ('pending', 'accepted', 'declined')),
   created_at timestamptz not null default now(),
   responded_at timestamptz,
   unique (group_id, provider_id),
-  constraint group_requests_message_len check (message is null or length(message) <= 1000)
+  constraint group_requests_message_len check (length(message) between 20 and 1000)
 );
 
 create index if not exists group_requests_group_idx on public.group_requests (group_id);
@@ -240,9 +252,22 @@ create policy "participants read requests" on public.group_requests for select
     or exists (select 1 from public.groups g where g.id = group_id and g.creator_id = auth.uid())
   );
 
+-- Only an approved, unsuspended provider may pitch a family. Enforced here
+-- rather than in the UI, because this message reaches a parent unvetted.
 drop policy if exists "provider sends request" on public.group_requests;
 create policy "provider sends request" on public.group_requests for insert
-  with check (public.is_my_provider(provider_id));
+  with check (
+    exists (
+      select 1 from public.providers p
+      where p.id = provider_id
+        and p.user_id = auth.uid()
+        and p.approved = true
+        and p.is_suspended = false
+        and p.provider_type <> 'event_planner'
+    )
+    -- and only to a group that is actually live
+    and exists (select 1 from public.active_groups g where g.id = group_id)
+  );
 
 drop policy if exists "creator answers request" on public.group_requests;
 create policy "creator answers request" on public.group_requests for update
