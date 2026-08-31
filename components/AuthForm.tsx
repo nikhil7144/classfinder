@@ -40,9 +40,18 @@ export default function AuthForm({ eyebrow, heading, subheading, intendedRole }:
     setFormError("");
     setLoading(true);
 
+    // Supabase decides whether the email carries a 6-digit code or a link,
+    // based on its email templates. Point the link at /auth/callback with the
+    // same intendedRole the code path uses, so clicking it lands the user in
+    // exactly the same place as typing the code — whichever the template sends.
+    const params = intendedRole ? `?intendedRole=${intendedRole}` : "";
+
     const { error } = await supabase.auth.signInWithOtp({
       email: trimmedEmail,
-      options: { shouldCreateUser: true },
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: `${window.location.origin}/auth/callback${params}`,
+      },
     });
 
     setLoading(false);

@@ -21,14 +21,27 @@ function AuthCallback() {
     let active = true;
 
     const finish = async () => {
-      const { data, error: sessionError } = await supabase.auth.getSession();
+      // The tokens arrive in the URL hash and the client parses them
+      // asynchronously, so the session isn't always there on the first read.
+      // Poll briefly rather than declaring failure too early.
+      let session = null;
+      for (let attempt = 0; attempt < 10 && active; attempt++) {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          session = data.session;
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 250));
+      }
 
       if (!active) return;
 
-      if (sessionError || !data.session) {
-        setError("Sign-in didn't complete — go back and try again.");
+      if (!session) {
+        setError("That sign-in link didn't work — it may have expired. Request a new one.");
         return;
       }
+
+      const data = { session };
 
       const result = await resolveProfileAndRedirect(
         router,
@@ -49,17 +62,17 @@ function AuthCallback() {
   }, [router, intendedRole]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-6">
-      <div className="w-full max-w-md bg-white border border-gray-200 rounded-3xl p-8 text-center shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
+    <div className="flex min-h-screen items-center justify-center bg-bg px-6">
+      <div className="cf-card w-full max-w-md p-8 text-center">
         {error ? (
           <>
-            <p className="text-sm font-semibold text-rose-600">{error}</p>
-            <a href="/login" className="mt-4 inline-block text-sm font-semibold text-indigo-600 hover:text-indigo-700">
+            <p className="text-sm font-semibold text-danger">{error}</p>
+            <a href="/login" className="mt-4 inline-block text-sm font-semibold text-gold hover:text-accent-ink">
               Back to login
             </a>
           </>
         ) : (
-          <p className="text-sm text-gray-500">Signing you in…</p>
+          <p className="text-sm text-muted">Signing you in…</p>
         )}
       </div>
     </div>
