@@ -152,6 +152,52 @@ rather than hard-coded hexes.
 
 ---
 
+## Groups — how demand reaches supply
+
+ClassFinder is asymmetric in a way MentBridge was not. There, startups posted
+requirements and experts applied, and both sides had reason to search. Here
+parents search and coaches wait: an approved coach has nothing to do until
+someone finds them, so supply goes dormant before demand arrives.
+
+**Groups are parent-created demand.** In metro societies parents already
+coordinate this in WhatsApp — "anyone want to split a badminton coach for the
+kids?" — so this digitises an existing behaviour rather than teaching a new one.
+
+A group carries a service category, an area, a society, and how many students.
+The creator shares a link; others join. It reaches providers only once it has
+**at least 3 members**, which does double duty: it filters idle wishes from real
+demand, and it makes recruiting neighbours the activation step, so the growth
+loop and the quality gate are the same action.
+
+Groups are **time-boxed** (default 10 days, extendable by the creator). Stale
+demand is worse than none — a coach who contacts five dead groups stops
+contacting groups.
+
+The economics improve for both sides, which is why both will tolerate the
+friction: five children in one society is a better rate per parent and one trip
+for five students for the coach.
+
+### Privacy
+
+A group describes how many children, roughly what age, which society, and
+eventually a weekly time. That is a description of where children gather and
+when — the most sensitive object in the product.
+
+- **Public:** service, area, number of students. Enough to signal activity.
+- **Approved providers only:** society name and the creator's contact.
+- The creator's phone is shown only if they opt in, never by default.
+
+### Contact
+
+No group wall. A provider contacts the **creator one-to-one**, via the
+request → accept → chat pipeline ported from MentBridge
+(`association_requests` / `associations` / `messages`). This keeps children and
+other members out of any conversation with a stranger, and means Groups pulls
+messaging forward from Phase 4 rather than building a comment system.
+
+
+---
+
 ## Roadmap
 
 ### Phase 1 — Foundation
@@ -171,7 +217,14 @@ Provider profile captures: photo, category, services, help statement, age,
 experience, certifications, fees (range + period), teaching formats, service
 areas or branches, and **day- and place-wise availability**.
 
-### Phase 2 — Spaces, with moderation
+### Phase 2 — Groups, with 1:1 messaging
+
+Parent-created demand, per the section above, plus the request → accept → chat
+pipeline it depends on. Chosen ahead of Spaces because it is what stops approved
+coaches going dormant while areas open one at a time — Spaces without demand is
+a coach posting photos to nobody.
+
+### Phase 3 — Spaces, with moderation
 
 Community pages per provider (admin-creatable and claimable): photo and video
 posts, join, and a public comments wall. Report/flag plus an admin review queue
@@ -179,16 +232,10 @@ ships **in this phase, not after** — parents and children are the audience.
 
 Video is the main cost risk: its own bucket, explicit size and MIME limits.
 
-### Phase 3 — Events & bookings
+### Phase 4 — Events & bookings
 
-`event_planner` providers, events, bookings. Payment status tracked manually;
-no gateway yet.
-
-### Phase 4 — Messaging
-
-Seeker ↔ provider. MentBridge's request → accept → chat pipeline ports almost
-verbatim; rename `startup_id`/`veteran_id` to `seeker_id`/`provider_id` and add
-RLS, which it never had.
+`event_planner` providers, events, bookings, and an events tab on the provider
+dashboard. Payment status tracked manually; no gateway yet.
 
 ### Phase 5 — Advertising
 
@@ -221,3 +268,8 @@ is what makes it straightforward rather than a rewrite.
 | Event planners hidden from search | They run spaces, they aren't "found" like coaches |
 | No self-serve advertiser accounts | Admin-managed banners plus a lead form is enough |
 | Payments deferred to Phase 6 | Model the booking data now, wire the gateway later |
+| Groups before Spaces | Demand generation beats content marketing at cold start |
+| Groups need 3 members to activate | Quality gate and growth loop in one action |
+| Society name hidden from the public | It describes where children gather; approved providers only |
+| No group wall, 1:1 to the creator only | Keeps children out of conversations with strangers |
+| Groups expire after ~10 days | Stale demand poisons provider trust faster than no demand |
