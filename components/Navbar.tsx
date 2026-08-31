@@ -76,6 +76,10 @@ export default function Navbar() {
         </button>
 
         <div className="hidden items-center gap-3 md:flex">
+          <button onClick={() => navigate("/search")} className={navPillClass("/search")}>
+            Find classes
+          </button>
+
           {user ? (
             <>
               <button onClick={() => navigate("/dashboard")} className={navPillClass("/dashboard")}>
@@ -113,6 +117,10 @@ export default function Navbar() {
 
       {menuOpen && (
         <div className="mt-4 flex flex-col gap-3 md:hidden">
+          <button onClick={() => navigate("/search")} className={navPillClass("/search")}>
+            Find classes
+          </button>
+
           {user ? (
             <>
               <button onClick={() => navigate("/dashboard")} className={navPillClass("/dashboard")}>

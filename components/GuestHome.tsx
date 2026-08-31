@@ -49,8 +49,8 @@ export default function GuestHome() {
         </p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link href="/signup/seeker" className="cf-btn-primary w-full sm:w-auto">
-            I&apos;m looking for classes
+          <Link href="/search" className="cf-btn-primary w-full sm:w-auto">
+            Find classes near me
           </Link>
           <Link href="/signup/provider" className="cf-btn-ghost w-full sm:w-auto">
             I teach or coach
@@ -58,7 +58,7 @@ export default function GuestHome() {
         </div>
 
         <p className="mt-5 text-sm text-faint">
-          Already have an account?{" "}
+          Browse freely — you only need an account to get in touch.{" "}
           <Link href="/login" className="font-semibold text-gold hover:text-accent-ink">
             Log in
           </Link>
@@ -70,7 +70,7 @@ export default function GuestHome() {
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {VERTICALS.map((v) => (
-            <div key={v.label} className="cf-card p-6 transition hover:border-faint">
+            <Link key={v.label} href="/search" className="cf-card block p-6 transition hover:border-faint">
               <div className="flex items-center gap-2.5">
                 <span
                   aria-hidden="true"
@@ -80,12 +80,12 @@ export default function GuestHome() {
                 <h2 className="font-display text-base font-bold text-ink">{v.label}</h2>
               </div>
               <p className="mt-2.5 text-sm leading-6 text-muted">{v.blurb}</p>
-            </div>
+            </Link>
           ))}
         </div>
 
         <p className="mt-10 text-center text-sm text-faint">
-          Browse and search is coming soon — create an account and we&apos;ll get you set up first.
+          We open area by area — search yours to see who&apos;s teaching there now.
         </p>
       </section>
     </main>
