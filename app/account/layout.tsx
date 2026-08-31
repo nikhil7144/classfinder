@@ -33,6 +33,9 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   // phases land.
   const navItems = [
     { href: "/account/profile", label: "Profile" },
+    // Groups are a seeker's own demand; providers see matching demand on their
+    // dashboard instead.
+    ...(role === "seeker" ? [{ href: "/account/groups", label: "Groups" }] : []),
     { href: "/account/settings", label: "Settings" },
   ];
 
