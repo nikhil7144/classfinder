@@ -7,6 +7,12 @@ const cards = [
     description: "Approve, feature, or suspend coaches, tutors, coaching centers, and event planners.",
   },
   {
+    href: "/admin/locations",
+    title: "Cities & Areas",
+    description:
+      "Define the areas the platform serves, set their coordinates, and control which ones are live for seekers.",
+  },
+  {
     href: "/admin/provider-categories",
     title: "Provider Categories",
     description: "Manage the self-description labels providers pick at signup (Coach, Home Tutor, Sports Academy, etc.).",
