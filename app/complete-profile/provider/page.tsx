@@ -89,6 +89,9 @@ export default function CompleteProviderProfile() {
   const [showValidation, setShowValidation] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState("");
+  // Account type is locked once the profile is complete, so the switch link
+  // only appears while there is still nothing to lose.
+  const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -105,7 +108,7 @@ export default function CompleteProviderProfile() {
         await Promise.all([
           supabase.from("provider_category_master").select("*").eq("is_active", true).order("name"),
           supabase.from("service_category_master").select("*").eq("is_active", true).order("name"),
-          supabase.from("profiles").select("phone").eq("id", uid).maybeSingle(),
+          supabase.from("profiles").select("phone, profile_complete").eq("id", uid).maybeSingle(),
           supabase.from("providers").select("*").eq("user_id", uid).maybeSingle(),
         ]);
 
@@ -114,6 +117,7 @@ export default function CompleteProviderProfile() {
       // Functional update: don't clobber a phone number the user already
       // started typing while this fetch was still in flight.
       setPhone((current) => current || profileRow?.phone || "");
+      setIsComplete(Boolean(profileRow?.profile_complete));
 
       if (providerRow) {
         setHasExistingProfile(true);
@@ -387,6 +391,14 @@ export default function CompleteProviderProfile() {
             Your profile is reviewed before it's visible to parents and students — you can keep
             editing it any time after.
           </p>
+          {!isComplete && (
+            <p className="mt-4 text-sm text-gray-500">
+              Actually looking for classes?{" "}
+              <a href="/choose-role" className="font-semibold text-indigo-600 hover:text-indigo-700">
+                Switch to a seeker account
+              </a>
+            </p>
+          )}
         </div>
 
         <div className={sectionClass}>

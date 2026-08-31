@@ -25,6 +25,9 @@ export default function CompleteSeekerProfile() {
   const [isSaving, setIsSaving] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
   const [formError, setFormError] = useState("");
+  // Account type is locked once the profile is complete, so the switch link
+  // only appears while there is still nothing to lose.
+  const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -37,9 +40,15 @@ export default function CompleteSeekerProfile() {
       setUserId(authData.user.id);
 
       const [{ data: profileRow }, { data: seekerRow }] = await Promise.all([
-        supabase.from("profiles").select("phone").eq("id", authData.user.id).maybeSingle(),
+        supabase
+          .from("profiles")
+          .select("phone, profile_complete")
+          .eq("id", authData.user.id)
+          .maybeSingle(),
         supabase.from("seekers").select("*").eq("user_id", authData.user.id).maybeSingle(),
       ]);
+
+      setIsComplete(Boolean(profileRow?.profile_complete));
 
       // Functional update: don't clobber a phone number the user already
       // started typing while this fetch was still in flight.
@@ -152,6 +161,14 @@ export default function CompleteSeekerProfile() {
           <p className="mt-3 text-[15px] leading-relaxed text-gray-600">
             Just enough to book and message providers — you can add more later.
           </p>
+          {!isComplete && (
+            <p className="mt-4 text-sm text-gray-500">
+              Actually here to teach?{" "}
+              <a href="/choose-role" className="font-semibold text-indigo-600 hover:text-indigo-700">
+                Switch to a provider account
+              </a>
+            </p>
+          )}
         </div>
 
         <div className="rounded-3xl border border-gray-200 bg-white p-8 shadow-sm space-y-5">
