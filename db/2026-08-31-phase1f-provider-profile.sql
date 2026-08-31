@@ -82,9 +82,12 @@ create table if not exists public.teaching_place_master (
 
 insert into public.teaching_place_master (id, label, description, sort_order) values
   ('my_academy', 'At my academy or centre', 'Students come to your own place.', 1),
-  ('group_classes', 'Group classes', 'Several students taught together. Post individual batches in your Space.', 2),
+  ('group_classes', 'Group classes', 'Several students taught together at an agreed place — a society hall, ground or shared venue. Post specific batches in your Space.', 2),
   ('individual_classes', 'Individual classes', 'One-to-one coaching or tuition.', 3)
-on conflict (id) do nothing;
+on conflict (id) do update set
+  label = excluded.label,
+  description = excluded.description,
+  sort_order = excluded.sort_order;
 
 alter table public.teaching_place_master enable row level security;
 
