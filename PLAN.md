@@ -140,6 +140,34 @@ and the phases at risk are in the porting doc.
 
 ---
 
+## API shape — built for the mobile app too
+
+A mobile app is coming and will talk to Supabase directly, with the same anon
+key and the same RLS. That makes one rule worth holding to:
+
+> Anything the app will need must be an **RPC function** or an **RLS-governed
+> table read**. Logic that only a Next.js server component can perform is
+> logic the app cannot reuse.
+
+This is why RLS being on matters beyond security: the rules live in the
+database, so web and mobile inherit the same ones instead of each
+re-implementing them. MentBridge's RLS-off approach — client-side redirects
+plus per-route server checks — would have transferred nothing.
+
+| Surface | Reusable by mobile? |
+|---|---|
+| `search_providers()`, `groups_for_provider()`, `get_provider_profile()` | Yes — call over RPC |
+| Any table read (providers, areas, groups…) | Yes — RLS applies identically |
+| `/api/admin/*` | No, and fine: admin is a web-only console |
+| Server components rendering HTML | No — they must stay thin wrappers over the above |
+
+The trap to avoid is a server component reading with the **service role** and
+re-checking the rule in TypeScript. That writes the same security rule twice,
+and the copies drift. `app/provider/[id]` did exactly this before
+`get_provider_profile()` replaced it.
+
+---
+
 ## Design
 
 **Charcoal & Coral** — [proposal](https://claude.ai/code/artifact/03ec9968-92f5-4144-ab03-c044ea3fa035).
