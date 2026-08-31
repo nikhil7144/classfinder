@@ -28,14 +28,11 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
     load();
   }, []);
 
-  // Messaging, Spaces and payments add their own entries here as those phases
-  // land. Profile editing lives in the complete-profile forms, which load
-  // existing values and double as the edit screen.
+  // Everything account-related lives in this section so the left menu stays
+  // mounted. Messages, requests, Spaces and payments join this list as those
+  // phases land.
   const navItems = [
-    {
-      href: role === "provider" ? "/complete-profile/provider" : "/complete-profile/seeker",
-      label: "Profile",
-    },
+    { href: "/account/profile", label: "Profile" },
     { href: "/account/settings", label: "Settings" },
   ];
 
