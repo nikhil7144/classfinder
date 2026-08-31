@@ -94,7 +94,54 @@ with (security_invoker = on) as
     and g.closed_at is null;
 
 -- ---------------------------------------------------------------------
--- 3. what providers see
+-- 3. pitch -> accept -> chat, adapted from MentBridge
+--
+-- MentBridge asked to connect first and talked after, but there a veteran was
+-- approaching a business. Here a coach is approaching a family, and a parent
+-- judging a stranger needs to read what they actually said. So the provider's
+-- first message IS the request: the parent sees the pitch, then decides
+-- whether a conversation opens.
+--
+-- The safeguards that makes necessary:
+--   * the pitch is required and substantive — no bare "hi"
+--   * only an approved, unsuspended provider may send one (RLS, below)
+--   * one request per provider per group, so a declined coach cannot try again
+--
+-- Unlike MentBridge this runs under RLS: only the two participants can read a
+-- thread, and replies are refused until the parent accepts.
+-- ---------------------------------------------------------------------
+
+create table if not exists public.group_requests (
+  id uuid primary key default gen_random_uuid(),
+  group_id uuid not null references public.groups(id) on delete cascade,
+  provider_id uuid not null references public.providers(id) on delete cascade,
+  -- the pitch itself, not an optional note
+  message text not null,
+  status text not null default 'pending' check (status in ('pending', 'accepted', 'declined')),
+  created_at timestamptz not null default now(),
+  responded_at timestamptz,
+  unique (group_id, provider_id),
+  constraint group_requests_message_len check (length(message) between 20 and 1000)
+);
+
+create index if not exists group_requests_group_idx on public.group_requests (group_id);
+create index if not exists group_requests_provider_idx on public.group_requests (provider_id);
+
+create table if not exists public.group_messages (
+  id uuid primary key default gen_random_uuid(),
+  request_id uuid not null references public.group_requests(id) on delete cascade,
+  sender_id uuid not null references public.profiles(id) on delete cascade,
+  body text not null,
+  created_at timestamptz not null default now(),
+  constraint group_messages_body_len check (length(body) between 1 and 4000)
+);
+
+create index if not exists group_messages_request_idx
+  on public.group_messages (request_id, created_at);
+
+-- ---------------------------------------------------------------------
+-- ---------------------------------------------------------------------
+-- 4. what providers see
 --
 -- Society name and the creator's identity are NOT in this function's output.
 -- A provider gets them only after the creator accepts their request.
@@ -145,52 +192,6 @@ as $$
   order by g.created_at desc
   limit p_limit;
 $$;
-
--- ---------------------------------------------------------------------
--- 4. pitch -> accept -> chat, adapted from MentBridge
---
--- MentBridge asked to connect first and talked after, but there a veteran was
--- approaching a business. Here a coach is approaching a family, and a parent
--- judging a stranger needs to read what they actually said. So the provider's
--- first message IS the request: the parent sees the pitch, then decides
--- whether a conversation opens.
---
--- The safeguards that makes necessary:
---   * the pitch is required and substantive — no bare "hi"
---   * only an approved, unsuspended provider may send one (RLS, below)
---   * one request per provider per group, so a declined coach cannot try again
---
--- Unlike MentBridge this runs under RLS: only the two participants can read a
--- thread, and replies are refused until the parent accepts.
--- ---------------------------------------------------------------------
-
-create table if not exists public.group_requests (
-  id uuid primary key default gen_random_uuid(),
-  group_id uuid not null references public.groups(id) on delete cascade,
-  provider_id uuid not null references public.providers(id) on delete cascade,
-  -- the pitch itself, not an optional note
-  message text not null,
-  status text not null default 'pending' check (status in ('pending', 'accepted', 'declined')),
-  created_at timestamptz not null default now(),
-  responded_at timestamptz,
-  unique (group_id, provider_id),
-  constraint group_requests_message_len check (length(message) between 20 and 1000)
-);
-
-create index if not exists group_requests_group_idx on public.group_requests (group_id);
-create index if not exists group_requests_provider_idx on public.group_requests (provider_id);
-
-create table if not exists public.group_messages (
-  id uuid primary key default gen_random_uuid(),
-  request_id uuid not null references public.group_requests(id) on delete cascade,
-  sender_id uuid not null references public.profiles(id) on delete cascade,
-  body text not null,
-  created_at timestamptz not null default now(),
-  constraint group_messages_body_len check (length(body) between 1 and 4000)
-);
-
-create index if not exists group_messages_request_idx
-  on public.group_messages (request_id, created_at);
 
 -- ---------------------------------------------------------------------
 -- 5. RLS
