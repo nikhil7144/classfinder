@@ -11,36 +11,69 @@ type ProviderRow = {
   city: string | null;
   approved: boolean;
   is_suspended: boolean;
+  is_featured: boolean;
 };
 
 export default function AdminProviders() {
   const [providers, setProviders] = useState<ProviderRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase
-        .from("providers")
-        .select("id, display_name, provider_type, city, approved, is_suspended")
-        .order("approved")
-        .order("display_name");
+      // Through the admin API, not the anon client: RLS hides unapproved
+      // providers from everyone but their owner, so reading directly showed
+      // an admin zero of the rows they exist to act on.
+      const { data: sessionData } = await supabase.auth.getSession();
+      const response = await fetch("/api/admin/providers", {
+        headers: { Authorization: `Bearer ${sessionData.session?.access_token || ""}` },
+      });
+      const result = await response.json();
 
-      setProviders((data as ProviderRow[]) || []);
+      if (!response.ok) {
+        setError(result.error || "Unable to load providers.");
+        setLoading(false);
+        return;
+      }
+
+      setProviders(result.providers || []);
       setLoading(false);
     };
 
     load();
   }, []);
 
+  const pending = providers.filter((p) => !p.approved && !p.is_suspended);
+
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">Providers</h1>
         <p className="mt-2 text-sm text-gray-500">
-          Review a listing before it appears in search — open a provider to see their branches,
-          categories, and photo, then approve or suspend.
+          Review a listing before it appears in search — open one to see its branches, areas and
+          services, then approve or suspend.
         </p>
+        {!loading && (
+          <div className="mt-4 flex flex-wrap gap-3 text-sm">
+            <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-600">
+              {providers.length} total
+            </span>
+            <span
+              className={`rounded-full px-3 py-1 ${
+                pending.length ? "bg-orange-100 text-orange-700" : "bg-gray-100 text-gray-600"
+              }`}
+            >
+              {pending.length} awaiting review
+            </span>
+          </div>
+        )}
       </div>
+
+      {error && (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+          {error}
+        </div>
+      )}
 
       <div className="space-y-4">
         {loading ? (
@@ -72,10 +105,17 @@ export default function AdminProviders() {
                     ) : (
                       <span
                         className={`rounded-full px-3 py-1 text-xs ${
-                          provider.approved ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+                          provider.approved
+                            ? "bg-green-100 text-green-700"
+                            : "bg-orange-100 text-orange-700"
                         }`}
                       >
-                        {provider.approved ? "Approved" : "Pending"}
+                        {provider.approved ? "Approved" : "Awaiting review"}
+                      </span>
+                    )}
+                    {provider.is_featured && (
+                      <span className="rounded-full bg-amber-100 px-3 py-1 text-xs text-amber-700">
+                        Featured
                       </span>
                     )}
                   </div>
