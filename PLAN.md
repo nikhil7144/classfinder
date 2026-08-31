@@ -128,9 +128,24 @@ anon key in its binary.
 - Taxonomy and locations: public read, writes only through admin API routes
 - Admin actions use the service-role key server-side
 
-Two things that bit us and are worth remembering: tables created via the SQL
-editor **don't inherit Supabase's default grants**, and new tables default to
-RLS-enabled-with-no-policies, which silently returns empty results.
+Four things that bit us and are worth remembering:
+
+- Tables created via the SQL editor **don't inherit Supabase's default grants**.
+- New tables default to RLS-enabled-with-no-policies, silently returning empty.
+- **A policy that reads another RLS-protected table is filtered too.** If the
+  caller can't see that row the policy quietly evaluates false — no error. It
+  made joining a group impossible, because proving the group was open meant
+  reading a group only members could read. Ask such questions through
+  `security definer` helpers that return a boolean and no data.
+- **Every insertable table needs a SELECT path for the writer's own new row.**
+  PostgREST asks for the row back by default, `RETURNING` needs SELECT, and a
+  `STABLE` policy function reads the pre-statement snapshot so it cannot see
+  the row being written. The symptom is a 403 on a write that actually
+  succeeded.
+
+Test RLS as a real user with their own JWT. The service-role key bypasses it
+entirely, so service-role tests prove nothing — they passed for weeks while
+admin approval was completely broken.
 
 ### Media
 
