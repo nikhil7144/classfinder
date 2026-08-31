@@ -84,3 +84,26 @@ All user-facing naming reads from `lib/brand.ts`. Changing the product name is
 one edit there. Set `NEXT_PUBLIC_SITE_URL` in the deploy environment before
 going live — `robots.ts` and `sitemap.ts` fall back to localhost, and until
 that variable is set they must not advertise a domain we don't own.
+
+## Media rule: file bytes never go in a row
+
+Images, video and documents belong in Supabase Storage; the database holds
+only the URL. Base64 in a column is ~33% larger than the file, is billed at
+database rates rather than storage rates, is read into memory by any SELECT
+touching that row, bloats every backup, and cannot be CDN-served. One 2 MB
+photo becomes ~2.7 MB of row data — a thousand providers is ~2.7 GB of
+database that should have been cheap object storage.
+
+`db/2026-08-31-phase1g-no-blobs.sql` enforces this: photo columns must match
+`^https?://`, free-text and JSONB columns have size ceilings an encoded file
+cannot fit inside, and the photo buckets cap uploads at 5 MB with an image-only
+MIME allowlist.
+
+Phases that will need the same treatment:
+
+- **Phase 2, Spaces** — photo *and video* posts. The largest risk here. Video
+  needs its own bucket with a deliberately chosen size limit and MIME list;
+  do not reuse the 5 MB photo buckets, and do not let a client send a data URI.
+- **Phase 5, ad banners** — `ad_banners.image_url`, same URL-only constraint.
+- **Certifications** — if scans are ever uploaded, they go to Storage with the
+  URL in the JSONB, not the file.
