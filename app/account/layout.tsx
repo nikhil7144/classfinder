@@ -22,27 +22,16 @@ export default function AccountLayout({
         : "text-slate-600 hover:bg-white/70 hover:text-slate-950"
     }`;
 
+  // Messaging (Phase 4), Spaces/posts (Phase 2) and payments (Phase 6) add
+  // their own entries here as those phases land. Profile editing currently
+  // lives in /complete-profile/{seeker,provider}, which doubles as the edit form.
   const navigationItems = [
-    { href: "/account/profile", label: "Profile", order: "01" },
-    { href: "/account/associations", label: "Associations", order: "02" },
-    { href: "/messages", label: "Messages", order: "03" },
-    ...(role === "startup"
-      ? [
-          { href: "/account/create-post", label: "Create Post", order: "04" },
-          { href: "/account/my-posts", label: "My Posts", order: "05" },
-          {
-            href: "/account/requested-associations",
-            label: "Requested Associations",
-            order: "06",
-          },
-          { href: "/account/payments", label: "Payment History", order: "07" },
-        ]
-      : []),
     {
-      href: "/account/settings",
-      label: "Settings",
-      order: role === "startup" ? "08" : "04",
+      href: role === "provider" ? "/complete-profile/provider" : "/complete-profile/seeker",
+      label: "Profile",
+      order: "01",
     },
+    { href: "/account/settings", label: "Settings", order: "02" },
   ];
 
   useEffect(() => {

@@ -3,6 +3,7 @@
 import type { User } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { BRAND } from "@/lib/brand";
 import { usePathname, useRouter } from "next/navigation";
 
 const baseNavPillClass =
@@ -71,37 +72,10 @@ export default function Navbar() {
           onClick={() => router.push("/")}
           className="cursor-pointer transition"
         >
-          <img
-            src="/mentbridge-logo.svg"
-            alt="MentBridge"
-            className="h-12 w-auto"
-          />
+          <span className="text-2xl font-bold tracking-tight text-slate-900">{BRAND.name}</span>
         </button>
 
         <div className="hidden items-center gap-3 md:flex">
-          <button onClick={() => navigate("/why-mentbridge")} className={navPillClass("/why-mentbridge")}>
-            Why MentBridge
-          </button>
-
-          <button onClick={() => navigate("/startup/news")} className={navPillClass("/startup/news")}>
-            Startup News
-          </button>
-
-          <button onClick={() => navigate("/blog")} className={navPillClass("/blog")}>
-            Blog
-          </button>
-
-          <button
-            onClick={() => navigate("/veterans")}
-            className={`cursor-pointer rounded-full px-5 py-2.5 text-sm font-semibold text-white transition ${
-              isActivePath("/veterans")
-                ? "bg-slate-950 shadow-[0_12px_28px_rgba(15,23,42,0.22)]"
-                : "bg-gradient-to-r from-violet-700 via-indigo-700 to-blue-700 shadow-[0_12px_28px_rgba(79,70,229,0.25)] hover:brightness-105"
-            }`}
-          >
-            Search Industry Leaders
-          </button>
-
           {user ? (
             <>
               <button onClick={() => navigate("/dashboard")} className={navPillClass("/dashboard")}>
@@ -141,29 +115,6 @@ export default function Navbar() {
 
       {menuOpen && (
         <div className="mt-4 flex flex-col gap-3 md:hidden">
-          <button onClick={() => navigate("/why-mentbridge")} className={navPillClass("/why-mentbridge")}>
-            Why MentBridge
-          </button>
-
-          <button onClick={() => navigate("/startup/news")} className={navPillClass("/startup/news")}>
-            Startup News
-          </button>
-
-          <button onClick={() => navigate("/blog")} className={navPillClass("/blog")}>
-            Blog
-          </button>
-
-          <button
-            onClick={() => navigate("/veterans")}
-            className={`cursor-pointer rounded-full px-5 py-2.5 text-sm font-semibold text-white ${
-              isActivePath("/veterans")
-                ? "bg-slate-950"
-                : "bg-gradient-to-r from-violet-700 via-indigo-700 to-blue-700"
-            }`}
-          >
-            Search Industry Leaders
-          </button>
-
           {user ? (
             <>
               <button onClick={() => navigate("/dashboard")} className={navPillClass("/dashboard")}>

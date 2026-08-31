@@ -1,4 +1,5 @@
 import { MetadataRoute } from 'next'
+import { BRAND } from '@/lib/brand'
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -8,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         allow: '/',
       },
     ],
-    sitemap: 'https://mentbridge.com/sitemap.xml',
+    sitemap: `${BRAND.siteUrl}/sitemap.xml`,
   }
 }

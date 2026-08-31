@@ -4,6 +4,7 @@ import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { BRAND } from "@/lib/brand";
 import { usePathname } from "next/navigation";
 
 const footerLinkClass =
@@ -39,18 +40,10 @@ export default function Footer() {
       <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
           <Link href="/" className="inline-flex transition">
-            <img
-              src="/mentbridge-logo.svg"
-              alt="MentBridge"
-              className="h-12 w-auto"
-            />
+            <span className="text-2xl font-bold tracking-tight text-slate-900">{BRAND.name}</span>
           </Link>
-          <p className="mt-4 max-w-xl text-sm leading-7 text-slate-600">
-            Trustcabbage Private Limited
-          </p>
-          <p className="mt-2 max-w-xl text-sm leading-7 text-slate-500">
-            Connect ambition with experience through startup, consultant, and industry expert partnerships.
-          </p>
+          <p className="mt-4 max-w-xl text-sm leading-7 text-slate-600">{BRAND.legalName}</p>
+          <p className="mt-2 max-w-xl text-sm leading-7 text-slate-500">{BRAND.tagline}</p>
         </div>
 
         <div className="grid gap-8 sm:grid-cols-2">
@@ -62,14 +55,11 @@ export default function Footer() {
               <Link href="/" className={footerLinkClass}>
                 Home
               </Link>
-              <Link href="/why-mentbridge" className={footerLinkClass}>
-                Why MentBridge
+              <Link href="/signup/seeker" className={footerLinkClass}>
+                Find a coach or tutor
               </Link>
-              <Link href="/blog" className={footerLinkClass}>
-                Blog
-              </Link>
-              <Link href="/veterans" className={footerLinkClass}>
-                Search Industry Leaders
+              <Link href="/signup/provider" className={footerLinkClass}>
+                List your classes
               </Link>
             </div>
           </div>

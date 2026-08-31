@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
+import { BRAND } from "@/lib/brand";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MentBridge",
-  description: "Connect ambition with experience",
+  title: BRAND.name,
+  description: BRAND.tagline,
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
