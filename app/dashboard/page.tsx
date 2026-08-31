@@ -44,7 +44,7 @@ export default async function DashboardPage() {
       ? isSeekerProfileComplete({
           name: seekerProfile.name || "",
           phone: profile.phone || "",
-          city: seekerProfile.city || "",
+          areaId: seekerProfile.area_id || null,
         })
       : false;
 
@@ -65,12 +65,15 @@ export default async function DashboardPage() {
       .eq("user_id", userId)
       .maybeSingle();
 
-    const { data: branches } = providerProfile
-      ? await supabaseServerAdmin
-          .from("branches")
-          .select("*")
-          .eq("provider_id", providerProfile.id)
-      : { data: [] };
+    const [{ data: branches }, { data: serviceAreas }] = providerProfile
+      ? await Promise.all([
+          supabaseServerAdmin.from("branches").select("*").eq("provider_id", providerProfile.id),
+          supabaseServerAdmin
+            .from("provider_service_areas")
+            .select("area_id")
+            .eq("provider_id", providerProfile.id),
+        ])
+      : [{ data: [] }, { data: [] }];
 
     const profileComplete = providerProfile
       ? isProviderProfileComplete({
@@ -79,14 +82,25 @@ export default async function DashboardPage() {
           displayName: providerProfile.display_name || "",
           bio: providerProfile.bio || "",
           phone: profile.phone || "",
-          city: providerProfile.city || "",
+                    helpStatement: providerProfile.help_statement || "",
+          age: providerProfile.age === null || providerProfile.age === undefined ? "" : String(providerProfile.age),
+          experienceYears:
+            providerProfile.experience_years === null || providerProfile.experience_years === undefined
+              ? ""
+              : String(providerProfile.experience_years),
+          feeMin: providerProfile.fee_min === null || providerProfile.fee_min === undefined ? "" : String(providerProfile.fee_min),
+          feeMax: providerProfile.fee_max === null || providerProfile.fee_max === undefined ? "" : String(providerProfile.fee_max),
+          feePeriod: providerProfile.fee_period || "",
+          teachingPlaces: providerProfile.teaching_places || [],
+          certifications: providerProfile.certifications || [],
+          availability: providerProfile.availability || [],
           serviceCategoryIds: providerProfile.service_category_ids || [],
           photoUrl: providerProfile.photo_url || null,
+          serviceAreaIds: (serviceAreas || []).map((a) => a.area_id),
           branches: (branches || []).map((b) => ({
             label: b.label || "",
             address: b.address || "",
-            city: b.city || "",
-            area: b.area || "",
+            areaId: b.area_id || null,
             phone: b.phone || "",
           })),
         })
