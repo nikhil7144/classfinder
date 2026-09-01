@@ -201,7 +201,7 @@ export default function ProviderGroupsPage() {
                           <p className="mt-3 text-sm text-muted">{existing.message}</p>
                           {existing.status === "accepted" && (
                             <Link
-                              href={`/groups/${g.id}/chat/${existing.id}`}
+                              href={`/groups/${g.id}?tab=messages&t=${existing.id}`}
                               className="cf-btn-primary mt-4 px-5 py-2 text-sm"
                             >
                               Open conversation

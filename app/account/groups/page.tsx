@@ -57,7 +57,13 @@ export default function MyGroupsPage() {
             return (
               <Link
                 key={g.id}
-                href={`/groups/${g.id}`}
+                // Coaches waiting is the reason they opened this list — land on
+                // the conversations rather than making them find the tab.
+                href={
+                  g.is_creator && Number(g.pending_requests) > 0
+                    ? `/groups/${g.id}?tab=messages`
+                    : `/groups/${g.id}`
+                }
                 className="cf-card block p-5 transition hover:border-faint"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">

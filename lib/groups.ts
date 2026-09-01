@@ -19,13 +19,34 @@ export type GroupInvite = {
   service_name: string;
   area_name: string;
   city_name: string;
-  society_name: string;
+  /** Withheld from a coach who hasn't been accepted — see phase2k. */
+  society_name: string | null;
   student_count: number;
   notes: string | null;
   member_count: number;
   expires_at: string;
   is_open: boolean;
   already_member: boolean;
+};
+
+export type ThreadStatus = "pending" | "accepted" | "declined";
+
+/** One coach's conversation with a group, as the inbox lists it. */
+export type GroupThread = {
+  request_id: string;
+  provider_id: string;
+  provider_name: string;
+  provider_photo_url: string | null;
+  /** The opening pitch. It is what the parent judged, so it stays visible. */
+  pitch: string;
+  status: ThreadStatus;
+  created_at: string;
+  last_message: string | null;
+  last_message_at: string | null;
+  last_sender_id: string | null;
+  message_count: number;
+  unread: boolean;
+  is_creator: boolean;
 };
 
 export type ProviderGroup = {
@@ -96,6 +117,27 @@ export function activationLabel(memberCount: number): string {
 /** How many more people are needed, for prompts that ask for them. */
 export function membersStillNeeded(memberCount: number): number {
   return Math.max(0, MEMBERS_TO_ACTIVATE - memberCount);
+}
+
+/** "now" / "14:05" / "Tue" / "3 Sep" — the density an inbox row can carry. */
+export function inboxTime(iso: string | null): string {
+  if (!iso) return "";
+  const then = new Date(iso);
+  const mins = (Date.now() - then.getTime()) / 60_000;
+  if (mins < 1) return "now";
+  if (mins < 60 * 12) return then.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  if (mins < 60 * 24 * 6) return then.toLocaleDateString(undefined, { weekday: "short" });
+  return then.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+}
+
+/**
+ * What the inbox row says under the coach's name. Falls back to the pitch,
+ * because a thread with no replies yet still has something to show.
+ */
+export function threadPreview(t: GroupThread, myId: string | null): string {
+  const body = t.last_message ?? t.pitch;
+  const mine = t.last_message ? t.last_sender_id === myId : !t.is_creator;
+  return mine ? `You: ${body}` : body;
 }
 
 export function groupShareUrl(id: string): string {
