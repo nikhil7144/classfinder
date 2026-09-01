@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { formatFees } from "@/lib/search";
+import ProviderTabs from "@/components/provider/ProviderTabs";
 
 export type ProviderSummary = {
   id: string;
@@ -69,6 +70,8 @@ export default function ProviderHome({ profileComplete, provider }: Props) {
   return (
     <main className="min-h-screen bg-bg">
       <div className="mx-auto max-w-4xl space-y-5 px-6 py-10">
+        <ProviderTabs />
+
         <header className="cf-card p-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
@@ -149,26 +152,14 @@ export default function ProviderHome({ profileComplete, provider }: Props) {
         )}
 
         <section className="cf-card p-7">
-          <h2 className="cf-display text-lg text-ink">Coming next</h2>
-          <p className="mt-2 text-sm text-muted">
-            Not built yet — listed so you know what&apos;s on the way.
+          <h2 className="cf-display text-lg text-ink">Groups near you</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            Parents in a society get together when several children want the same class, and post
+            it as a group. You see the ones wanting what you teach, where you teach.
           </p>
-          <ul className="mt-4 space-y-3 text-sm">
-            <li className="flex gap-3">
-              <span className="cf-badge cf-badge-neutral shrink-0">Spaces</span>
-              <span className="text-muted">
-                Your own page for photos and short videos, that parents can follow.
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <span className="cf-badge cf-badge-neutral shrink-0">Messages</span>
-              <span className="text-muted">Parents contacting you directly.</span>
-            </li>
-            <li className="flex gap-3">
-              <span className="cf-badge cf-badge-neutral shrink-0">Bookings</span>
-              <span className="text-muted">Trial classes and paid sessions.</span>
-            </li>
-          </ul>
+          <Link href="/dashboard/groups" className="cf-btn-ghost mt-5">
+            See groups looking for you
+          </Link>
         </section>
       </div>
     </main>
