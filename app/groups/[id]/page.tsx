@@ -41,6 +41,7 @@ function GroupPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [confirmingClose, setConfirmingClose] = useState(false);
 
   const load = useCallback(async () => {
     // get_group_invite is readable by anyone holding the link — RLS hides the
@@ -139,6 +140,24 @@ function GroupPage() {
   const close = async () => {
     setBusy(true);
     await supabase.from("groups").update({ closed_at: new Date().toISOString() }).eq("id", id);
+    setBusy(false);
+    setConfirmingClose(false);
+    load();
+  };
+
+  // Closing used to be a dead end: Extend only moved expires_at and never
+  // cleared closed_at, so the button was still offered and did nothing.
+  const reopen = async () => {
+    setBusy(true);
+    const stillFuture = new Date(invite!.expires_at).getTime() > Date.now();
+    await supabase
+      .from("groups")
+      .update({
+        closed_at: null,
+        // an expiry in the past would reopen it straight back into expired
+        ...(stillFuture ? {} : { expires_at: new Date(Date.now() + EXTEND_DAYS * 86_400_000).toISOString() }),
+      })
+      .eq("id", id);
     setBusy(false);
     load();
   };
@@ -351,22 +370,47 @@ function GroupPage() {
             <p className="mt-2 text-sm text-muted">
               {invite.is_open
                 ? `Groups run out after a while so coaches aren't shown stale requests. ${expiryLabel(invite.expires_at)}.`
-                : "This group is closed. Coaches can no longer see it."}
+                : "This group is closed — coaches can't see it. Reopening keeps your members and conversations."}
             </p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <button onClick={extend} disabled={busy} className="cf-btn-ghost">
-                Extend {EXTEND_DAYS} more days
-              </button>
-              {invite.is_open && (
-                <button
-                  onClick={close}
-                  disabled={busy}
-                  className="cf-btn-ghost text-danger hover:border-danger"
-                >
-                  Close group
+            {invite.is_open ? (
+              <div className="mt-5 flex flex-wrap gap-2">
+                <button onClick={extend} disabled={busy} className="cf-btn-ghost">
+                  Extend {EXTEND_DAYS} more days
                 </button>
-              )}
-            </div>
+                {!confirmingClose ? (
+                  <button
+                    onClick={() => setConfirmingClose(true)}
+                    disabled={busy}
+                    className="cf-btn-ghost text-danger hover:border-danger"
+                  >
+                    Close group
+                  </button>
+                ) : (
+                  <div className="w-full rounded-2xl border border-danger/40 bg-danger-soft p-4">
+                    <p className="text-sm font-semibold text-ink">Close this group?</p>
+                    <p className="mt-1 text-sm text-muted">
+                      Coaches stop seeing it and can no longer get in touch. Your members and any
+                      conversations you&apos;ve already accepted are kept, and you can reopen it
+                      whenever you like.
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button onClick={close} disabled={busy} className="cf-btn-ghost text-danger hover:border-danger">
+                        Yes, close it
+                      </button>
+                      <button onClick={() => setConfirmingClose(false)} className="cf-btn-ghost">
+                        Keep it open
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="mt-5">
+                <button onClick={reopen} disabled={busy} className="cf-btn-primary">
+                  Reopen group
+                </button>
+              </div>
+            )}
           </section>
         )}
 

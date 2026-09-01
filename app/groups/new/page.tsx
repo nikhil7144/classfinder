@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { DEFAULT_VALIDITY_DAYS, MEMBERS_TO_ACTIVATE } from "@/lib/groups";
+import { DEFAULT_VALIDITY_DAYS, MEMBERS_TO_ACTIVATE, VALIDITY_OPTIONS } from "@/lib/groups";
 
 type City = { id: string; name: string };
 type Area = { id: string; city_id: string; name: string };
@@ -39,6 +39,7 @@ export default function NewGroupPage() {
   const [studentCount, setStudentCount] = useState("3");
   const [notes, setNotes] = useState("");
   const [showPhone, setShowPhone] = useState(false);
+  const [validityDays, setValidityDays] = useState(DEFAULT_VALIDITY_DAYS);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -129,6 +130,7 @@ export default function NewGroupPage() {
         student_count: count,
         notes: notes.trim() || null,
         show_phone: showPhone,
+        expires_at: new Date(Date.now() + validityDays * 86_400_000).toISOString(),
       })
       .select("id")
       .single();
@@ -169,8 +171,8 @@ export default function NewGroupPage() {
           <p className="mt-3 leading-relaxed text-muted">
             Get neighbours together and coaches come to you. Share the link once you&apos;ve created
             it — a group reaches coaches at{" "}
-            <strong className="text-ink">{MEMBERS_TO_ACTIVATE} members</strong>, and stays open for{" "}
-            {DEFAULT_VALIDITY_DAYS} days.
+            <strong className="text-ink">{MEMBERS_TO_ACTIVATE} members</strong>, and runs for as
+            long as you choose.
           </p>
         </header>
 
@@ -250,6 +252,25 @@ export default function NewGroupPage() {
                 onChange={(e) => setStudentCount(e.target.value)}
               />
             </div>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm text-muted">How long should it run?</label>
+            <select
+              className="cf-input"
+              value={validityDays}
+              onChange={(e) => setValidityDays(Number(e.target.value))}
+            >
+              {VALIDITY_OPTIONS.map((o) => (
+                <option key={o.days} value={o.days}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-2 text-xs text-faint">
+              You can extend or close it at any time. Groups expire so coaches aren&apos;t shown
+              requests that are no longer live.
+            </p>
           </div>
 
           <div>

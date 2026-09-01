@@ -47,6 +47,14 @@ export type ProviderGroup = {
 export const MEMBERS_TO_ACTIVATE = 3;
 
 export const DEFAULT_VALIDITY_DAYS = 10;
+
+/** How long a group can run for, chosen at creation. */
+export const VALIDITY_OPTIONS = [
+  { days: 7, label: "1 week" },
+  { days: 10, label: "10 days" },
+  { days: 21, label: "3 weeks" },
+  { days: 30, label: "1 month" },
+];
 export const EXTEND_DAYS = 10;
 
 export function daysLeft(expiresAt: string): number {
