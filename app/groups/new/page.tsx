@@ -4,7 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { DEFAULT_VALIDITY_DAYS, MEMBERS_TO_ACTIVATE, VALIDITY_OPTIONS } from "@/lib/groups";
+import {
+  DEFAULT_VALIDITY_DAYS,
+  MEMBERS_TO_ACTIVATE,
+  MIN_STUDENTS,
+  VALIDITY_OPTIONS,
+} from "@/lib/groups";
 
 type City = { id: string; name: string };
 type Area = { id: string; city_id: string; name: string };
@@ -36,7 +41,7 @@ export default function NewGroupPage() {
   const [areaId, setAreaId] = useState("");
   const [serviceId, setServiceId] = useState("");
   const [society, setSociety] = useState("");
-  const [studentCount, setStudentCount] = useState("3");
+  const [studentCount, setStudentCount] = useState(String(MIN_STUDENTS));
   const [notes, setNotes] = useState("");
   const [showPhone, setShowPhone] = useState(false);
   const [validityDays, setValidityDays] = useState(DEFAULT_VALIDITY_DAYS);
@@ -113,8 +118,10 @@ export default function NewGroupPage() {
     if (society.trim().length < 2) return setError("Enter your society or locality.");
 
     const count = Number(studentCount);
-    if (!Number.isInteger(count) || count < 1 || count > 100) {
-      return setError("Number of students should be between 1 and 100.");
+    if (!Number.isInteger(count) || count < MIN_STUDENTS || count > 100) {
+      return setError(
+        `A group is for ${MIN_STUDENTS} or more students — that's the point of sharing a coach.`
+      );
     }
 
     setSaving(true);
@@ -251,6 +258,7 @@ export default function NewGroupPage() {
                 value={studentCount}
                 onChange={(e) => setStudentCount(e.target.value)}
               />
+              <p className="mt-2 text-xs text-faint">{MIN_STUDENTS} or more.</p>
             </div>
           </div>
 

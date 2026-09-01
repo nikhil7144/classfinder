@@ -4,11 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useAlerts } from "@/components/AlertsBadge";
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [role, setRole] = useState<string | null>(null);
   const [profileComplete, setProfileComplete] = useState<boolean | null>(null);
+  const alerts = useAlerts();
 
   useEffect(() => {
     const load = async () => {
@@ -31,11 +33,13 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   // Everything account-related lives in this section so the left menu stays
   // mounted. Messages, requests, Spaces and payments join this list as those
   // phases land.
-  const navItems = [
+  const navItems: { href: string; label: string; badge?: number }[] = [
     { href: "/account/profile", label: "Profile" },
     // Groups are a seeker's own demand; providers see matching demand on their
     // dashboard instead.
-    ...(role === "seeker" ? [{ href: "/account/groups", label: "Groups" }] : []),
+    ...(role === "seeker"
+      ? [{ href: "/account/groups", label: "Groups", badge: Number(alerts?.pending_pitches || 0) }]
+      : []),
     { href: "/account/settings", label: "Settings" },
   ];
 
@@ -72,7 +76,14 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                     : "text-muted hover:bg-surface-2 hover:text-ink"
                 }`}
               >
-                {item.label}
+                <span className="flex items-center gap-2">
+                  {item.label}
+                  {Boolean(item.badge) && (
+                    <span className="rounded-full bg-accent-ink px-1.5 py-0.5 text-[0.7rem] font-bold text-[#1a0d06]">
+                      {item.badge}
+                    </span>
+                  )}
+                </span>
                 <span className="font-mono text-xs text-faint">
                   {String(index + 1).padStart(2, "0")}
                 </span>

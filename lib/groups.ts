@@ -43,8 +43,18 @@ export type ProviderGroup = {
   already_requested: boolean;
 };
 
-/** A group needs this many members before providers can see it. */
-export const MEMBERS_TO_ACTIVATE = 3;
+/**
+ * Members needed before coaches can see a group. Two neighbours splitting a
+ * coach is already a group, and already a better deal for both sides than one
+ * family alone — requiring three made the commonest real case impossible.
+ *
+ * Mirrored in the database (active_groups, is_group_active,
+ * groups_for_provider); they must move together.
+ */
+export const MEMBERS_TO_ACTIVATE = 2;
+
+/** A group is for more than one child, by definition. */
+export const MIN_STUDENTS = 2;
 
 export const DEFAULT_VALIDITY_DAYS = 10;
 

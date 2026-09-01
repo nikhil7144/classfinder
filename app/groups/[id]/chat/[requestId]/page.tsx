@@ -8,6 +8,7 @@ import { GroupInvite } from "@/lib/groups";
 
 type Message = { id: string; sender_id: string; body: string; created_at: string };
 type Request = { id: string; group_id: string; provider_id: string; message: string; status: string };
+type Contact = { phone: string | null; name: string | null; society_name: string | null; shared: boolean };
 
 export default function GroupChatPage() {
   const { id, requestId } = useParams<{ id: string; requestId: string }>();
@@ -17,6 +18,7 @@ export default function GroupChatPage() {
   const [request, setRequest] = useState<Request | null>(null);
   const [group, setGroup] = useState<GroupInvite | null>(null);
   const [providerName, setProviderName] = useState("");
+  const [contact, setContact] = useState<Contact | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(true);
@@ -46,7 +48,7 @@ export default function GroupChatPage() {
     }
     setRequest(req as Request);
 
-    const [{ data: inv }, { data: prov }, { data: msgs }] = await Promise.all([
+    const [{ data: inv }, { data: prov }, { data: msgs }, { data: contactData }] = await Promise.all([
       supabase.rpc("get_group_invite", { p_id: id }),
       supabase.rpc("get_provider_profile", { p_id: (req as Request).provider_id }),
       supabase
@@ -54,7 +56,11 @@ export default function GroupChatPage() {
         .select("id, sender_id, body, created_at")
         .eq("request_id", requestId)
         .order("created_at"),
+      // Returns the parent's details only to the accepted coach, and the phone
+      // only if the parent opted in. Anyone else gets nothing.
+      supabase.rpc("get_request_contact", { p_request_id: requestId }),
     ]);
+    setContact((contactData as Contact | null) ?? null);
 
     setGroup(inv as GroupInvite | null);
     setProviderName((prov as { display_name?: string } | null)?.display_name || "The coach");
@@ -137,6 +143,30 @@ export default function GroupChatPage() {
               ? "This request wasn't taken up, so the conversation is closed."
               : "Waiting for the group to reply. You'll be able to message once they accept."}
           </div>
+        )}
+
+        {contact && (
+          <section className="cf-card p-6">
+            <p className="cf-eyebrow">Who you&apos;re talking to</p>
+            <p className="mt-2 text-ink">
+              {contact.name || "The group"}
+              {contact.society_name && (
+                <span className="text-muted"> · {contact.society_name}</span>
+              )}
+            </p>
+            {contact.shared && contact.phone ? (
+              <a
+                href={`tel:${contact.phone}`}
+                className="cf-btn-ghost mt-4 inline-flex font-mono"
+              >
+                {contact.phone}
+              </a>
+            ) : (
+              <p className="mt-3 text-sm text-faint">
+                They haven&apos;t shared a number — message them here instead.
+              </p>
+            )}
+          </section>
         )}
 
         <section className="cf-card p-6">

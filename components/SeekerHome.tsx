@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useAlerts } from "@/components/AlertsBadge";
 
 type Props = {
   profileComplete: boolean;
@@ -10,6 +11,9 @@ type Props = {
 };
 
 export default function SeekerHome({ profileComplete, areaName, areaId, cityName }: Props) {
+  const alerts = useAlerts();
+  const pending = Number(alerts?.pending_pitches || 0);
+  const needMembers = Number(alerts?.groups_needing_members || 0);
   return (
     <main className="min-h-screen bg-bg">
       <div className="mx-auto max-w-4xl space-y-5 px-6 py-10">
@@ -49,6 +53,50 @@ export default function SeekerHome({ profileComplete, areaName, areaId, cityName
             </p>
           )}
         </header>
+
+        {(pending > 0 || needMembers > 0) && (
+          <section className="cf-card p-7">
+            <h2 className="cf-display text-lg text-ink">Waiting on you</h2>
+            <div className="mt-4 space-y-3">
+              {pending > 0 && (
+                <Link
+                  href="/account/groups"
+                  className="flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-surface-2 p-4 transition hover:border-faint"
+                >
+                  <span className="cf-badge cf-badge-warn">{pending}</span>
+                  <span className="text-sm text-ink">
+                    {pending === 1 ? "A coach has" : "Coaches have"} got in touch about your{" "}
+                    {pending === 1 ? "group" : "groups"} — read what they said and decide.
+                  </span>
+                </Link>
+              )}
+              {needMembers > 0 && (
+                <Link
+                  href="/account/groups"
+                  className="flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-surface-2 p-4 transition hover:border-faint"
+                >
+                  <span className="cf-badge cf-badge-neutral">{needMembers}</span>
+                  <span className="text-sm text-muted">
+                    {needMembers === 1 ? "A group" : "Groups"} you started still{" "}
+                    {needMembers === 1 ? "needs" : "need"} more members before coaches can see{" "}
+                    {needMembers === 1 ? "it" : "them"}.
+                  </span>
+                </Link>
+              )}
+            </div>
+          </section>
+        )}
+
+        <section className="cf-card p-7">
+          <h2 className="cf-display text-lg text-ink">Start a group</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            Several children in your society want the same class? Start a group and coaches come to
+            you, rather than you searching one by one.
+          </p>
+          <Link href="/groups/new" className="cf-btn-ghost mt-5">
+            Start a group
+          </Link>
+        </section>
 
         <section className="cf-card p-7">
           <h2 className="cf-display text-lg text-ink">Coming next</h2>

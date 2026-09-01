@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { formatFees } from "@/lib/search";
 import ProviderTabs from "@/components/provider/ProviderTabs";
+import { useAlerts } from "@/components/AlertsBadge";
 
 export type ProviderSummary = {
   id: string;
@@ -63,6 +64,8 @@ function listingState(profileComplete: boolean, p: ProviderSummary | null) {
 }
 
 export default function ProviderHome({ profileComplete, provider }: Props) {
+  const alerts = useAlerts();
+  const accepted = Number(alerts?.accepted_pitches || 0);
   const state = listingState(profileComplete, provider);
   const fees = provider ? formatFees(provider.fee_min, provider.fee_max, provider.fee_period) : null;
   const isInstitution = provider?.provider_type === "institution";
@@ -149,6 +152,19 @@ export default function ProviderHome({ profileComplete, provider }: Props) {
               </p>
             )}
           </section>
+        )}
+
+        {accepted > 0 && (
+          <Link
+            href="/dashboard/groups"
+            className="cf-card flex flex-wrap items-center gap-3 p-5 transition hover:border-faint"
+          >
+            <span className="cf-badge cf-badge-ok">{accepted}</span>
+            <span className="text-sm text-ink">
+              {accepted === 1 ? "A group replied" : `${accepted} groups replied`} to you — the
+              conversation is open.
+            </span>
+          </Link>
         )}
 
         <section className="cf-card p-7">

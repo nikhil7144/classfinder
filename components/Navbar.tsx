@@ -4,6 +4,7 @@ import type { User } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { BRAND } from "@/lib/brand";
+import { useAlerts, waitingCount } from "@/components/AlertsBadge";
 import { usePathname, useRouter } from "next/navigation";
 
 const baseNavPillClass =
@@ -20,6 +21,8 @@ export default function Navbar() {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const alerts = useAlerts();
+  const waiting = waitingCount(alerts);
 
   useEffect(() => {
     const getSession = async () => {
@@ -88,6 +91,11 @@ export default function Navbar() {
 
               <button onClick={() => navigate("/account")} className={navPillClass("/account")}>
                 Account
+                {waiting > 0 && (
+                  <span className="ml-2 rounded-full bg-accent-ink px-1.5 py-0.5 text-[0.7rem] font-bold text-[#1a0d06]">
+                    {waiting}
+                  </span>
+                )}
               </button>
 
               <button
