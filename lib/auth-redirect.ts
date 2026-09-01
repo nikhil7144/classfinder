@@ -1,5 +1,6 @@
 import type { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { safeNextPath, withNext } from "@/lib/next-path";
 
 type Router = ReturnType<typeof useRouter>;
 
@@ -16,8 +17,16 @@ type Router = ReturnType<typeof useRouter>;
 export async function resolveProfileAndRedirect(
   router: Router,
   accessToken: string,
-  intendedRole?: "seeker" | "provider"
+  intendedRole?: "seeker" | "provider",
+  /**
+   * Where the user was headed before they were asked to sign in — a group
+   * invite, usually. Carried through role choice and profile completion, so
+   * following an invite link doesn't dump them on the dashboard with the
+   * invitation lost.
+   */
+  next?: string | null
 ): Promise<{ error?: string }> {
+  const target = safeNextPath(next);
   const response = await fetch("/api/auth/resolve-profile", {
     method: "POST",
     headers: {
@@ -33,7 +42,7 @@ export async function resolveProfileAndRedirect(
 
   if (result.isNew) {
     if (!intendedRole) {
-      router.push("/choose-role");
+      router.push(withNext("/choose-role", target));
       return {};
     }
 
@@ -56,14 +65,30 @@ export async function resolveProfileAndRedirect(
       return { error: saveError.message };
     }
 
-    router.push(intendedRole === "seeker" ? "/complete-profile/seeker" : "/complete-profile/provider");
+    router.push(
+      withNext(
+        intendedRole === "seeker" ? "/complete-profile/seeker" : "/complete-profile/provider",
+        target
+      )
+    );
     return {};
   }
 
   if (result.role === "admin") {
     router.push("/admin");
+  } else if (target && result.profileComplete) {
+    // Only once they can actually act there; an incomplete profile still has
+    // to be finished first, and that flow carries `next` onward itself.
+    router.push(target);
   } else if (result.role === "seeker" || result.role === "provider") {
-    router.push("/dashboard");
+    router.push(
+      target && !result.profileComplete
+        ? withNext(
+            result.role === "seeker" ? "/complete-profile/seeker" : "/complete-profile/provider",
+            target
+          )
+        : "/dashboard"
+    );
   } else {
     router.push("/home");
   }

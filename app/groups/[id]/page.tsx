@@ -13,6 +13,7 @@ import {
   expiryLabel,
   groupShareUrl,
 } from "@/lib/groups";
+import { withNext } from "@/lib/next-path";
 
 type Pitch = {
   id: string;
@@ -26,7 +27,10 @@ type Pitch = {
 function GroupPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const justCreated = useSearchParams().get("created") === "1";
+  const params = useSearchParams();
+  const justCreated = params.get("created") === "1";
+  // Set when they followed "Log in to join" — the intent survives the round trip.
+  const wantsToJoin = params.get("join") === "1";
 
   const [invite, setInvite] = useState<GroupInvite | null>(null);
   const [isCreator, setIsCreator] = useState(false);
@@ -97,6 +101,16 @@ function GroupPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // They clicked "Log in to join" and have now signed in and finished their
+  // profile. Clicking that button was the consent; making them find and press
+  // Join again is how invitations get abandoned.
+  useEffect(() => {
+    if (!wantsToJoin || loading || busy) return;
+    if (!invite || invite.already_member || !invite.is_open || !canJoin) return;
+    join();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantsToJoin, loading, invite, canJoin]);
 
   const join = async () => {
     setBusy(true);
@@ -170,8 +184,11 @@ function GroupPage() {
       <div className="mx-auto max-w-2xl space-y-5 px-6 py-10">
         {justCreated && (
           <div className="rounded-2xl border border-teal/30 bg-teal-soft px-5 py-4 text-sm font-medium text-teal">
-            Group created. Share the link below — {needed > 0 ? `${needed} more` : "you have enough"}{" "}
-            {needed === 1 ? "member" : "members"} and coaches can see it.
+            Group created — you&apos;re the first member. Share the link below;{" "}
+            {needed > 0
+              ? `${needed} more ${needed === 1 ? "person needs" : "people need"} to join`
+              : "you have enough members"}{" "}
+            before coaches can see it.
           </div>
         )}
 
@@ -185,9 +202,6 @@ function GroupPage() {
           <div className="mt-4 flex flex-wrap gap-2">
             <span className={`cf-badge ${needed === 0 ? "cf-badge-ok" : "cf-badge-warn"}`}>
               {activationLabel(invite.member_count)}
-            </span>
-            <span className="cf-badge cf-badge-neutral">
-              {invite.member_count} member{invite.member_count === 1 ? "" : "s"}
             </span>
             <span className="cf-badge cf-badge-neutral">{invite.student_count} students</span>
             <span className={`cf-badge ${invite.is_open ? "cf-badge-neutral" : "cf-badge-danger"}`}>
@@ -213,7 +227,10 @@ function GroupPage() {
               has {MEMBERS_TO_ACTIVATE} members.
             </p>
             {!signedIn ? (
-              <Link href={`/login?next=/groups/${id}`} className="cf-btn-primary mt-5">
+              <Link
+                href={withNext("/login", `/groups/${id}?join=1`)}
+                className="cf-btn-primary mt-5"
+              >
                 Log in to join
               </Link>
             ) : canJoin ? (
@@ -239,7 +256,7 @@ function GroupPage() {
             <h2 className="cf-display text-lg text-ink">Invite neighbours</h2>
             <p className="mt-2 text-sm text-muted">
               {needed > 0
-                ? `${needed} more ${needed === 1 ? "person" : "people"} and coaches can start reaching out.`
+                ? `You count as the first member. ${needed} more ${needed === 1 ? "person" : "people"} and coaches can start reaching out.`
                 : "Coaches can see this group now."}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">

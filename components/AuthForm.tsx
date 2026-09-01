@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { resolveProfileAndRedirect } from "@/lib/auth-redirect";
 
@@ -20,6 +20,7 @@ type AuthFormProps = {
 
 export default function AuthForm({ eyebrow, heading, subheading, intendedRole }: AuthFormProps) {
   const router = useRouter();
+  const next = useSearchParams().get("next");
   const [step, setStep] = useState<"email" | "otp">("email");
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
@@ -27,6 +28,32 @@ export default function AuthForm({ eyebrow, heading, subheading, intendedRole }:
   const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  // Someone already signed in has no business on a login form — and if they
+  // arrived from an invite, sitting here loses it. Send them on instead.
+  useEffect(() => {
+    let active = true;
+
+    const check = async () => {
+      const { data } = await supabase.auth.getSession();
+
+      if (!active) return;
+
+      if (data.session) {
+        await resolveProfileAndRedirect(router, data.session.access_token, intendedRole, next);
+        return;
+      }
+
+      setCheckingSession(false);
+    };
+
+    check();
+
+    return () => {
+      active = false;
+    };
+  }, [router, intendedRole, next]);
 
   const sendCode = async () => {
     const trimmedEmail = email.trim();
@@ -44,7 +71,10 @@ export default function AuthForm({ eyebrow, heading, subheading, intendedRole }:
     // based on its email templates. Point the link at /auth/callback with the
     // same intendedRole the code path uses, so clicking it lands the user in
     // exactly the same place as typing the code — whichever the template sends.
-    const params = intendedRole ? `?intendedRole=${intendedRole}` : "";
+    const callbackParams = new URLSearchParams();
+    if (intendedRole) callbackParams.set("intendedRole", intendedRole);
+    if (next) callbackParams.set("next", next);
+    const params = callbackParams.toString() ? `?${callbackParams}` : "";
 
     const { error } = await supabase.auth.signInWithOtp({
       email: trimmedEmail,
@@ -85,7 +115,12 @@ export default function AuthForm({ eyebrow, heading, subheading, intendedRole }:
       return;
     }
 
-    const result = await resolveProfileAndRedirect(router, data.session.access_token, intendedRole);
+    const result = await resolveProfileAndRedirect(
+      router,
+      data.session.access_token,
+      intendedRole,
+      next
+    );
 
     if (result.error) {
       setFormError(result.error);
@@ -98,7 +133,10 @@ export default function AuthForm({ eyebrow, heading, subheading, intendedRole }:
     setGoogleLoading(true);
     setFormError("");
 
-    const params = intendedRole ? `?intendedRole=${intendedRole}` : "";
+    const oauthParams = new URLSearchParams();
+    if (intendedRole) oauthParams.set("intendedRole", intendedRole);
+    if (next) oauthParams.set("next", next);
+    const params = oauthParams.toString() ? `?${oauthParams}` : "";
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -112,6 +150,8 @@ export default function AuthForm({ eyebrow, heading, subheading, intendedRole }:
     // On success the browser navigates away to Google, so no further
     // client-side state update happens here.
   };
+
+  if (checkingSession) return <div className="min-h-screen bg-bg" />;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg px-6 py-16">

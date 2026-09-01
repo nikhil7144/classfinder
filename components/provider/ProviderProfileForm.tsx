@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import ServiceCategoryPicker, { ServiceCategory } from "@/components/provider/ServiceCategoryPicker";
 import AvailabilityEditor from "@/components/provider/AvailabilityEditor";
@@ -58,6 +58,8 @@ type FormProps = {
 
 export default function ProviderProfileForm({ redirectTo = "/dashboard", variant = "setup" }: FormProps) {
   const router = useRouter();
+  // An invite that sent them here is still waiting once the profile exists.
+  const nextPath = useSearchParams().get("next");
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
   const [userId, setUserId] = useState<string | null>(null);
@@ -393,8 +395,8 @@ export default function ProviderProfileForm({ redirectTo = "/dashboard", variant
     setIsSaving(false);
     setHasExistingProfile(true);
 
-    if (redirectTo) {
-      router.push(redirectTo);
+    if (nextPath || redirectTo) {
+      router.push(nextPath || redirectTo!);
       return;
     }
 

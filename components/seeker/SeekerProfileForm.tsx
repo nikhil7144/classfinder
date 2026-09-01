@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { getSeekerProfileFieldErrors, SeekerProfileFieldErrors } from "@/lib/profile-rules";
 import type { AreaRow, CityRow } from "@/components/provider/AreaPicker";
@@ -12,6 +12,8 @@ type FormProps = { redirectTo?: string | null; variant?: "setup" | "account" };
 
 export default function SeekerProfileForm({ redirectTo = "/dashboard", variant = "setup" }: FormProps) {
   const router = useRouter();
+  // An invite that sent them here is still waiting once the profile exists.
+  const nextPath = useSearchParams().get("next");
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
   const [userId, setUserId] = useState<string | null>(null);
@@ -191,8 +193,8 @@ export default function SeekerProfileForm({ redirectTo = "/dashboard", variant =
 
     setIsSaving(false);
 
-    if (redirectTo) {
-      router.push(redirectTo);
+    if (nextPath || redirectTo) {
+      router.push(nextPath || redirectTo!);
       return;
     }
 

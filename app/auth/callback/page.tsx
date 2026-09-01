@@ -15,6 +15,7 @@ function AuthCallback() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const intendedRole = searchParams.get("intendedRole");
+  const next = searchParams.get("next");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -46,7 +47,8 @@ function AuthCallback() {
       const result = await resolveProfileAndRedirect(
         router,
         data.session.access_token,
-        intendedRole === "seeker" || intendedRole === "provider" ? intendedRole : undefined
+        intendedRole === "seeker" || intendedRole === "provider" ? intendedRole : undefined,
+        next
       );
 
       if (result.error && active) {
@@ -59,7 +61,7 @@ function AuthCallback() {
     return () => {
       active = false;
     };
-  }, [router, intendedRole]);
+  }, [router, intendedRole, next]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg px-6">

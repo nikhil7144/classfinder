@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+import { withNext } from "@/lib/next-path";
 import { supabase } from "@/lib/supabase";
 
 const roleOptions = [
@@ -17,18 +19,23 @@ const roleOptions = [
   },
 ];
 
-export default function ChooseRolePage() {
+function ChooseRolePage() {
   const router = useRouter();
+  const next = useSearchParams().get("next");
   const [userId, setUserId] = useState<string | null>(null);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  // `next` follows the user through role choice, so an invite that sent them
+  // here is still waiting once their profile exists.
   const destinationFor = (role: string) => {
     if (role === "admin") return "/admin";
-    if (role === "provider") return "/complete-profile/provider";
-    return "/complete-profile/seeker";
+    return withNext(
+      role === "provider" ? "/complete-profile/provider" : "/complete-profile/seeker",
+      next
+    );
   };
 
   useEffect(() => {
@@ -111,26 +118,26 @@ export default function ChooseRolePage() {
   };
 
   if (checking) {
-    return <div className="min-h-screen bg-gray-50" />;
+    return <div className="min-h-screen bg-bg" />;
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-6 py-16">
+    <div className="flex min-h-screen items-center justify-center bg-bg px-6 py-16">
       <div className="w-full max-w-2xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.22em] text-indigo-600 text-center">
+        <p className="cf-eyebrow text-center">
           One more step
         </p>
-        <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 text-center mb-2">
+        <h1 className="cf-display mt-4 mb-2 text-center text-3xl text-ink">
           {currentRole ? "Change your account type" : "What brings you here?"}
         </h1>
-        <p className="mx-auto mb-8 max-w-lg text-center text-sm text-gray-500">
+        <p className="mx-auto mb-8 max-w-lg text-center text-sm text-muted">
           {currentRole
             ? "You can still change this because your profile isn't finished. Switching clears what you've filled in so far, and once your profile is complete it's locked."
             : "This decides what your dashboard looks like. You can change it any time until your profile is complete."}
         </p>
 
         {error && (
-          <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+          <div className="mb-4 rounded-2xl border border-danger/40 bg-danger-soft px-4 py-3 text-sm font-medium text-danger">
             {error}
           </div>
         )}
@@ -142,25 +149,31 @@ export default function ChooseRolePage() {
               type="button"
               disabled={saving}
               onClick={() => chooseRole(option.value as "seeker" | "provider")}
-              className={`rounded-3xl border bg-white p-6 text-left transition hover:shadow-md disabled:cursor-not-allowed disabled:opacity-70 ${
-                currentRole === option.value
-                  ? "border-indigo-500 ring-2 ring-indigo-100"
-                  : "border-gray-200 hover:border-indigo-300"
+              className={`cf-card p-6 text-left transition disabled:cursor-not-allowed disabled:opacity-70 ${
+                currentRole === option.value ? "border-gold" : "hover:border-faint"
               }`}
             >
               <div className="flex items-center gap-2">
-                <span className="text-lg font-semibold text-gray-900">{option.title}</span>
+                <span className="cf-display text-lg text-ink">{option.title}</span>
                 {currentRole === option.value && (
-                  <span className="shrink-0 rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">
+                  <span className="cf-badge cf-badge-neutral shrink-0">
                     Current
                   </span>
                 )}
               </div>
-              <div className="mt-2 text-sm leading-6 text-gray-500">{option.description}</div>
+              <div className="mt-2 text-sm leading-6 text-muted">{option.description}</div>
             </button>
           ))}
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ChooseRolePageWrapper() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-bg" />}>
+      <ChooseRolePage />
+    </Suspense>
   );
 }

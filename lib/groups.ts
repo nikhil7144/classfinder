@@ -63,12 +63,21 @@ export function expiryLabel(expiresAt: string): string {
   return `${d} days left`;
 }
 
-/** What still has to happen before coaches can see this group. */
+/**
+ * Progress towards being visible to coaches.
+ *
+ * Stated as "1 of 3 members" rather than "2 more needed": the creator counts
+ * as the first member, and a bare countdown left people unsure whether they
+ * were included in it.
+ */
 export function activationLabel(memberCount: number): string {
-  const missing = MEMBERS_TO_ACTIVATE - memberCount;
-  if (missing <= 0) return "Visible to coaches";
-  if (missing === 1) return "1 more member needed";
-  return `${missing} more members needed`;
+  if (memberCount >= MEMBERS_TO_ACTIVATE) return "Visible to coaches";
+  return `${memberCount} of ${MEMBERS_TO_ACTIVATE} members`;
+}
+
+/** How many more people are needed, for prompts that ask for them. */
+export function membersStillNeeded(memberCount: number): number {
+  return Math.max(0, MEMBERS_TO_ACTIVATE - memberCount);
 }
 
 export function groupShareUrl(id: string): string {
