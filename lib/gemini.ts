@@ -29,8 +29,6 @@ export type LlmUsage = {
   totalTokens: number;
 };
 
-export type MasterOption = { id: string; name: string };
-
 function readUsage(response: {
   usageMetadata?: {
     promptTokenCount?: number;
@@ -46,42 +44,123 @@ function readUsage(response: {
   };
 }
 
-export type ExtractedExpertTags = {
-  functions: { functionId: string; functionName: string; proof: string }[];
-  stageIds: string[];
+// ---------------------------------------------------------------------
+// Which of these families is worth this coach's time?
+// ---------------------------------------------------------------------
+
+/** The coach, in the terms that decide a match. Assembled by the API route. */
+export type CoachContext = {
+  displayName: string;
+  providerType: string;
+  teaches: string[];
+  areas: string[];
+  teachingPlaces: string[];
+  experienceYears: number | null;
+  feeMin: number | null;
+  feeMax: number | null;
+  feePeriod: string | null;
+  helpStatement: string;
+  bio: string;
+  availability: { day: string; place: string; start: string; end: string }[];
 };
 
-export async function extractExpertTags(
-  input: {
-    headline: string;
-    bio: string;
-    pastCompanies: { company: string; years: string }[];
-    industries: string[];
-  },
-  masters: { functions: MasterOption[]; stages: MasterOption[] }
-): Promise<{ result: ExtractedExpertTags; usage: LlmUsage }> {
+/** One row of demand, flattened. Carries no identity — see students.ts. */
+export type DemandContext = {
+  key: string;
+  kind: string;
+  wants: string[];
+  area: string;
+  distance_km: number | null;
+  learner_age: number | null;
+  level: string | null;
+  preferred_modes: string[] | null;
+  preferred_days: string[] | null;
+  preferred_time: string | null;
+  budget_min: number | null;
+  budget_max: number | null;
+  budget_period: string | null;
+  notes: string | null;
+  students: number;
+};
+
+export type RankedDemand = { key: string; reason: string };
+
+/**
+ * Ranks demand the coach can already see.
+ *
+ * Deliberately not a search. The database has already decided who is eligible
+ * — the right subject, a served area, a parent who agreed to be found — and
+ * those are rules, not judgement calls, so they stay in SQL where they can be
+ * audited. What is left is the judgement: this family wants a nine-year-old
+ * beginner taught at home on Saturday mornings, and you already run a
+ * Saturday morning batch four streets away. A filter cannot say that.
+ *
+ * The model may only return keys it was given, and is asked for a reason per
+ * pick because an unexplained ranking is one a coach cannot disagree with.
+ */
+export async function rankDemandForCoach(
+  coach: CoachContext,
+  demand: DemandContext[],
+  limit = 8
+): Promise<{ result: RankedDemand[]; usage: LlmUsage }> {
   const ai = getClient();
+  const keys = demand.map((d) => d.key);
 
-  const functionIds = masters.functions.map((f) => f.id);
-  const stageIds = masters.stages.map((s) => s.id);
-  const functionList = masters.functions.map((f) => `- ${f.id}: ${f.name}`).join("\n");
-  const stageList = masters.stages.map((s) => `- ${s.id}: ${s.name}`).join("\n");
+  const money = (min: number | null, max: number | null, period: string | null) => {
+    if (min === null && max === null) return "not stated";
+    const range = min !== null && max !== null && min !== max ? `${min}-${max}` : `${min ?? max}`;
+    return `INR ${range} ${period || ""}`.trim();
+  };
 
-  const prompt = `You are tagging an operator/consultant ("industry expert") profile for a startup-advisory marketplace.
+  const coachLines = [
+    `Name: ${coach.displayName}`,
+    `Type: ${coach.providerType}`,
+    `Teaches: ${coach.teaches.join(", ") || "not stated"}`,
+    `Serves areas: ${coach.areas.join(", ") || "not stated"}`,
+    `Runs classes: ${coach.teachingPlaces.join(", ") || "not stated"}`,
+    `Experience: ${coach.experienceYears ?? "not stated"} years`,
+    `Fees: ${money(coach.feeMin, coach.feeMax, coach.feePeriod)}`,
+    `Available: ${
+      coach.availability.map((a) => `${a.day} ${a.start}-${a.end} (${a.place})`).join("; ") ||
+      "not stated"
+    }`,
+    `How they say they help: ${coach.helpStatement || "not stated"}`,
+    `Bio: ${coach.bio || "not stated"}`,
+  ].join("\n");
 
-Given the profile below, pick which of these FUNCTIONS this person can credibly help a founder with, and which of these company STAGES they're suited to serve. Only use the ids provided — never invent new ones. Be conservative: only include a function if the profile gives real evidence for it, and write one short, concrete, differentiating proof sentence per selected function (e.g. a specific outcome, number, or company — not a generic claim).
+  const demandLines = demand
+    .map((d) =>
+      [
+        `key: ${d.key}`,
+        `type: ${d.kind === "group" ? `group of ${d.students} students` : "one family"}`,
+        `wants: ${d.wants.join(", ")}`,
+        `area: ${d.area}${d.distance_km !== null ? ` (${d.distance_km.toFixed(1)} km away)` : ""}`,
+        `learner age: ${d.learner_age ?? "not stated"}`,
+        `level: ${d.level ?? "not stated"}`,
+        `prefers classes: ${d.preferred_modes?.join(", ") || "no preference"}`,
+        `days: ${d.preferred_days?.join(", ") || "no preference"}`,
+        `time: ${d.preferred_time ?? "no preference"}`,
+        `budget: ${money(d.budget_min, d.budget_max, d.budget_period)}`,
+        `notes: ${d.notes || "none"}`,
+      ].join(" | ")
+    )
+    .join("\n");
 
-Available functions:
-${functionList}
+  const prompt = `You are helping a coach or tutor in India decide which families to approach first, on a marketplace where parents post what they are looking for.
 
-Available stages:
-${stageList}
+Below is the coach, then a numbered list of families and groups who want something the coach teaches, near enough to reach. All of them are already eligible — you are ranking, not filtering.
 
-Profile:
-Headline: ${input.headline}
-Bio: ${input.bio}
-Past companies: ${input.pastCompanies.map((c) => `${c.company} (${c.years})`).join(", ") || "none listed"}
-Industries: ${input.industries.join(", ") || "none listed"}`;
+Pick at most ${limit}, best first. Judge on fit a database cannot see: whether the coach's own timings, format, fee range, experience and stated strengths actually match what this family asked for. Prefer specific evidence over generic enthusiasm. If a family is a poor fit, leave them out rather than padding the list — returning three good ones is a better answer than eight mediocre ones.
+
+For each pick, write ONE short sentence addressed to the coach, naming the concrete reason. Good: "They want Saturday-morning badminton for a 9-year-old beginner, which is the slot you already run in Sector 62." Bad: "This looks like a great match for your skills."
+
+Only use a key from the list. Never invent one.
+
+COACH
+${coachLines}
+
+FAMILIES
+${demandLines}`;
 
   const response = await ai.models.generateContent({
     model: MODEL,
@@ -91,69 +170,145 @@ Industries: ${input.industries.join(", ") || "none listed"}`;
       responseSchema: {
         type: Type.OBJECT,
         properties: {
-          functions: {
+          picks: {
             type: Type.ARRAY,
             items: {
               type: Type.OBJECT,
               properties: {
-                functionId: { type: Type.STRING, format: "enum", enum: functionIds },
-                proof: { type: Type.STRING },
+                key: { type: Type.STRING, format: "enum", enum: keys },
+                reason: { type: Type.STRING },
               },
-              required: ["functionId", "proof"],
+              required: ["key", "reason"],
             },
           },
-          stageIds: {
-            type: Type.ARRAY,
-            items: { type: Type.STRING, format: "enum", enum: stageIds },
-          },
         },
-        required: ["functions", "stageIds"],
+        required: ["picks"],
       },
     },
   });
 
   const parsed = JSON.parse(response.text ?? "{}") as {
-    functions?: { functionId: string; proof: string }[];
-    stageIds?: string[];
+    picks?: { key: string; reason: string }[];
   };
 
-  const functionNameById = new Map(masters.functions.map((f) => [f.id, f.name]));
+  const allowed = new Set(keys);
+  const seen = new Set<string>();
 
-  const result: ExtractedExpertTags = {
-    functions: (parsed.functions || [])
-      .filter((f) => functionNameById.has(f.functionId))
-      .map((f) => ({
-        functionId: f.functionId,
-        functionName: functionNameById.get(f.functionId)!,
-        proof: f.proof,
-      })),
-    stageIds: (parsed.stageIds || []).filter((id) => stageIds.includes(id)),
-  };
+  // A model that repeats a key, or invents one, must not be able to put a
+  // family on this screen twice or a stranger on it at all.
+  const result = (parsed.picks || [])
+    .filter((p) => allowed.has(p.key) && !seen.has(p.key) && seen.add(p.key))
+    .slice(0, limit)
+    .map((p) => ({ key: p.key, reason: p.reason }));
 
   return { result, usage: readUsage(response) };
 }
 
-export type ClassifiedProblem = {
-  functionId: string;
-  functionName: string;
-  confidence: number;
+// ---------------------------------------------------------------------
+// Which of these coaches is worth this parent's time?
+// ---------------------------------------------------------------------
+
+/** The requirement, as the parent stated it. */
+export type SeekerContext = {
+  wants: string[];
+  area: string;
+  learnerAge: number | null;
+  level: string | null;
+  preferredModes: string[];
+  preferredDays: string[];
+  preferredTime: string | null;
+  budgetMin: number | null;
+  budgetMax: number | null;
+  budgetPeriod: string | null;
+  notes: string;
 };
 
-export async function classifyFounderProblem(
-  input: { problem: string; companyStageName?: string },
-  masters: { functions: MasterOption[] }
-): Promise<{ result: ClassifiedProblem; usage: LlmUsage }> {
+/** One coach search already returned. A public listing, so it is named. */
+export type CoachOption = {
+  id: string;
+  name: string;
+  teaches: string[];
+  area: string;
+  distanceKm: number | null;
+  experienceYears: number | null;
+  feeMin: number | null;
+  feeMax: number | null;
+  feePeriod: string | null;
+  teachingPlaces: string[];
+  helpStatement: string;
+  bio: string;
+};
+
+export type RankedCoaches = { providerId: string; reason: string };
+
+/**
+ * The mirror of rankDemandForCoach, and the same division of labour: search
+ * has already decided who is eligible — teaches it, serves the area, approved,
+ * within the radius — and this only orders what came back and says why.
+ *
+ * The reason is written to the parent, not about the coach, because a parent
+ * choosing who will teach their child is the least appropriate audience for
+ * marketing copy. "Runs a Saturday morning batch nearby, which is when you
+ * said you're free" is a fact they can check; "highly experienced and
+ * passionate" is not.
+ */
+export async function rankCoachesForSeeker(
+  seeker: SeekerContext,
+  coaches: CoachOption[],
+  limit = 6
+): Promise<{ result: RankedCoaches[]; usage: LlmUsage }> {
   const ai = getClient();
-  const functionIds = masters.functions.map((f) => f.id);
-  const functionList = masters.functions.map((f) => `- ${f.id}: ${f.name}`).join("\n");
+  const ids = coaches.map((c) => c.id);
 
-  const prompt = `A startup founder described a problem. Classify it into exactly one of these FUNCTIONS — the kind of help they need, not a summary of the problem. Only use an id from the list.
+  const money = (min: number | null, max: number | null, period: string | null) => {
+    if (min === null && max === null) return "not stated";
+    const range = min !== null && max !== null && min !== max ? `${min}-${max}` : `${min ?? max}`;
+    return `INR ${range} ${period || ""}`.trim();
+  };
 
-Available functions:
-${functionList}
+  const seekerLines = [
+    `Looking for: ${seeker.wants.join(", ") || "not stated"}`,
+    `Area: ${seeker.area}`,
+    `Learner age: ${seeker.learnerAge ?? "not stated"}`,
+    `Level: ${seeker.level ?? "not stated"}`,
+    `Wants classes: ${seeker.preferredModes.join(", ") || "no preference"}`,
+    `Days: ${seeker.preferredDays.join(", ") || "no preference"}`,
+    `Time of day: ${seeker.preferredTime ?? "no preference"}`,
+    `Budget: ${money(seeker.budgetMin, seeker.budgetMax, seeker.budgetPeriod)}`,
+    `Notes: ${seeker.notes || "none"}`,
+  ].join("\n");
 
-Founder's company stage: ${input.companyStageName || "unknown"}
-Founder's problem: "${input.problem}"`;
+  const coachLines = coaches
+    .map((c) =>
+      [
+        `id: ${c.id}`,
+        `name: ${c.name}`,
+        `teaches: ${c.teaches.join(", ") || "not stated"}`,
+        `area: ${c.area}${c.distanceKm !== null ? ` (${c.distanceKm.toFixed(1)} km away)` : ""}`,
+        `experience: ${c.experienceYears ?? "not stated"} years`,
+        `fees: ${money(c.feeMin, c.feeMax, c.feePeriod)}`,
+        `runs classes: ${c.teachingPlaces.join(", ") || "not stated"}`,
+        `says they help with: ${c.helpStatement || "not stated"}`,
+        `bio: ${c.bio || "not stated"}`,
+      ].join(" | ")
+    )
+    .join("\n");
+
+  const prompt = `You are helping a parent in India shortlist coaches and tutors for their child, on a marketplace where coaches publish a listing.
+
+Below is what the parent is looking for, then a list of coaches who already teach it and serve their area. All of them are eligible — you are shortlisting, not filtering.
+
+Pick at most ${limit}, best first. Judge on fit the parent would have to read every listing to spot: whether the coach's format, timings, fee range, experience and stated strengths actually match this child's age, level and the family's constraints. If a coach is a poor fit, leave them out — three good suggestions beat six padded ones.
+
+For each pick, write ONE short sentence addressed to the parent, giving the concrete reason. Good: "Coaches under-11s at a ground 1 km away, and the fees sit inside your range." Bad: "A highly experienced and passionate coach."
+
+Never claim anything the listing does not say. Never mention a price, a timing or an age band that is not in the data above. Only use an id from the list.
+
+PARENT IS LOOKING FOR
+${seekerLines}
+
+COACHES
+${coachLines}`;
 
   const response = await ai.models.generateContent({
     model: MODEL,
@@ -163,35 +318,40 @@ Founder's problem: "${input.problem}"`;
       responseSchema: {
         type: Type.OBJECT,
         properties: {
-          functionId: { type: Type.STRING, format: "enum", enum: functionIds },
-          confidence: { type: Type.NUMBER },
+          picks: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                providerId: { type: Type.STRING, format: "enum", enum: ids },
+                reason: { type: Type.STRING },
+              },
+              required: ["providerId", "reason"],
+            },
+          },
         },
-        required: ["functionId", "confidence"],
+        required: ["picks"],
       },
     },
   });
 
   const parsed = JSON.parse(response.text ?? "{}") as {
-    functionId?: string;
-    confidence?: number;
+    picks?: { providerId: string; reason: string }[];
   };
-  const functionNameById = new Map(masters.functions.map((f) => [f.id, f.name]));
 
-  if (!parsed.functionId || !functionNameById.has(parsed.functionId)) {
-    throw new Error("Model returned an unrecognized function id.");
-  }
+  const allowed = new Set(ids);
+  const seen = new Set<string>();
 
-  const result: ClassifiedProblem = {
-    functionId: parsed.functionId,
-    functionName: functionNameById.get(parsed.functionId)!,
-    confidence: typeof parsed.confidence === "number" ? parsed.confidence : 0,
-  };
+  const result = (parsed.picks || [])
+    .filter((p) => allowed.has(p.providerId) && !seen.has(p.providerId) && seen.add(p.providerId))
+    .slice(0, limit)
+    .map((p) => ({ providerId: p.providerId, reason: p.reason }));
 
   return { result, usage: readUsage(response) };
 }
 
 export async function recordLlmUsage(
-  purpose: "extract_expert_tags" | "classify_founder_problem",
+  purpose: "rank_demand_for_coach" | "rank_coaches_for_seeker",
   usage: LlmUsage,
   relatedId?: string | null
 ) {

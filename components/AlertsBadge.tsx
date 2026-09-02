@@ -7,6 +7,14 @@ export type Alerts = {
   pending_pitches: number;
   groups_needing_members: number;
   accepted_pitches: number;
+  /** Coaches who have asked to teach this parent's child — see phase2r. */
+  pending_approaches: number;
+  /** Conversations with something new in them, group and direct together. */
+  unread_threads: number;
+  /** Enquiries a coach has never answered — see phase2l. */
+  unanswered_enquiries: number;
+  /** One de-duplicated total of everything actually waiting on this person. */
+  needs_you: number;
 };
 
 /**
@@ -37,8 +45,13 @@ export function useAlerts() {
   return alerts;
 }
 
-/** Total things actually waiting on this person to act. */
+/**
+ * Total things actually waiting on this person to act.
+ *
+ * Counted in the database over threads, not added up here: an unread pitch
+ * that also needs a decision is one thing waiting, and summing the individual
+ * counts told people they had twice as much to do as they did.
+ */
 export function waitingCount(alerts: Alerts | null): number {
-  if (!alerts) return 0;
-  return Number(alerts.pending_pitches || 0) + Number(alerts.accepted_pitches || 0);
+  return Number(alerts?.needs_you || 0);
 }

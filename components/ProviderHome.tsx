@@ -73,7 +73,7 @@ export default function ProviderHome({ profileComplete, provider }: Props) {
   return (
     <main className="min-h-screen bg-bg">
       <div className="mx-auto max-w-4xl space-y-5 px-6 py-10">
-        <ProviderTabs />
+        <ProviderTabs messageCount={Number(alerts?.unread_threads || 0)} />
 
         <header className="cf-card p-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -156,7 +156,7 @@ export default function ProviderHome({ profileComplete, provider }: Props) {
 
         {accepted > 0 && (
           <Link
-            href="/dashboard/groups"
+            href="/students"
             className="cf-card flex flex-wrap items-center gap-3 p-5 transition hover:border-faint"
           >
             <span className="cf-badge cf-badge-ok">{accepted}</span>
@@ -168,13 +168,14 @@ export default function ProviderHome({ profileComplete, provider }: Props) {
         )}
 
         <section className="cf-card p-7">
-          <h2 className="cf-display text-lg text-ink">Groups near you</h2>
+          <h2 className="cf-display text-lg text-ink">Families looking for you</h2>
           <p className="mt-2 text-sm leading-relaxed text-muted">
-            Parents in a society get together when several children want the same class, and post
-            it as a group. You see the ones wanting what you teach, where you teach.
+            Parents say what they&apos;re looking for — a subject, an age, a level, the days that
+            suit them — and neighbours who want the same class post it as a group. You see the
+            ones wanting what you teach, where you teach.
           </p>
-          <Link href="/dashboard/groups" className="cf-btn-ghost mt-5">
-            See groups looking for you
+          <Link href="/students" className="cf-btn-ghost mt-5">
+            Find students
           </Link>
         </section>
       </div>

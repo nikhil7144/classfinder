@@ -45,6 +45,7 @@ export default async function DashboardPage() {
           name: seekerProfile.name || "",
           phone: profile.phone || "",
           areaId: seekerProfile.area_id || null,
+          relation: seekerProfile.relation_to_learner || "",
         })
       : false;
 
@@ -63,9 +64,39 @@ export default async function DashboardPage() {
           .maybeSingle()
       : { data: null };
 
+    // What they told us they want, read back in their own words. A
+    // requirement a parent cannot see is one they will never think to change,
+    // and what a nine-year-old wants this September is not what they wanted
+    // last September.
+    const lookingForIds: string[] = seekerProfile?.looking_for || [];
+    const { data: wantedServices } = lookingForIds.length
+      ? await supabaseServerAdmin
+          .from("service_category_master")
+          .select("name")
+          .in("id", lookingForIds)
+          .order("name")
+      : { data: [] as { name: string }[] };
+
     return (
       <SeekerHome
         profileComplete={profileComplete}
+        requirement={
+          seekerProfile
+            ? {
+                wants: (wantedServices || []).map((s) => s.name),
+                openToOffers: seekerProfile.open_to_offers ?? false,
+                relation: seekerProfile.relation_to_learner ?? null,
+                learnerAge: seekerProfile.learner_age ?? null,
+                level: seekerProfile.level ?? null,
+                preferredDays: seekerProfile.preferred_days ?? null,
+                preferredTime: seekerProfile.preferred_time ?? null,
+                budgetMin: seekerProfile.budget_min ?? null,
+                budgetMax: seekerProfile.budget_max ?? null,
+                budgetPeriod: seekerProfile.budget_period ?? null,
+                updatedAt: seekerProfile.requirement_updated_at ?? null,
+              }
+            : null
+        }
         areaId={area?.id ?? null}
         areaName={area?.name ?? null}
         cityName={
@@ -109,6 +140,11 @@ export default async function DashboardPage() {
           feeMax: providerProfile.fee_max === null || providerProfile.fee_max === undefined ? "" : String(providerProfile.fee_max),
           feePeriod: providerProfile.fee_period || "",
           teachingPlaces: providerProfile.teaching_places || [],
+          travelsToStudents:
+            providerProfile.travels_to_students === null ||
+            providerProfile.travels_to_students === undefined
+              ? null
+              : Boolean(providerProfile.travels_to_students),
           certifications: providerProfile.certifications || [],
           availability: providerProfile.availability || [],
           serviceCategoryIds: providerProfile.service_category_ids || [],

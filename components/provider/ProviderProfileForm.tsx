@@ -56,6 +56,52 @@ type FormProps = {
   variant?: "setup" | "account";
 };
 
+/**
+ * The selection read back as a sentence.
+ *
+ * Three bordered cards with two of them lit is not a statement a coach can
+ * check. Saying it in words is how they notice they have claimed to run an
+ * academy they do not have, or forgotten the one they do.
+ */
+function formatSummary(
+  selected: string[],
+  options: { id: string; label: string }[],
+  travels: boolean | null
+): string {
+  const has = (id: string) => selected.includes(id);
+  const known = new Set(["my_academy", "group_classes", "individual_classes"]);
+
+  const parts: string[] = [];
+  if (has("my_academy")) parts.push("students come to your own place");
+  if (has("group_classes") && has("individual_classes")) {
+    parts.push("you teach both groups and one-to-one");
+  } else if (has("group_classes")) {
+    parts.push("you teach groups");
+  } else if (has("individual_classes")) {
+    parts.push("you teach one-to-one");
+  }
+
+  // Anything an admin adds to the master list later, named rather than dropped.
+  for (const id of selected) {
+    if (!known.has(id)) {
+      const label = options.find((o) => o.id === id)?.label;
+      if (label) parts.push(label.toLowerCase());
+    }
+  }
+
+  if (travels === true) parts.push("and you travel to students");
+  if (travels === false && !has("my_academy")) {
+    parts.push("and students come to you");
+  }
+
+  if (parts.length === 0) return "";
+  if (parts.length === 1) return `So: ${parts[0]}.`;
+
+  const last = parts[parts.length - 1];
+  const rest = parts.slice(0, -1).join(", ");
+  return `So: ${rest}${last.startsWith("and ") ? ", " : ", and "}${last}.`;
+}
+
 export default function ProviderProfileForm({ redirectTo = "/dashboard", variant = "setup" }: FormProps) {
   const router = useRouter();
   // An invite that sent them here is still waiting once the profile exists.
@@ -80,6 +126,9 @@ export default function ProviderProfileForm({ redirectTo = "/dashboard", variant
   const [feePeriod, setFeePeriod] = useState("");
   const [feesNote, setFeesNote] = useState("");
   const [teachingPlaces, setTeachingPlaces] = useState<string[]>([]);
+  // Null until answered. Not derived from teachingPlaces: that list is about
+  // format, and format says nothing about venue. See phase2u.
+  const [travelsToStudents, setTravelsToStudents] = useState<boolean | null>(null);
   const [certifications, setCertifications] = useState<CertificationInput[]>([emptyCertification()]);
   const [availability, setAvailability] = useState<AvailabilitySlotInput[]>([]);
   const [serviceAreaIds, setServiceAreaIds] = useState<string[]>([]);
@@ -158,6 +207,11 @@ export default function ProviderProfileForm({ redirectTo = "/dashboard", variant
         setFeePeriod(providerRow.fee_period || "");
         setFeesNote(providerRow.fees_note || "");
         setTeachingPlaces(providerRow.teaching_places || []);
+        setTravelsToStudents(
+          providerRow.travels_to_students === null || providerRow.travels_to_students === undefined
+            ? null
+            : Boolean(providerRow.travels_to_students)
+        );
         setCertifications(
           providerRow.certifications?.length ? providerRow.certifications : [emptyCertification()]
         );
@@ -224,12 +278,51 @@ export default function ProviderProfileForm({ redirectTo = "/dashboard", variant
     if (teachingPlaces.includes("my_academy")) {
       places.push("My place");
     }
-    for (const id of serviceAreaIds) {
-      const area = areas.find((a) => a.id === id);
-      if (area) places.push(area.name);
+    // Only when they actually travel. For a coach who does not, the service
+    // areas are where they ARE, not places they go — listing them here put
+    // areas a coach has never visited into their availability, and the
+    // scheduler would have believed it.
+    if (travelsToStudents) {
+      for (const id of serviceAreaIds) {
+        const area = areas.find((a) => a.id === id);
+        if (area) places.push(area.name);
+      }
     }
     return places;
-  }, [isInstitution, branches, teachingPlaces, serviceAreaIds, areas]);
+  }, [isInstitution, branches, teachingPlaces, travelsToStudents, serviceAreaIds, areas]);
+
+  /**
+   * The areas question has been asking two different things under one label.
+   * For a coach who travels it is "where can you get to"; for one who does
+   * not it is "where is your place" — which parents still search by, so it is
+   * still required, but it is not the same question and should not pretend to
+   * be.
+   */
+  const areasQuestion = useMemo(() => {
+    if (travelsToStudents === false) {
+      return {
+        title: "Where can parents find you?",
+        hint: "The area your own place is in. Parents search by area, so this is how they find you.",
+      };
+    }
+    if (travelsToStudents && teachingPlaces.includes("my_academy")) {
+      return {
+        title: "Where can you travel to?",
+        hint:
+          "Besides your own place — the areas you can reach around your academy classes. Parents search by area, so pick every one you cover.",
+      };
+    }
+    if (travelsToStudents) {
+      return {
+        title: "Which areas do you travel to?",
+        hint: "Parents search by area, so pick every one you cover.",
+      };
+    }
+    return {
+      title: "Where do you teach?",
+      hint: "The areas you can travel to or serve. Parents search by area, so pick every one you cover.",
+    };
+  }, [travelsToStudents, teachingPlaces]);
 
   const formInput = {
     providerType,
@@ -244,6 +337,7 @@ export default function ProviderProfileForm({ redirectTo = "/dashboard", variant
     feeMax,
     feePeriod,
     teachingPlaces,
+    travelsToStudents,
     certifications,
     availability,
     serviceCategoryIds: selectedServiceCategories,
@@ -330,6 +424,7 @@ export default function ProviderProfileForm({ redirectTo = "/dashboard", variant
           fee_period: feePeriod || null,
           fees_note: feesNote || null,
           teaching_places: teachingPlaces,
+          travels_to_students: travelsToStudents,
           certifications: cleanCerts,
           availability,
           city: primaryCity?.name ?? null,
@@ -659,15 +754,69 @@ export default function ProviderProfileForm({ redirectTo = "/dashboard", variant
               })}
             </div>
             {fieldErrors.teachingPlaces?.[0] && <p className={errorText}>{fieldErrors.teachingPlaces[0]}</p>}
+
+            {/* Nothing in three bordered cards says "you may pick more than
+                one", and a coach who runs an academy AND takes one-to-one
+                students was picking whichever single card felt closest. */}
+            <p className="mt-3 text-xs text-faint">
+              Pick every one that applies — most coaches do more than one of these.
+            </p>
+
+            {teachingPlaces.length > 0 && (
+              <p className="mt-3 rounded-2xl border border-line bg-surface-2 px-4 py-3 text-sm text-muted">
+                {formatSummary(teachingPlaces, teachingPlaceOptions, travelsToStudents)}
+              </p>
+            )}
+
+            {/* The question the format cards only look like they answer.
+                Running group classes tells nobody whether you run them at your
+                own centre or theirs, and everything below — which areas we
+                ask for, and what your availability means — turns on it. */}
+            {!isInstitution && (
+              <div
+                className={`mt-5 border-t border-line-soft pt-5 ${
+                  invalid("travelsToStudents")
+                    ? "rounded-2xl border border-danger/50 bg-danger-soft/40 p-4"
+                    : ""
+                }`}
+              >
+                <p className="text-sm font-semibold text-ink">Do you travel to students?</p>
+                <p className="mt-1 text-xs text-muted">
+                  Going to a home, a society hall or a ground — as opposed to students always
+                  coming to you.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className="cf-pill px-4 py-2 text-sm"
+                    data-selected={travelsToStudents === true}
+                    onClick={() => setTravelsToStudents(true)}
+                  >
+                    Yes, I travel
+                  </button>
+                  <button
+                    type="button"
+                    className="cf-pill px-4 py-2 text-sm"
+                    data-selected={travelsToStudents === false}
+                    onClick={() => setTravelsToStudents(false)}
+                  >
+                    No, students come to me
+                  </button>
+                </div>
+                {fieldErrors.travelsToStudents?.[0] && (
+                  <p className={errorText}>{fieldErrors.travelsToStudents[0]}</p>
+                )}
+              </div>
+            )}
           </Section>
         )}
 
         <Section
-          title={isInstitution ? "Branches" : "Where do you teach?"}
+          title={isInstitution ? "Branches" : areasQuestion.title}
           hint={
             isInstitution
               ? "Every location you operate from — this is how parents find you."
-              : "The areas you can travel to or serve. Parents search by area, so pick every one you cover."
+              : areasQuestion.hint
           }
         >
           {isInstitution ? (

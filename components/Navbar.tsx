@@ -20,6 +20,10 @@ export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
+  // A coach and a parent are on opposite sides of this marketplace, and the
+  // navbar was offering both of them the parent's screen. Held as null until
+  // it is known, so nothing flickers between the two labels on first paint.
+  const [role, setRole] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const alerts = useAlerts();
   const waiting = waitingCount(alerts);
@@ -40,6 +44,30 @@ export default function Navbar() {
       authListener.subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setRole(null);
+      return;
+    }
+
+    let active = true;
+
+    const loadRole = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (active) setRole(data?.role ?? null);
+    };
+
+    loadRole();
+    return () => {
+      active = false;
+    };
+  }, [user]);
 
   const handleLogout = async () => {
     setMenuOpen(false);
@@ -67,6 +95,11 @@ export default function Navbar() {
       isActivePath(path) ? activeNavPillClass : inactiveNavPillClass
     }`;
 
+  // Coaches have no use for the parent's search — they are what it returns.
+  const isProvider = role === "provider";
+  const findPath = isProvider ? "/students" : "/search";
+  const findLabel = isProvider ? "Find students" : "Find classes";
+
   return (
     <nav className="sticky top-0 z-50 border-b border-line bg-bg/85 px-6 py-4 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
@@ -79,8 +112,8 @@ export default function Navbar() {
         </button>
 
         <div className="hidden items-center gap-3 md:flex">
-          <button onClick={() => navigate("/search")} className={navPillClass("/search")}>
-            Find classes
+          <button onClick={() => navigate(findPath)} className={navPillClass(findPath)}>
+            {findLabel}
           </button>
 
           {user ? (
@@ -125,8 +158,8 @@ export default function Navbar() {
 
       {menuOpen && (
         <div className="mt-4 flex flex-col gap-3 md:hidden">
-          <button onClick={() => navigate("/search")} className={navPillClass("/search")}>
-            Find classes
+          <button onClick={() => navigate(findPath)} className={navPillClass(findPath)}>
+            {findLabel}
           </button>
 
           {user ? (

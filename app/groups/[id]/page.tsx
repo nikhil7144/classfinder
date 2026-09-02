@@ -36,6 +36,7 @@ function GroupPage() {
   const [me, setMe] = useState<string | null>(null);
   const [isCreator, setIsCreator] = useState(false);
   const [canJoin, setCanJoin] = useState(false);
+  const [isProvider, setIsProvider] = useState(false);
   const [threads, setThreads] = useState<GroupThread[]>([]);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
@@ -64,6 +65,7 @@ function GroupPage() {
         .eq("id", auth.user.id)
         .maybeSingle();
       setCanJoin(profile?.role === "seeker" && Boolean(profile?.profile_complete));
+      setIsProvider(profile?.role === "provider");
 
       // One call for the whole inbox. Returns every coach to the parent who
       // created the group, one thread to the coach on it, nothing to anyone
@@ -202,18 +204,23 @@ function GroupPage() {
             isCreator={isCreator}
             signedIn={Boolean(me)}
             canJoin={canJoin}
+            isProvider={isProvider}
+            hasThread={threads.length > 0}
             pendingCount={pending}
             onChanged={load}
             onOpenMessages={() => go({ tab: "messages", t: null })}
           />
         )}
 
+        {/* A coach reaching this from a pitch was being sent to the parent's
+            "your groups" screen, which offers to start one — the wrong half of
+            the product. Groups a coach can act on live on their dashboard. */}
         <div className="text-center">
           <button
-            onClick={() => router.push("/account/groups")}
+            onClick={() => router.push(isProvider ? "/students" : "/account/groups")}
             className="text-sm text-muted transition hover:text-ink"
           >
-            All my groups
+            {isProvider ? "Groups looking for coaches" : "All my groups"}
           </button>
         </div>
       </div>

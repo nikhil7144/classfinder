@@ -6,17 +6,29 @@ import { usePathname } from "next/navigation";
 type Tab = { href: string; label: string; badge?: number; soon?: boolean };
 
 /**
- * The provider dashboard is more than a listing status — Groups is where
- * demand arrives, and Spaces and Events land here as those phases ship.
+ * The provider dashboard is more than a listing status — Find students is
+ * where demand arrives, and Spaces and Events land here as those phases ship.
  * Unbuilt tabs are shown greyed rather than hidden, so a coach can see what
  * the account will do rather than wondering if they've missed it.
  */
-export default function ProviderTabs({ groupCount = 0 }: { groupCount?: number }) {
+export default function ProviderTabs({
+  studentCount = 0,
+  messageCount = 0,
+}: {
+  studentCount?: number;
+  messageCount?: number;
+}) {
   const pathname = usePathname();
 
   const tabs: Tab[] = [
     { href: "/dashboard", label: "Overview" },
-    { href: "/dashboard/groups", label: "Groups", badge: groupCount },
+    // Groups used to be its own tab, showing half the demand on the platform;
+    // phase2r folded it into one feed with the families who post alone.
+    { href: "/students", label: "Find students", badge: studentCount },
+    // Parents who found the listing and wrote directly, alongside the group
+    // pitches — one inbox, because a coach does not sort their replies by
+    // which feature produced them.
+    { href: "/dashboard/messages", label: "Messages", badge: messageCount },
     { href: "/dashboard/space", label: "My Space", soon: true },
     { href: "/dashboard/events", label: "Events", soon: true },
   ];

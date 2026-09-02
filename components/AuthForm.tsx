@@ -216,7 +216,9 @@ export default function AuthForm({ eyebrow, heading, subheading, intendedRole }:
             <input
               type="text"
               inputMode="numeric"
-              placeholder="6-digit code"
+              // Length is a Supabase setting, not ours — it is currently 8 —
+              // so the placeholder doesn't name a number it can't guarantee.
+              placeholder="Enter the code"
               className="cf-input mb-4 text-center font-mono text-lg tracking-[0.35em]"
               value={otp}
               onChange={(e) => {

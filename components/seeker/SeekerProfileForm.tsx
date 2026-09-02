@@ -4,6 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { getSeekerProfileFieldErrors, SeekerProfileFieldErrors } from "@/lib/profile-rules";
+import RequirementFields from "@/components/requirements/RequirementFields";
+import {
+  RELATIONS,
+  Requirement,
+  RequirementErrors,
+  emptyRequirement,
+  getRequirementErrors,
+  requirementFromRow,
+  requirementToColumns,
+} from "@/lib/requirements";
 import type { AreaRow, CityRow } from "@/components/provider/AreaPicker";
 
 const errorText = "mt-2 text-sm text-danger";
@@ -19,11 +29,22 @@ export default function SeekerProfileForm({ redirectTo = "/dashboard", variant =
   const [userId, setUserId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  // Asked here rather than with the requirement: it is true of the person,
+  // not of what they happen to want this month. See profile-rules.
+  const [relation, setRelation] = useState("");
   const [cityId, setCityId] = useState("");
   const [areaId, setAreaId] = useState<string | null>(null);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
   const [locationNote, setLocationNote] = useState("");
+
+  const [requirement, setRequirement] = useState<Requirement>(emptyRequirement());
+  const [openToOffers, setOpenToOffers] = useState(true);
+  // Separate from openToOffers, and defaulted off. That one is "coaches on
+  // this site may write to me about this"; this one is "you may tell me about
+  // other things", and conflating a consent with a feature is how people end
+  // up on lists they never joined.
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
 
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -63,8 +84,17 @@ export default function SeekerProfileForm({ redirectTo = "/dashboard", variant =
 
       if (seekerRow) {
         setName(seekerRow.name || "");
+        setRelation(seekerRow.relation_to_learner || "");
         setAreaId(seekerRow.area_id || null);
         setExistingPhoto(seekerRow.photo_url || null);
+        setRequirement(
+          requirementFromRow(seekerRow, {
+            lookingFor: seekerRow.looking_for || [],
+            notes: seekerRow.requirement_notes,
+          })
+        );
+        setOpenToOffers(seekerRow.open_to_offers ?? true);
+        setMarketingOptIn(seekerRow.marketing_opt_in ?? false);
         if (seekerRow.lat !== null && seekerRow.lng !== null) {
           setCoords({ lat: seekerRow.lat, lng: seekerRow.lng });
         }
@@ -119,14 +149,23 @@ export default function SeekerProfileForm({ redirectTo = "/dashboard", variant =
   };
 
   const fieldErrors: SeekerProfileFieldErrors = showValidation
-    ? getSeekerProfileFieldErrors({ name, phone, areaId })
+    ? getSeekerProfileFieldErrors({ name, phone, areaId, relation })
+    : {};
+
+  // What they want is only required of someone who has asked to be found —
+  // a parent who just wants to browse and message owes us nothing.
+  const requirementRules = { requireLookingFor: openToOffers };
+  const requirementErrors: RequirementErrors = showValidation
+    ? getRequirementErrors(requirement, requirementRules)
     : {};
 
   const handleSave = async () => {
     if (!userId) return;
 
     setShowValidation(true);
-    if (Object.keys(getSeekerProfileFieldErrors({ name, phone, areaId })).length > 0) return;
+    if (Object.keys(getSeekerProfileFieldErrors({ name, phone, areaId, relation })).length > 0)
+      return;
+    if (Object.keys(getRequirementErrors(requirement, requirementRules)).length > 0) return;
 
     setIsSaving(true);
     setFormError("");
@@ -164,12 +203,22 @@ export default function SeekerProfileForm({ redirectTo = "/dashboard", variant =
       {
         user_id: userId,
         name,
+        relation_to_learner: relation,
         area_id: areaId,
         lat: coords?.lat ?? null,
         lng: coords?.lng ?? null,
         city: cityName,
         area: areaName,
         photo_url: photoUrl,
+        looking_for: requirement.lookingFor,
+        requirement_notes: requirement.notes.trim() || null,
+        open_to_offers: openToOffers,
+        marketing_opt_in: marketingOptIn,
+        // Stamped on save rather than by a trigger: the demand feed sorts on
+        // it, and a parent who re-confirms what they want should come back to
+        // the top of a coach's list.
+        requirement_updated_at: new Date().toISOString(),
+        ...requirementToColumns(requirement),
       },
       { onConflict: "user_id" }
     );
@@ -248,6 +297,30 @@ export default function SeekerProfileForm({ redirectTo = "/dashboard", variant =
               onChange={(e) => setName(e.target.value)}
             />
             {fieldErrors.name?.[0] && <p className={errorText}>{fieldErrors.name[0]}</p>}
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm text-muted">
+              Who are you looking for classes for?
+            </label>
+            <select
+              className="cf-input"
+              aria-invalid={Boolean(fieldErrors.relation?.length)}
+              value={relation}
+              onChange={(e) => setRelation(e.target.value)}
+            >
+              <option value="">Choose…</option>
+              {RELATIONS.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-2 text-xs text-faint">
+              Teaching an adult and teaching someone&apos;s child are different jobs — a coach
+              shouldn&apos;t have to guess which one you&apos;re asking about.
+            </p>
+            {fieldErrors.relation?.[0] && <p className={errorText}>{fieldErrors.relation[0]}</p>}
           </div>
 
           <div>
@@ -351,13 +424,75 @@ export default function SeekerProfileForm({ redirectTo = "/dashboard", variant =
             </div>
           </div>
 
+        </section>
+
+        {/* The half of the marketplace this form never asked about. Until now
+            a parent told us where they were and nothing about what they
+            wanted, so every coach on the platform was waiting on a search
+            that only the parent could start. */}
+        <section className="cf-card space-y-5 p-7">
+          <div>
+            <p className="cf-eyebrow">What you&apos;re looking for</p>
+            <h2 className="cf-display mt-2 text-xl text-ink">Tell coaches what you need</h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              Answer as much or as little as you like. The more you say, the better the coaches
+              who get in touch — and the fewer who shouldn&apos;t.
+            </p>
+          </div>
+
+          <RequirementFields
+            value={requirement}
+            onChange={setRequirement}
+            errors={requirementErrors}
+            relation={relation}
+          />
+
+          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-line bg-surface-2 p-4">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={openToOffers}
+              onChange={(e) => setOpenToOffers(e.target.checked)}
+            />
+            <span className="text-sm">
+              <span className="font-semibold text-ink">Let coaches get in touch with me</span>
+              <span className="mt-1 block text-muted">
+                Coaches who teach what you want, near you, can see this requirement and your area
+                — never your name, photo or number. If one writes, you decide whether to reply,
+                and nothing is shared until you do. Turn this off and you go back to searching
+                only.
+              </span>
+            </span>
+          </label>
+
+          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-line bg-surface-2 p-4">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={marketingOptIn}
+              onChange={(e) => setMarketingOptIn(e.target.checked)}
+            />
+            <span className="text-sm">
+              <span className="font-semibold text-ink">
+                Tell me about camps, competitions and events
+              </span>
+              <span className="mt-1 block text-muted">
+                Off unless you turn it on. Occasional emails about things matching what you&apos;re
+                looking for — a holiday camp, a local tournament, a trial day. Your details go to
+                an organiser only if you fill in their form yourself.
+              </span>
+            </span>
+          </label>
+        </section>
+
+        <section className="cf-card p-7">
           <button
             type="button"
             onClick={handleSave}
             disabled={isSaving}
             className="cf-btn-primary w-full"
           >
-            {isSaving ? "Saving…" : "Save & Continue"}
+            {isSaving ? "Saving…" : variant === "setup" ? "Save & Continue" : "Save"}
           </button>
         </section>
       </div>

@@ -10,25 +10,14 @@ import {
   SearchResult,
   searchProviders,
 } from "@/lib/search";
+import { ServiceOption, groupServices } from "@/lib/requirements";
+import SuggestedCoaches from "@/components/seeker/SuggestedCoaches";
 
 type City = { id: string; name: string };
 type Area = { id: string; city_id: string; name: string };
-type Service = { id: string; name: string; group: string };
+type Service = ServiceOption;
 type Category = { id: string; name: string };
 type TeachingPlace = { id: string; label: string };
-
-const GROUP_LABEL: Record<string, string> = {
-  sport: "Sports",
-  wellness_fitness: "Wellness & Fitness",
-  mind_game: "Mind Games",
-  indoor_game: "Indoor Games",
-  dance: "Dance",
-  music: "Music",
-  subject: "School Subjects",
-  exam_board: "Boards & Exams",
-};
-
-const GROUP_ORDER = Object.keys(GROUP_LABEL);
 
 function SearchPage() {
   const router = useRouter();
@@ -51,6 +40,13 @@ function SearchPage() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [searched, setSearched] = useState(false);
+  /**
+   * The subject filter was applied from the parent's saved requirement rather
+   * than chosen here. Tracked so the page can say so and offer to undo it — a
+   * search that silently starts filtered is a search that quietly hides
+   * results, which is the one thing a search must never do without saying.
+   */
+  const [subjectFromProfile, setSubjectFromProfile] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -68,9 +64,51 @@ function SearchPage() {
       setServices((s as Service[]) || []);
       setCategories((cat as Category[]) || []);
       setPlaces((p as TeachingPlace[]) || []);
+
+      // Start from what this parent has already told us.
+      //
+      // A link carrying ?area= or ?service= always wins: it was either shared
+      // with them or is their own back button, and either way it is a more
+      // specific intent than a profile field. Guests and coaches have no
+      // seekers row, so both reads come back empty and nothing changes.
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) return;
+
+      const { data: me } = await supabase
+        .from("seekers")
+        .select("area_id, looking_for")
+        .eq("user_id", auth.user.id)
+        .maybeSingle();
+
+      if (!me) return;
+
+      // Their area was asked for at signup and then never used here, so
+      // arriving from the navbar showed "choose an area" to someone who had.
+      //
+      // The city goes with it. The effect below has already defaulted it to
+      // the first city by the time this returns, and if the parent lives in
+      // any other one their area would not be among that city's options —
+      // leaving a filled-in search behind an apparently empty dropdown.
+      if (!params.get("area") && me.area_id) {
+        setAreaId(me.area_id);
+        const home = ((a as Area[]) || []).find((row) => row.id === me.area_id);
+        if (home) setCityId(home.city_id);
+      }
+
+      // Only when there is exactly one thing they want. Two subjects have no
+      // single right answer, and picking one of them for someone is worse
+      // than picking none.
+      const wanted: string[] = me.looking_for || [];
+      if (!params.get("service") && wanted.length === 1) {
+        setServiceId(wanted[0]);
+        setSubjectFromProfile(true);
+      }
     };
 
     load();
+    // params is read once, as the opening state — a later URL rewrite by this
+    // page's own shareable-link effect must not re-run any of this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Default the city to whichever one holds the selected area.
@@ -98,17 +136,7 @@ function SearchPage() {
     [places]
   );
 
-  const servicesByGroup = useMemo(() => {
-    const grouped = services.reduce<Record<string, Service[]>>((acc, s) => {
-      (acc[s.group] = acc[s.group] || []).push(s);
-      return acc;
-    }, {});
-    return GROUP_ORDER.filter((g) => grouped[g]?.length).map((g) => ({
-      group: g,
-      label: GROUP_LABEL[g],
-      items: grouped[g],
-    }));
-  }, [services]);
+  const servicesByGroup = useMemo(() => groupServices(services), [services]);
 
   const runSearch = useCallback(async () => {
     if (!areaId && !coords) {
@@ -222,7 +250,12 @@ function SearchPage() {
                   <select
                     className="cf-input"
                     value={serviceId}
-                    onChange={(e) => setServiceId(e.target.value)}
+                    onChange={(e) => {
+                      setServiceId(e.target.value);
+                      // Once they touch it, it is their choice and the note
+                      // about where it came from stops being true.
+                      setSubjectFromProfile(false);
+                    }}
                   >
                     <option value="">Anything</option>
                     {servicesByGroup.map((g) => (
@@ -237,6 +270,27 @@ function SearchPage() {
                   </select>
                 </div>
               </div>
+
+              {/* Said out loud, with the undo next to it. The filter is doing
+                  the parent a favour and hiding coaches to do it, and only one
+                  of those two is visible in the dropdown. */}
+              {subjectFromProfile && serviceId && (
+                <p className="mt-3 text-xs text-muted">
+                  Filtered to{" "}
+                  <span className="font-semibold text-ink">{serviceName[serviceId]}</span> because
+                  that&apos;s what you said you&apos;re looking for.{" "}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setServiceId("");
+                      setSubjectFromProfile(false);
+                    }}
+                    className="cursor-pointer font-semibold text-gold underline-offset-2 transition hover:text-accent-ink hover:underline"
+                  >
+                    Show everything
+                  </button>
+                </p>
+              )}
 
               <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-line-soft pt-4">
                 <button type="button" onClick={useMyLocation} disabled={locating} className="cf-btn-ghost px-4 py-2 text-sm">
@@ -261,6 +315,12 @@ function SearchPage() {
                 {locationNote && <span className="text-xs text-faint">{locationNote}</span>}
               </div>
             </section>
+
+            {/* Above the results, not inside them: a parent who has already
+                told us what they want should not have to re-run their own
+                search to be shown the answer. Renders nothing for anyone who
+                hasn't, which includes every guest. */}
+            <SuggestedCoaches variant="search" />
 
             <section className="mt-6">
               {loading ? (

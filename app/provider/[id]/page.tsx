@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server-client";
+import EnquiryForm from "@/components/provider/EnquiryForm";
 import { formatExperience, formatFees } from "@/lib/search";
 import { WEEK_DAYS } from "@/lib/profile-rules";
 
@@ -51,10 +52,9 @@ export default async function ProviderProfilePage({ params }: Params) {
 
   if (!provider) notFound();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  // Who is looking is now EnquiryForm's business: it needs the answer on the
+  // client anyway to write the enquiry, and asking here as well meant two
+  // sources of truth for the same question.
   const { data: placeRows } = await supabase.from("teaching_place_master").select("id, label");
   const placeLabel = Object.fromEntries(
     ((placeRows as { id: string; label: string }[]) || []).map((p) => [p.id, p.label])
@@ -240,17 +240,11 @@ export default async function ProviderProfilePage({ params }: Params) {
           </section>
         )}
 
-        <section className="cf-card p-7 text-center">
-          <p className="text-sm text-muted">Messaging and booking arrive in a later release.</p>
-          {!user && (
-            <p className="mt-3 text-sm text-faint">
-              <Link href="/signup/seeker" className="font-semibold text-gold hover:text-accent-ink">
-                Create an account
-              </Link>{" "}
-              and you&apos;ll be ready when they do.
-            </p>
-          )}
-        </section>
+        <EnquiryForm
+          providerId={provider.id}
+          providerName={provider.display_name || "this coach"}
+          services={provider.services || []}
+        />
       </div>
     </main>
   );

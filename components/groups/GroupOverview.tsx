@@ -19,6 +19,14 @@ type Props = {
   signedIn: boolean;
   /** A completed seeker profile — groups only count members who can be reached. */
   canJoin: boolean;
+  /**
+   * A coach is looking at demand, not deciding whether to join it. Without
+   * this the join card fell through to its last branch and told them to
+   * complete a seeker profile — a role they cannot switch to.
+   */
+  isProvider: boolean;
+  /** This coach has already written to the group. */
+  hasThread: boolean;
   pendingCount: number;
   onChanged: () => void;
   onOpenMessages: () => void;
@@ -29,6 +37,8 @@ export default function GroupOverview({
   isCreator,
   signedIn,
   canJoin,
+  isProvider,
+  hasThread,
   pendingCount,
   onChanged,
   onOpenMessages,
@@ -130,7 +140,7 @@ export default function GroupOverview({
         </button>
       )}
 
-      {!isMember && invite.is_open && (
+      {!isProvider && !isMember && invite.is_open && (
         <section className="cf-card p-7">
           <h2 className="cf-display text-lg text-ink">Join this group</h2>
           <p className="mt-2 text-sm text-muted">
@@ -154,6 +164,28 @@ export default function GroupOverview({
                 Complete my profile
               </Link>
             </div>
+          )}
+        </section>
+      )}
+
+      {isProvider && invite.is_open && (
+        <section className="cf-card p-7">
+          <h2 className="cf-display text-lg text-ink">
+            {hasThread ? "You've written to this group" : "Teaching this?"}
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            {hasThread
+              ? "Your conversation with the parent is in Messages."
+              : "This is a family looking for a coach. Write to them from the groups matched to what you teach."}
+          </p>
+          {hasThread ? (
+            <button onClick={onOpenMessages} className="cf-btn-primary mt-5">
+              Open messages
+            </button>
+          ) : (
+            <Link href="/students" className="cf-btn-primary mt-5">
+              Groups looking for coaches
+            </Link>
           )}
         </section>
       )}

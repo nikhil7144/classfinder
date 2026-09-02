@@ -31,14 +31,22 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   }, []);
 
   // Everything account-related lives in this section so the left menu stays
-  // mounted. Messages, requests, Spaces and payments join this list as those
-  // phases land.
+  // mounted. Spaces and payments join this list as those phases land.
   const navItems: { href: string; label: string; badge?: number }[] = [
     { href: "/account/profile", label: "Profile" },
     // Groups are a seeker's own demand; providers see matching demand on their
-    // dashboard instead.
+    // dashboard instead. Messages sits beside it because a parent talks to
+    // coaches both through a group and directly, and thinks of it as one
+    // inbox either way.
     ...(role === "seeker"
-      ? [{ href: "/account/groups", label: "Groups", badge: Number(alerts?.pending_pitches || 0) }]
+      ? [
+          { href: "/account/groups", label: "Groups", badge: Number(alerts?.pending_pitches || 0) },
+          {
+            href: "/account/messages",
+            label: "Messages",
+            badge: Number(alerts?.unread_threads || 0),
+          },
+        ]
       : []),
     { href: "/account/settings", label: "Settings" },
   ];

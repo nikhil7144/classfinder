@@ -12,9 +12,24 @@ type SeekerProfileInput = {
   name: string;
   phone: string;
   areaId: string | null;
+  /**
+   * Who they're looking for classes for. Required, and asked here rather than
+   * with the requirement, because it is a fact about the person: a father is
+   * a father whether or not he is searching this month. Asked inside the
+   * optional requirement block it was answered by nobody who skipped that
+   * block, and left attached to nothing by anyone who later cleared it.
+   *
+   * Required because the answer changes what a coach is being asked to do —
+   * teaching a 26-year-old beginner and teaching someone's six-year-old are
+   * different jobs, and a coach reading an enquiry should not have to guess
+   * which one they have been offered.
+   */
+  relation: string;
 };
 
-export type SeekerProfileFieldErrors = Partial<Record<"name" | "phone" | "areaId", string[]>>;
+export type SeekerProfileFieldErrors = Partial<
+  Record<"name" | "phone" | "areaId" | "relation", string[]>
+>;
 
 export function validateSeekerProfile(input: SeekerProfileInput) {
   return Object.values(getSeekerProfileFieldErrors(input)).flat();
@@ -33,6 +48,7 @@ export function getSeekerProfileFieldErrors(input: SeekerProfileInput): SeekerPr
   if (!hasValue(input.name)) addError("name", "Name is required.");
   if (!hasValue(input.phone)) addError("phone", "Mobile number is required.");
   if (!input.areaId) addError("areaId", "Choose the area you're looking in.");
+  if (!hasValue(input.relation)) addError("relation", "Tell us who you're looking for.");
 
   return errors;
 }
@@ -108,6 +124,17 @@ type ProviderProfileInput = {
   feeMax: string;
   feePeriod: string;
   teachingPlaces: string[];
+  /**
+   * Individuals only: do they go to the student, or does the student come to
+   * them? Null means unanswered.
+   *
+   * Separate from teachingPlaces because that list is about FORMAT — group or
+   * one-to-one — and format says nothing about venue. Someone can run group
+   * batches at their own academy and someone else travels to run them. It was
+   * being inferred from the format list, and the inference put areas a coach
+   * never visits into their availability. See phase2u.
+   */
+  travelsToStudents: boolean | null;
   certifications: CertificationInput[];
   availability: AvailabilitySlotInput[];
   serviceCategoryIds: string[];
@@ -129,6 +156,7 @@ export type ProviderProfileFieldErrors = Partial<
     | "experienceYears"
     | "fees"
     | "teachingPlaces"
+    | "travelsToStudents"
     | "certifications"
     | "availability"
     | "serviceCategoryIds"
@@ -224,6 +252,12 @@ export function getProviderProfileFieldErrors(
 
   if (!isEventPlanner && input.teachingPlaces.length === 0) {
     addError("teachingPlaces", "Select how you run your classes.");
+  }
+
+  // Only individuals. An institution is located by its branches, and an event
+  // planner is not found by area at all.
+  if (!isEventPlanner && !isInstitution && input.travelsToStudents === null) {
+    addError("travelsToStudents", "Tell parents whether you travel to students.");
   }
 
   const certs = input.certifications.filter((c) => !isBlankCertification(c));

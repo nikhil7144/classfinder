@@ -2,15 +2,35 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { MyGroup, activationLabel, expiryLabel } from "@/lib/groups";
 
 export default function MyGroupsPage() {
+  const router = useRouter();
   const [groups, setGroups] = useState<MyGroup[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
+      // A group is parent demand, so this screen has nothing for a coach — it
+      // would show them an empty list and offer to start one. The account nav
+      // already hides it from them; this catches the direct link, which is how
+      // a coach following "all my groups" from a pitch used to arrive here.
+      const { data: auth } = await supabase.auth.getUser();
+      if (auth.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", auth.user.id)
+          .maybeSingle();
+
+        if (profile?.role === "provider") {
+          router.replace("/students");
+          return;
+        }
+      }
+
       // my_groups() counts members itself: RLS limits what a member can read
       // from group_members, so counting client-side would under-report.
       const { data } = await supabase.rpc("my_groups");
@@ -18,7 +38,7 @@ export default function MyGroupsPage() {
       setLoading(false);
     };
     load();
-  }, []);
+  }, [router]);
 
   return (
     <div className="space-y-5">

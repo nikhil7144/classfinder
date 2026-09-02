@@ -68,15 +68,15 @@ export default function GroupMessages({
                   }`}
                 >
                   <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-3 text-sm font-semibold text-muted">
-                    {t.provider_photo_url ? (
+                    {t.photo_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={t.provider_photo_url}
+                        src={t.photo_url}
                         alt=""
                         className="size-full object-cover"
                       />
                     ) : (
-                      (t.provider_name || "?").charAt(0).toUpperCase()
+                      (t.title || "?").charAt(0).toUpperCase()
                     )}
                   </span>
 
@@ -87,12 +87,18 @@ export default function GroupMessages({
                           t.unread ? "font-semibold text-ink" : "text-ink"
                         }`}
                       >
-                        {t.provider_name}
+                        {t.title}
                       </span>
                       <span className="shrink-0 font-mono text-[0.65rem] text-faint">
                         {inboxTime(t.last_message_at ?? t.created_at)}
                       </span>
                     </span>
+
+                    {t.subtitle && (
+                      <span className="mt-0.5 block truncate text-[0.7rem] text-faint">
+                        {t.subtitle}
+                      </span>
+                    )}
 
                     <span
                       className={`mt-1 block truncate text-xs ${
@@ -133,7 +139,9 @@ export default function GroupMessages({
         ) : (
           <section className="cf-card flex min-h-[28rem] items-center justify-center p-8 text-center">
             <p className="max-w-xs text-sm leading-relaxed text-muted">
-              Pick a coach on the left to read what they said and reply.
+              {isCreator
+                ? "Pick a coach on the left to read what they said and reply."
+                : "Pick a conversation on the left to read it and reply."}
             </p>
           </section>
         )}

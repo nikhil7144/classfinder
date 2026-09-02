@@ -35,8 +35,14 @@ export type ThreadStatus = "pending" | "accepted" | "declined";
 export type GroupThread = {
   request_id: string;
   provider_id: string;
-  provider_name: string;
-  provider_photo_url: string | null;
+  /**
+   * The OTHER side, as this viewer may know them — the coach if you are the
+   * parent, the group if you are the coach. Was provider_name, which showed a
+   * coach their own name as the person they were talking to (phase2p).
+   */
+  title: string;
+  subtitle: string;
+  photo_url: string | null;
   /** The opening pitch. It is what the parent judged, so it stays visible. */
   pitch: string;
   status: ThreadStatus;

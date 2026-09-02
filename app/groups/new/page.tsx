@@ -10,22 +10,18 @@ import {
   MIN_STUDENTS,
   VALIDITY_OPTIONS,
 } from "@/lib/groups";
+import RequirementFields from "@/components/requirements/RequirementFields";
+import {
+  Requirement,
+  ServiceOption,
+  emptyRequirement,
+  getRequirementErrors,
+  groupServices,
+  requirementToColumns,
+} from "@/lib/requirements";
 
 type City = { id: string; name: string };
 type Area = { id: string; city_id: string; name: string };
-type Service = { id: string; name: string; group: string };
-
-const GROUP_LABEL: Record<string, string> = {
-  sport: "Sports",
-  wellness_fitness: "Wellness & Fitness",
-  mind_game: "Mind Games",
-  indoor_game: "Indoor Games",
-  dance: "Dance",
-  music: "Music",
-  subject: "School Subjects",
-  exam_board: "Boards & Exams",
-};
-const GROUP_ORDER = Object.keys(GROUP_LABEL);
 
 export default function NewGroupPage() {
   const router = useRouter();
@@ -35,7 +31,7 @@ export default function NewGroupPage() {
 
   const [cities, setCities] = useState<City[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
+  const [services, setServices] = useState<ServiceOption[]>([]);
 
   const [cityId, setCityId] = useState("");
   const [areaId, setAreaId] = useState("");
@@ -43,6 +39,9 @@ export default function NewGroupPage() {
   const [society, setSociety] = useState("");
   const [studentCount, setStudentCount] = useState(String(MIN_STUDENTS));
   const [notes, setNotes] = useState("");
+  // Same questions the parent's own profile now asks, in the same words —
+  // a group is a requirement several families share, not a different object.
+  const [requirement, setRequirement] = useState<Requirement>(emptyRequirement());
   const [showPhone, setShowPhone] = useState(false);
   const [validityDays, setValidityDays] = useState(DEFAULT_VALIDITY_DAYS);
 
@@ -88,7 +87,7 @@ export default function NewGroupPage() {
 
       setCities((c as City[]) || []);
       setAreas((a as Area[]) || []);
-      setServices((s as Service[]) || []);
+      setServices((s as ServiceOption[]) || []);
       if ((c as City[])?.length) setCityId((c as City[])[0].id);
       setReady(true);
     };
@@ -98,17 +97,7 @@ export default function NewGroupPage() {
 
   const cityAreas = useMemo(() => areas.filter((a) => a.city_id === cityId), [areas, cityId]);
 
-  const servicesByGroup = useMemo(() => {
-    const grouped = services.reduce<Record<string, Service[]>>((acc, s) => {
-      (acc[s.group] = acc[s.group] || []).push(s);
-      return acc;
-    }, {});
-    return GROUP_ORDER.filter((g) => grouped[g]?.length).map((g) => ({
-      group: g,
-      label: GROUP_LABEL[g],
-      items: grouped[g],
-    }));
-  }, [services]);
+  const servicesByGroup = useMemo(() => groupServices(services), [services]);
 
   const create = async () => {
     setError("");
@@ -124,6 +113,12 @@ export default function NewGroupPage() {
       );
     }
 
+    // The group's own subject is the select above, so the shared fields are
+    // never asked for one.
+    const detailErrors = getRequirementErrors(requirement, { requireLookingFor: false });
+    const firstDetailError = Object.values(detailErrors).flat()[0];
+    if (firstDetailError) return setError(firstDetailError);
+
     setSaving(true);
 
     const { data: auth } = await supabase.auth.getUser();
@@ -137,6 +132,7 @@ export default function NewGroupPage() {
         student_count: count,
         notes: notes.trim() || null,
         show_phone: showPhone,
+        ...requirementToColumns(requirement),
         expires_at: new Date(Date.now() + validityDays * 86_400_000).toISOString(),
       })
       .select("id")
@@ -260,6 +256,21 @@ export default function NewGroupPage() {
               />
               <p className="mt-2 text-xs text-faint">{MIN_STUDENTS} or more.</p>
             </div>
+          </div>
+
+          <div className="border-t border-line-soft pt-5">
+            <p className="cf-eyebrow">The details</p>
+            <p className="mt-2 mb-4 text-xs text-faint">
+              The same questions your own profile asks. Coaches read these before deciding whether
+              to write, so a filled-in group gets better replies than a bare one.
+            </p>
+            <RequirementFields
+              value={requirement}
+              onChange={setRequirement}
+              errors={getRequirementErrors(requirement, { requireLookingFor: false })}
+              showLookingFor={false}
+              showNotes={false}
+            />
           </div>
 
           <div>

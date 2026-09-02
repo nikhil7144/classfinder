@@ -80,8 +80,8 @@ export default function ApiUsageAdmin() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">API Usage</h1>
         <p className="mt-2 text-sm text-gray-500">
-          Token usage and rough cost estimate for the Gemini calls behind expert tagging and
-          founder-problem matching. Showing the most recent 200 calls.
+          Token usage and rough cost estimate for the Gemini calls behind the coach&apos;s demand
+          ranking and the parent&apos;s suggested coaches. Showing the most recent 200 calls.
         </p>
       </div>
 
