@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { fetchCoachSuggestions } from "@/lib/api/my-feed";
 import { SearchResult, formatDistance, formatExperience, formatFees } from "@/lib/search";
 
 export type CoachSuggestion = {
@@ -43,22 +43,11 @@ export default function SuggestedCoaches({ variant }: Props) {
     let active = true;
 
     const load = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData?.session?.access_token;
-      if (!token) return;
-
-      const response = await fetch("/api/coaches/suggest", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) return;
-
-      const result = await response.json();
+      const result = await fetchCoachSuggestions();
       if (!active) return;
 
-      setSuggestions((result.suggestions as CoachSuggestion[]) || []);
-      setEmptyReason((result.reason as string) ?? null);
+      setSuggestions(result.suggestions as CoachSuggestion[]);
+      setEmptyReason(result.reason);
     };
 
     load();

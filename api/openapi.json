@@ -135,6 +135,72 @@
           "feeds"
         ]
       }
+    },
+    "/api/v1/suggestions/coaches": {
+      "post": {
+        "description": "For a signed-in parent with a stated requirement. search_providers() decides who is eligible; the model only orders them and says why. Answers are cached against a fingerprint of the requirement and the candidate set, so a second look is free until one of them changes. Always returns a list where one exists — `ranked: false` means it is in plain distance order, not that anything failed.",
+        "operationId": "SuggestionsController_coaches_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoachSuggestionsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Coaches worth looking at first",
+        "tags": [
+          "suggestions"
+        ]
+      }
+    },
+    "/api/v1/suggestions/students": {
+      "post": {
+        "description": "The same idea pointed the other way, over the coach's demand feed. Not cached: unlike the parent's, this one is asked for deliberately rather than rendered on arrival.",
+        "operationId": "SuggestionsController_students_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentSuggestionsQueryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentSuggestionsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Families worth a coach's attention first",
+        "tags": [
+          "suggestions"
+        ]
+      }
     }
   },
   "info": {
@@ -286,6 +352,127 @@
           "likes",
           "wows",
           "surprises"
+        ]
+      },
+      "CoachSuggestionDto": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "A row as search_providers() returns it, passed through unchanged."
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the model placed this coach here. Null when the list was not ranked."
+          }
+        },
+        "required": [
+          "provider",
+          "reason"
+        ]
+      },
+      "CoachSuggestionsDto": {
+        "type": "object",
+        "properties": {
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoachSuggestionDto"
+            }
+          },
+          "ranked": {
+            "type": "boolean",
+            "description": "False when the list is in plain distance order."
+          },
+          "cached": {
+            "type": "boolean",
+            "description": "True when served from the stored ranking."
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "not_a_seeker",
+              "no_requirement",
+              "no_origin",
+              "nothing_nearby"
+            ],
+            "description": "Why there is nothing to show; absent when there is. The caller renders these very differently — 'no_requirement' is an invitation to state one, 'not_a_seeker' is not."
+          }
+        },
+        "required": [
+          "suggestions",
+          "ranked"
+        ]
+      },
+      "StudentSuggestionsQueryDto": {
+        "type": "object",
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The coach's own listing. Must belong to them."
+          },
+          "serviceCategoryId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "areaId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "radiusKm": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 200,
+            "default": 15
+          }
+        },
+        "required": [
+          "providerId"
+        ]
+      },
+      "StudentSuggestionDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "seeker:6f1c...",
+            "description": "\"kind:id\" of a demand row."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why the model placed it here."
+          }
+        },
+        "required": [
+          "key",
+          "reason"
+        ]
+      },
+      "StudentSuggestionsDto": {
+        "type": "object",
+        "properties": {
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentSuggestionDto"
+            }
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "not_a_provider",
+              "no_demand"
+            ],
+            "description": "Why there is nothing to rank. 'no_demand' also covers too few untouched rows to be worth a model call — the caller keeps showing its own unranked list either way."
+          }
+        },
+        "required": [
+          "suggestions"
         ]
       }
     }

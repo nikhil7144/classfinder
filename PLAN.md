@@ -218,8 +218,10 @@ rather than decided per file:
 | Surface | Reads via |
 |---|---|
 | Spaces feeds — guest city feed, seeker feed | **API** — first surface migrated (3B) |
+| AI suggestions — coaches for a parent, students for a coach | **API** — they hold the model key, so a server is the only place they can live |
 | Search, groups, threads, trials, enquiries | Supabase direct — migrate when touched |
 | A Space's own page (`space_feed`) | Supabase direct — still snake_case |
+| Sign-in profile resolution, role switching | Supabase direct — no shaping, no secret; the login path must not depend on a second process |
 | `/api/admin/*` | Next route handlers, web-only console, staying put |
 | Phase 4 onward | **API from the start** — no new SQL read functions |
 

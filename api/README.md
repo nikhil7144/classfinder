@@ -70,8 +70,19 @@ openapi-generator generate -i openapi.json -g dart-dio -o ../mobile/lib/api
 openapi-generator generate -i openapi.json -g typescript-fetch -o ../lib/api
 ```
 
+## Secrets
+
+`GOOGLE_API_KEY` lives here and nowhere else. It is the one thing in the
+product that genuinely cannot be given to a browser or a phone, and holding it
+is why the two suggestion endpoints are here rather than called directly. It
+is not a service role key and does not weaken the rule above: those endpoints
+still query Postgres as the caller, and their two writes — metering and the
+suggestion cache — go through definer functions added in phase3d.
+
 ## Status
 
-One module, three endpoints, thirteen tests. The rest of the app still talks
+Two modules, five endpoints, twenty-two tests. The rest of the app still talks
 to Supabase directly, and that is fine — surfaces move over as they are
 touched. What must not happen is a surface reading *both* ways at once.
+
+Nothing user-facing is left that a mobile client cannot reach.

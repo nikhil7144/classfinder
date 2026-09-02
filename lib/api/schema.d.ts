@@ -64,6 +64,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/suggestions/coaches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Coaches worth looking at first
+         * @description For a signed-in parent with a stated requirement. search_providers() decides who is eligible; the model only orders them and says why. Answers are cached against a fingerprint of the requirement and the candidate set, so a second look is free until one of them changes. Always returns a list where one exists — `ranked: false` means it is in plain distance order, not that anything failed.
+         */
+        post: operations["SuggestionsController_coaches_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/suggestions/students": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Families worth a coach's attention first
+         * @description The same idea pointed the other way, over the coach's demand feed. Not cached: unlike the parent's, this one is asked for deliberately rather than rendered on arrival.
+         */
+        post: operations["SuggestionsController_students_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -118,6 +158,56 @@ export interface components {
              * @enum {string}
              */
             reason?: "following" | "interest";
+        };
+        CoachSuggestionDto: {
+            /** @description A row as search_providers() returns it, passed through unchanged. */
+            provider: {
+                [key: string]: unknown;
+            };
+            /** @description Why the model placed this coach here. Null when the list was not ranked. */
+            reason: string | null;
+        };
+        CoachSuggestionsDto: {
+            suggestions: components["schemas"]["CoachSuggestionDto"][];
+            /** @description False when the list is in plain distance order. */
+            ranked: boolean;
+            /** @description True when served from the stored ranking. */
+            cached?: boolean;
+            /**
+             * @description Why there is nothing to show; absent when there is. The caller renders these very differently — 'no_requirement' is an invitation to state one, 'not_a_seeker' is not.
+             * @enum {string}
+             */
+            reason?: "not_a_seeker" | "no_requirement" | "no_origin" | "nothing_nearby";
+        };
+        StudentSuggestionsQueryDto: {
+            /**
+             * Format: uuid
+             * @description The coach's own listing. Must belong to them.
+             */
+            providerId: string;
+            /** Format: uuid */
+            serviceCategoryId?: string | null;
+            /** Format: uuid */
+            areaId?: string | null;
+            /** @default 15 */
+            radiusKm: number;
+        };
+        StudentSuggestionDto: {
+            /**
+             * @description "kind:id" of a demand row.
+             * @example seeker:6f1c...
+             */
+            key: string;
+            /** @description Why the model placed it here. */
+            reason: string;
+        };
+        StudentSuggestionsDto: {
+            suggestions: components["schemas"]["StudentSuggestionDto"][];
+            /**
+             * @description Why there is nothing to rank. 'no_demand' also covers too few untouched rows to be worth a model call — the caller keeps showing its own unranked list either way.
+             * @enum {string}
+             */
+            reason?: "not_a_provider" | "no_demand";
         };
     };
     responses: never;
@@ -191,6 +281,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FeedPostDto"][];
+                };
+            };
+        };
+    };
+    SuggestionsController_coaches_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoachSuggestionsDto"];
+                };
+            };
+        };
+    };
+    SuggestionsController_students_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StudentSuggestionsQueryDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentSuggestionsDto"];
                 };
             };
         };

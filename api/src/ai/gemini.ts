@@ -1,12 +1,19 @@
+// Ported from the web app's lib/gemini.ts when the two suggestion endpoints
+// moved here. Unchanged except for what it no longer does: recordLlmUsage
+// wrote to llm_usage_log with the service role, and this service has none.
+// Metering is now record_llm_usage(), a definer function called as the user
+// — see db/2026-09-05-phase3d-ai-writes.sql and SuggestionsService.
+//
+// The web app's copy is deleted; this is the only one.
+
 import { GoogleGenAI, Type } from "@google/genai";
-import { supabaseServerAdmin } from "@/lib/supabase-server";
 
 // Swap the model here in one place if it gets deprecated or a cheaper/better
 // option ships — nothing else in this file should reference a model name.
 // gemini-2.5-flash-lite is blocked for accounts created after its cutover
 // date ("no longer available to new users"); gemini-3.5-flash-lite is the
 // current flash-lite-tier model confirmed working against this project.
-const MODEL = "gemini-3.5-flash-lite";
+export const MODEL = "gemini-3.5-flash-lite";
 
 // $ per 1M tokens, input/output — used only for the rough cost estimate on
 // the admin usage page. Flash-lite-tier placeholder rate; confirm against
@@ -348,21 +355,6 @@ ${coachLines}`;
     .map((p) => ({ providerId: p.providerId, reason: p.reason }));
 
   return { result, usage: readUsage(response) };
-}
-
-export async function recordLlmUsage(
-  purpose: "rank_demand_for_coach" | "rank_coaches_for_seeker",
-  usage: LlmUsage,
-  relatedId?: string | null
-) {
-  await supabaseServerAdmin.from("llm_usage_log").insert({
-    purpose,
-    model: MODEL,
-    prompt_tokens: usage.promptTokens,
-    completion_tokens: usage.completionTokens,
-    total_tokens: usage.totalTokens,
-    related_id: relatedId || null,
-  });
 }
 
 export function estimateCostUsd(model: string, promptTokens: number, completionTokens: number): number {

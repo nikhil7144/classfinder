@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { fetchStudentSuggestions } from "@/lib/api/my-feed";
 
 /**
  * Demand, as a coach sees it.
@@ -146,30 +147,12 @@ export type Suggestion = {
  * this waits on it.
  */
 export async function fetchSuggestions(providerId: string, filters: DemandFilters = {}) {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData?.session?.access_token;
-
-  if (!token) return { suggestions: [] as Suggestion[], error: "Log in again." };
-
-  const response = await fetch("/api/students/suggest", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      providerId,
-      serviceCategoryId: filters.serviceCategoryId ?? null,
-      areaId: filters.areaId ?? null,
-      radiusKm: filters.radiusKm ?? DEFAULT_RADIUS_KM,
-    }),
+  const result = await fetchStudentSuggestions({
+    providerId,
+    serviceCategoryId: filters.serviceCategoryId ?? null,
+    areaId: filters.areaId ?? null,
+    radiusKm: filters.radiusKm ?? DEFAULT_RADIUS_KM,
   });
 
-  const result = await response.json();
-
-  if (!response.ok) {
-    return { suggestions: [] as Suggestion[], error: result.error || "Couldn't rank these." };
-  }
-
-  return { suggestions: (result.suggestions as Suggestion[]) || [], error: null };
+  return { suggestions: result.suggestions as Suggestion[], error: result.error };
 }
