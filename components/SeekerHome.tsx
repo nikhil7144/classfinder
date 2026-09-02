@@ -11,6 +11,7 @@ import {
   timeLabel,
 } from "@/lib/requirements";
 import SuggestedCoaches from "@/components/seeker/SuggestedCoaches";
+import FollowedSpaces from "@/components/spaces/FollowedSpaces";
 
 /** What this parent told us they want — see phase2r. */
 export type SeekerRequirement = {
@@ -234,6 +235,8 @@ export default function SeekerHome({
             also the fastest way to notice the answer has gone stale. */}
         {published && <SuggestedCoaches variant="dashboard" />}
 
+        <FollowedSpaces />
+
         <section className="cf-card p-7">
           <h2 className="cf-display text-lg text-ink">Start a group</h2>
           <p className="mt-2 text-sm leading-relaxed text-muted">
@@ -251,12 +254,6 @@ export default function SeekerHome({
             Not built yet — listed so you know what&apos;s on the way.
           </p>
           <ul className="mt-4 space-y-3 text-sm">
-            <li className="flex gap-3">
-              <span className="cf-badge cf-badge-neutral shrink-0">Spaces</span>
-              <span className="text-muted">
-                Follow a coach or academy and see photos and videos of what they do.
-              </span>
-            </li>
             <li className="flex gap-3">
               <span className="cf-badge cf-badge-neutral shrink-0">Messages</span>
               <span className="text-muted">Ask questions before you commit.</span>

@@ -439,6 +439,13 @@ no name, and the parent decides whether anyone is introduced.
 
 ### Phase 3 — Spaces, with moderation
 
+| | Status |
+|---|---|
+| Space per coach, auto-created, followable (3A) | done |
+| Photo posts and YouTube video posts (3A) | done |
+| Reactions: like, wow, surprise (3A) | done |
+| Report, auto-hide at 3, admin queue, suspend (3A) | done |
+
 A Space is a provider's own page: what they do, what they know, how they
 teach. Created automatically with the listing, one per provider, reached as a
 tab from their profile. Seekers follow it. Posts are a short piece of writing
@@ -474,11 +481,9 @@ anything; an admin queue resolves or dismisses. A Space in breach is
 suspended and becomes unreachable — stated on the composer, so the rule is
 known before it is enforced rather than after.
 
-Event planners get their Space here, and it is the whole reason that role
-exists: they are excluded from coach search, from Groups and from the demand
-feed, so until this phase they could sign up and appear nowhere. The Space
-read therefore carries its own visibility rule rather than reusing
-`get_provider_profile`, which excludes them by design.
+Coaches only. Event planners are a separate entity — they share the providers
+table today, and are excluded from coach search, Groups and the demand feed —
+and a teaching page is not what they need. Phase 4 is where they get theirs.
 
 ### Phase 4 — Events & bookings
 

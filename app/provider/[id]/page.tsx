@@ -88,6 +88,20 @@ export default async function ProviderProfilePage({ params }: Params) {
           ← Back to search
         </Link>
 
+        {/* Two tabs, not a section: a Space paginates and this page does not,
+            and an event planner has a Space with no profile behind it. */}
+        <nav className="flex flex-wrap gap-2 border-b border-line pb-3">
+          <span className="rounded-full bg-surface-3 px-4 py-2 text-sm font-semibold text-ink">
+            Profile
+          </span>
+          <Link
+            href={`/provider/${provider.id}/space`}
+            className="rounded-full px-4 py-2 text-sm text-muted transition hover:bg-surface-2 hover:text-ink"
+          >
+            Space
+          </Link>
+        </nav>
+
         <header className="cf-card p-7">
           <div className="flex flex-wrap gap-5">
             {provider.photo_url ? (

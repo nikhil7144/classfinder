@@ -29,7 +29,7 @@ export default function ProviderTabs({
     // pitches — one inbox, because a coach does not sort their replies by
     // which feature produced them.
     { href: "/dashboard/messages", label: "Messages", badge: messageCount },
-    { href: "/dashboard/space", label: "My Space", soon: true },
+    { href: "/dashboard/space", label: "My Space" },
     { href: "/dashboard/events", label: "Events", soon: true },
   ];
 
