@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { fetchTaxonomy } from "@/lib/api/reference";
 import {
   TRIAL_DURATIONS,
   Trial,
@@ -93,12 +94,7 @@ export default function TrialCard({
   );
 
   useEffect(() => {
-    supabase
-      .from("teaching_place_master")
-      .select("id, label")
-      .eq("is_active", true)
-      .order("sort_order")
-      .then(({ data }) => setPlaces((data as Place[]) || []));
+    fetchTaxonomy().then(({ teachingPlaces }) => setPlaces(teachingPlaces));
   }, []);
 
   // PromiseLike, not Promise: a Supabase builder is a thenable and only

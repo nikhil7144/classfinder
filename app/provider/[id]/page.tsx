@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server-client";
+import { fetchTaxonomy } from "@/lib/api/reference";
 import EnquiryForm from "@/components/provider/EnquiryForm";
 import { formatExperience, formatFees } from "@/lib/search";
 import { WEEK_DAYS } from "@/lib/profile-rules";
@@ -55,10 +56,8 @@ export default async function ProviderProfilePage({ params }: Params) {
   // Who is looking is now EnquiryForm's business: it needs the answer on the
   // client anyway to write the enquiry, and asking here as well meant two
   // sources of truth for the same question.
-  const { data: placeRows } = await supabase.from("teaching_place_master").select("id, label");
-  const placeLabel = Object.fromEntries(
-    ((placeRows as { id: string; label: string }[]) || []).map((p) => [p.id, p.label])
-  );
+  const { teachingPlaces } = await fetchTaxonomy();
+  const placeLabel = Object.fromEntries(teachingPlaces.map((p) => [p.id, p.label]));
 
   const fees = formatFees(provider.fee_min, provider.fee_max, provider.fee_period);
   const experience = formatExperience(provider.experience_years);

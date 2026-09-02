@@ -3,6 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import {
+  fetchAllLocations,
+  fetchTaxonomy,
+  type ProviderCategory,
+  type TeachingPlace,
+} from "@/lib/api/reference";
 import ServiceCategoryPicker, { ServiceCategory } from "@/components/provider/ServiceCategoryPicker";
 import AvailabilityEditor from "@/components/provider/AvailabilityEditor";
 import { ServiceAreaPicker, BranchAreaSelect, CityRow, AreaRow } from "@/components/provider/AreaPicker";
@@ -19,8 +25,8 @@ import {
   isBlankCertification,
 } from "@/lib/profile-rules";
 
-type ProviderCategory = { id: string; name: string; provider_type: string };
-type TeachingPlace = { id: string; label: string; description: string | null };
+
+
 
 const providerTypeOptions = [
   { value: "individual", title: "Individual", description: "A coach, teacher, or tutor working on your own." },
@@ -160,29 +166,22 @@ export default function ProviderProfileForm({ redirectTo = "/dashboard", variant
       const uid = authData.user.id;
       setUserId(uid);
 
-      const [
-        { data: cats },
-        { data: services },
-        { data: places },
-        { data: cityRows },
-        { data: areaRows },
-        { data: profileRow },
-        { data: providerRow },
-      ] = await Promise.all([
-        supabase.from("provider_category_master").select("*").eq("is_active", true).order("name"),
-        supabase.from("service_category_master").select("*").eq("is_active", true).order("name"),
-        supabase.from("teaching_place_master").select("*").eq("is_active", true).order("sort_order"),
-        supabase.from("cities").select("id, name, state").eq("is_active", true).order("name"),
-        supabase.from("areas").select("id, city_id, name, is_live").order("name"),
+      const [locations, taxonomy, { data: profileRow }, { data: providerRow }] =
+        await Promise.all([
+        // fetchAllLocations, not the seeker's: a provider may register in an
+        // area before it opens to search, which is how supply is built up
+        // quietly ahead of a launch.
+        fetchAllLocations(),
+        fetchTaxonomy(),
         supabase.from("profiles").select("phone, profile_complete").eq("id", uid).maybeSingle(),
         supabase.from("providers").select("*").eq("user_id", uid).maybeSingle(),
       ]);
 
-      setProviderCategories((cats as ProviderCategory[]) || []);
-      setServiceCategories((services as ServiceCategory[]) || []);
-      setTeachingPlaceOptions((places as TeachingPlace[]) || []);
-      setCities((cityRows as CityRow[]) || []);
-      setAreas((areaRows as AreaRow[]) || []);
+      setProviderCategories(taxonomy.providerCategories);
+      setServiceCategories(taxonomy.serviceCategories);
+      setTeachingPlaceOptions(taxonomy.teachingPlaces);
+      setCities(locations.cities);
+      setAreas(locations.areas);
 
       // Functional update: don't clobber a value the user already started typing.
       setPhone((current) => current || profileRow?.phone || "");
@@ -255,7 +254,7 @@ export default function ProviderProfileForm({ redirectTo = "/dashboard", variant
   const isInstitution = providerType === "institution";
 
   const availableCategories = useMemo(
-    () => providerCategories.filter((c) => c.provider_type === providerType),
+    () => providerCategories.filter((c) => c.providerType === providerType),
     [providerCategories, providerType]
   );
 
@@ -405,7 +404,7 @@ export default function ProviderProfileForm({ redirectTo = "/dashboard", variant
     // the table — keep them roughly in step until they're dropped.
     const primaryAreaId = isInstitution ? cleanBranches[0]?.areaId : serviceAreaIds[0];
     const primaryArea = areas.find((a) => a.id === primaryAreaId);
-    const primaryCity = cities.find((c) => c.id === primaryArea?.city_id);
+    const primaryCity = cities.find((c) => c.id === primaryArea?.cityId);
 
     const { data: saved, error } = await supabase
       .from("providers")
@@ -458,7 +457,7 @@ export default function ProviderProfileForm({ redirectTo = "/dashboard", variant
             address: b.address,
             area_id: b.areaId,
             city: areas.find((a) => a.id === b.areaId)
-              ? cities.find((c) => c.id === areas.find((a) => a.id === b.areaId)!.city_id)?.name ?? null
+              ? cities.find((c) => c.id === areas.find((a) => a.id === b.areaId)!.cityId)?.name ?? null
               : null,
             area: areas.find((a) => a.id === b.areaId)?.name ?? null,
             phone: b.phone,

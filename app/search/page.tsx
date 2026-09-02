@@ -3,6 +3,15 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import {
+  fetchSeekerLocations,
+  fetchTaxonomy,
+  type Area,
+  type City,
+  type ProviderCategory,
+  type ServiceCategory,
+  type TeachingPlace,
+} from "@/lib/api/reference";
 import ProviderCard from "@/components/ProviderCard";
 import {
   DEFAULT_RADIUS_KM,
@@ -13,11 +22,11 @@ import {
 import { ServiceOption, groupServices } from "@/lib/requirements";
 import SuggestedCoaches from "@/components/seeker/SuggestedCoaches";
 
-type City = { id: string; name: string };
-type Area = { id: string; city_id: string; name: string };
+
+// ServiceOption is structurally the generated ServiceCategory, so the two
+// interoperate and lib/requirements' grouping helpers still take these rows.
 type Service = ServiceOption;
-type Category = { id: string; name: string };
-type TeachingPlace = { id: string; label: string };
+type Category = ProviderCategory;
 
 function SearchPage() {
   const router = useRouter();
@@ -50,20 +59,19 @@ function SearchPage() {
 
   useEffect(() => {
     const load = async () => {
-      const [{ data: c }, { data: a }, { data: s }, { data: cat }, { data: p }] = await Promise.all([
-        supabase.from("cities").select("id, name").eq("is_active", true).order("name"),
-        // Seekers only see live areas — that's the area-wise launch gate.
-        supabase.from("areas").select("id, city_id, name").eq("is_live", true).order("name"),
-        supabase.from("service_category_master").select("id, name, group").eq("is_active", true).order("name"),
-        supabase.from("provider_category_master").select("id, name"),
-        supabase.from("teaching_place_master").select("id, label"),
+      // One call for all five, shared with every other screen that needs
+      // them. fetchSeekerLocations applies the area-wise launch gate: seekers
+      // only ever see live areas.
+      const [{ cities: c, areas: a }, taxonomy] = await Promise.all([
+        fetchSeekerLocations(),
+        fetchTaxonomy(),
       ]);
 
-      setCities((c as City[]) || []);
-      setAreas((a as Area[]) || []);
-      setServices((s as Service[]) || []);
-      setCategories((cat as Category[]) || []);
-      setPlaces((p as TeachingPlace[]) || []);
+      setCities(c);
+      setAreas(a);
+      setServices(taxonomy.serviceCategories);
+      setCategories(taxonomy.providerCategories);
+      setPlaces(taxonomy.teachingPlaces);
 
       // Start from what this parent has already told us.
       //
@@ -92,7 +100,7 @@ function SearchPage() {
       if (!params.get("area") && me.area_id) {
         setAreaId(me.area_id);
         const home = ((a as Area[]) || []).find((row) => row.id === me.area_id);
-        if (home) setCityId(home.city_id);
+        if (home) setCityId(home.cityId);
       }
 
       // Only when there is exactly one thing they want. Two subjects have no
@@ -115,11 +123,11 @@ function SearchPage() {
   useEffect(() => {
     if (cityId || cities.length === 0) return;
     const fromArea = areas.find((a) => a.id === areaId);
-    setCityId(fromArea?.city_id ?? cities[0].id);
+    setCityId(fromArea?.cityId ?? cities[0].id);
   }, [cities, areas, areaId, cityId]);
 
   const cityAreas = useMemo(
-    () => areas.filter((a) => a.city_id === cityId),
+    () => areas.filter((a) => a.cityId === cityId),
     [areas, cityId]
   );
 

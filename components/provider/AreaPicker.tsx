@@ -1,9 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import type { Area, City } from "@/lib/api/reference";
 
-export type CityRow = { id: string; name: string; state: string | null };
-export type AreaRow = { id: string; city_id: string; name: string; is_live: boolean };
+// The generated reference types, under the names this component's callers
+// already use. One definition of an area, from the contract.
+export type CityRow = City;
+export type AreaRow = Area;
 
 type MultiProps = {
   cities: CityRow[];
@@ -29,7 +32,7 @@ export function ServiceAreaPicker({ cities, areas, selectedIds, onChange, invali
   const cityAreas = useMemo(() => {
     const q = query.trim().toLowerCase();
     return areas
-      .filter((a) => a.city_id === cityId)
+      .filter((a) => a.cityId === cityId)
       .filter((a) => (q ? a.name.toLowerCase().includes(q) : true))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [areas, cityId, query]);
@@ -68,7 +71,7 @@ export function ServiceAreaPicker({ cities, areas, selectedIds, onChange, invali
               className="inline-flex items-center gap-1.5 rounded-full bg-accent-ink px-3.5 py-2 text-sm font-semibold text-[#1a0d06]"
             >
               {a.name}
-              <span className="text-xs opacity-70">{cityNameById[a.city_id]}</span>
+              <span className="text-xs opacity-70">{cityNameById[a.cityId]}</span>
               <span aria-hidden="true">×</span>
             </button>
           ))}
@@ -115,7 +118,7 @@ export function ServiceAreaPicker({ cities, areas, selectedIds, onChange, invali
               onClick={() => toggle(a.id)}
             >
               {a.name}
-              {!a.is_live && (
+              {!a.isLive && (
                 <span className="ml-1.5 text-[0.7rem] opacity-60" title="Not open to seekers yet">
                   soon
                 </span>
@@ -139,7 +142,7 @@ type SingleProps = {
 export function BranchAreaSelect({ cities, areas, areaId, onChange }: SingleProps) {
   const currentCityId = useMemo(() => {
     const area = areas.find((a) => a.id === areaId);
-    return area?.city_id ?? cities[0]?.id ?? "";
+    return area?.cityId ?? cities[0]?.id ?? "";
   }, [areaId, areas, cities]);
 
   // Same reason as above: cities load after first render, so hold only an
@@ -148,7 +151,7 @@ export function BranchAreaSelect({ cities, areas, areaId, onChange }: SingleProp
   const cityId = chosenCityId ?? currentCityId;
 
   const cityAreas = useMemo(
-    () => areas.filter((a) => a.city_id === cityId).sort((a, b) => a.name.localeCompare(b.name)),
+    () => areas.filter((a) => a.cityId === cityId).sort((a, b) => a.name.localeCompare(b.name)),
     [areas, cityId]
   );
 
@@ -180,7 +183,7 @@ export function BranchAreaSelect({ cities, areas, areaId, onChange }: SingleProp
         {cityAreas.map((a) => (
           <option key={a.id} value={a.id}>
             {a.name}
-            {a.is_live ? "" : " (soon)"}
+            {a.isLive ? "" : " (soon)"}
           </option>
         ))}
       </select>

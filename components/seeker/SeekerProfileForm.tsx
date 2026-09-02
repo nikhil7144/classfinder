@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { fetchSeekerLocations } from "@/lib/api/reference";
 import { getSeekerProfileFieldErrors, SeekerProfileFieldErrors } from "@/lib/profile-rules";
 import RequirementFields from "@/components/requirements/RequirementFields";
 import {
@@ -68,11 +69,11 @@ export default function SeekerProfileForm({ redirectTo = "/dashboard", variant =
 
       setUserId(authData.user.id);
 
-      const [{ data: cityRows }, { data: areaRows }, { data: profileRow }, { data: seekerRow }] =
+      // Seekers only pick from live areas — the launch gate, applied inside
+      // fetchSeekerLocations so every seeker-side screen agrees on it.
+      const [{ cities: cityRows, areas: areaRows }, { data: profileRow }, { data: seekerRow }] =
         await Promise.all([
-          supabase.from("cities").select("id, name, state").eq("is_active", true).order("name"),
-          // Seekers only pick from live areas — that's the launch gate.
-          supabase.from("areas").select("id, city_id, name, is_live").eq("is_live", true).order("name"),
+          fetchSeekerLocations(),
           supabase.from("profiles").select("phone, profile_complete").eq("id", authData.user.id).maybeSingle(),
           supabase.from("seekers").select("*").eq("user_id", authData.user.id).maybeSingle(),
         ]);
@@ -108,7 +109,7 @@ export default function SeekerProfileForm({ redirectTo = "/dashboard", variant =
   useEffect(() => {
     if (cityId || cities.length === 0) return;
     const saved = areas.find((a) => a.id === areaId);
-    setCityId(saved?.city_id ?? cities[0].id);
+    setCityId(saved?.cityId ?? cities[0].id);
   }, [cities, areas, areaId, cityId]);
 
   useEffect(() => {
@@ -119,7 +120,7 @@ export default function SeekerProfileForm({ redirectTo = "/dashboard", variant =
   }, [photoFile]);
 
   const cityAreas = useMemo(
-    () => areas.filter((a) => a.city_id === cityId).sort((a, b) => a.name.localeCompare(b.name)),
+    () => areas.filter((a) => a.cityId === cityId).sort((a, b) => a.name.localeCompare(b.name)),
     [areas, cityId]
   );
 

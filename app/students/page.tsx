@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { fetchReference } from "@/lib/api/reference";
 import ProviderTabs from "@/components/provider/ProviderTabs";
 import { useAlerts } from "@/components/AlertsBadge";
 import { expiryLabel } from "@/lib/groups";
@@ -117,19 +118,25 @@ export default function FindStudentsPage() {
         return;
       }
 
-      const [{ data: serviceRows }, { data: areaLinks }] = await Promise.all([
-        supabase
-          .from("service_category_master")
-          .select("id, name")
-          .in("id", provider.service_category_ids || [])
-          .order("name"),
+      // Both lists come out of the one reference fetch and are filtered here:
+      // this coach teaches a handful of subjects in a handful of areas, and a
+      // round trip per screen to narrow a list already in memory is a round
+      // trip for nothing.
+      const [reference, { data: areaLinks }] = await Promise.all([
+        fetchReference(),
         supabase.from("provider_discoverable_areas").select("area_id").eq("provider_id", provider.id),
       ]);
 
-      const ids = (areaLinks || []).map((a) => a.area_id);
-      const { data: areaRows } = ids.length
-        ? await supabase.from("areas").select("id, name, cities(name)").in("id", ids).order("name")
-        : { data: [] };
+      const taught = new Set(provider.service_category_ids || []);
+      const serviceRows = reference.serviceCategories
+        .filter((s) => taught.has(s.id))
+        .map((s) => ({ id: s.id, name: s.name }));
+
+      const ids = new Set((areaLinks || []).map((a) => a.area_id));
+      const cityName = new Map(reference.cities.map((c) => [c.id, c.name]));
+      const areaRows = reference.areas
+        .filter((a) => ids.has(a.id))
+        .map((a) => ({ id: a.id, name: a.name, cities: { name: cityName.get(a.cityId) ?? "" } }));
 
       setServices((serviceRows as Service[]) || []);
       setAreas(

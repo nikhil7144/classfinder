@@ -4,6 +4,7 @@ import ProviderHome from "@/components/ProviderHome";
 import { isSeekerProfileComplete, isProviderProfileComplete } from "@/lib/profile-rules";
 import { createSupabaseServerClient } from "@/lib/supabase-server-client";
 import { supabaseServerAdmin } from "@/lib/supabase-server";
+import { fetchReference } from "@/lib/api/reference";
 
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();
@@ -56,26 +57,29 @@ export default async function DashboardPage() {
         .eq("id", userId);
     }
 
-    const { data: area } = seekerProfile?.area_id
-      ? await supabaseServerAdmin
-          .from("areas")
-          .select("id, name, cities(name)")
-          .eq("id", seekerProfile.area_id)
-          .maybeSingle()
-      : { data: null };
+    // Reference data through the API, not the service role. These are public
+    // tables — cities, areas, the taxonomy — and reading them with admin
+    // rights was privilege spent on rows anyone may see.
+    const reference = await fetchReference();
+    const areaRow = seekerProfile?.area_id
+      ? reference.areas.find((a) => a.id === seekerProfile.area_id)
+      : null;
+    const area = areaRow
+      ? {
+          id: areaRow.id,
+          name: areaRow.name,
+          cities: { name: reference.cities.find((c) => c.id === areaRow.cityId)?.name ?? "" },
+        }
+      : null;
 
     // What they told us they want, read back in their own words. A
     // requirement a parent cannot see is one they will never think to change,
     // and what a nine-year-old wants this September is not what they wanted
     // last September.
-    const lookingForIds: string[] = seekerProfile?.looking_for || [];
-    const { data: wantedServices } = lookingForIds.length
-      ? await supabaseServerAdmin
-          .from("service_category_master")
-          .select("name")
-          .in("id", lookingForIds)
-          .order("name")
-      : { data: [] as { name: string }[] };
+    const lookingForIds = new Set<string>(seekerProfile?.looking_for || []);
+    const wantedServices = reference.serviceCategories
+      .filter((s) => lookingForIds.has(s.id))
+      .map((s) => ({ name: s.name }));
 
     return (
       <SeekerHome
@@ -166,6 +170,9 @@ export default async function DashboardPage() {
         .eq("id", userId);
     }
 
+    // Same cached call the seeker branch makes; the fetch is shared.
+    const providerReference = await fetchReference();
+
     const areaNames = providerProfile
       ? await (async () => {
           const ids = [
@@ -173,18 +180,16 @@ export default async function DashboardPage() {
             ...(branches || []).map((b) => b.area_id).filter(Boolean),
           ];
           if (!ids.length) return [] as string[];
-          const { data } = await supabaseServerAdmin.from("areas").select("name").in("id", ids);
-          return (data || []).map((a) => a.name as string);
+          const wanted = new Set(ids);
+          return providerReference.areas.filter((a) => wanted.has(a.id)).map((a) => a.name);
         })()
       : [];
 
-    const { data: category } = providerProfile?.provider_category_id
-      ? await supabaseServerAdmin
-          .from("provider_category_master")
-          .select("name")
-          .eq("id", providerProfile.provider_category_id)
-          .maybeSingle()
-      : { data: null };
+    const category = providerProfile?.provider_category_id
+      ? (providerReference.providerCategories.find(
+          (c) => c.id === providerProfile.provider_category_id,
+        ) ?? null)
+      : null;
 
     return (
       <ProviderHome

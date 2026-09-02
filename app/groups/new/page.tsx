@@ -5,6 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import {
+  fetchSeekerLocations,
+  fetchTaxonomy,
+  type Area,
+  type City,
+} from "@/lib/api/reference";
+import {
   DEFAULT_VALIDITY_DAYS,
   MEMBERS_TO_ACTIVATE,
   MIN_STUDENTS,
@@ -20,8 +26,6 @@ import {
   requirementToColumns,
 } from "@/lib/requirements";
 
-type City = { id: string; name: string };
-type Area = { id: string; city_id: string; name: string };
 
 export default function NewGroupPage() {
   const router = useRouter();
@@ -75,14 +79,11 @@ export default function NewGroupPage() {
         return;
       }
 
-      const [{ data: c }, { data: a }, { data: s }] = await Promise.all([
-        supabase.from("cities").select("id, name").eq("is_active", true).order("name"),
-        supabase.from("areas").select("id, city_id, name").eq("is_live", true).order("name"),
-        supabase
-          .from("service_category_master")
-          .select("id, name, group")
-          .eq("is_active", true)
-          .order("name"),
+      // Live areas only — a group is seeker-side demand, and the launch gate
+      // applies to it exactly as it does to search.
+      const [{ cities: c, areas: a }, { serviceCategories: s }] = await Promise.all([
+        fetchSeekerLocations(),
+        fetchTaxonomy(),
       ]);
 
       setCities((c as City[]) || []);
@@ -95,7 +96,7 @@ export default function NewGroupPage() {
     load();
   }, [router]);
 
-  const cityAreas = useMemo(() => areas.filter((a) => a.city_id === cityId), [areas, cityId]);
+  const cityAreas = useMemo(() => areas.filter((a) => a.cityId === cityId), [areas, cityId]);
 
   const servicesByGroup = useMemo(() => groupServices(services), [services]);
 

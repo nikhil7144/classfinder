@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { fetchTaxonomy } from "@/lib/api/reference";
 import {
   BUDGET_PERIODS,
   LEVELS,
@@ -60,18 +61,7 @@ export default function RequirementFields({
 
   useEffect(() => {
     const load = async () => {
-      const [{ data: s }, { data: p }] = await Promise.all([
-        supabase
-          .from("service_category_master")
-          .select("id, name, group")
-          .eq("is_active", true)
-          .order("name"),
-        supabase
-          .from("teaching_place_master")
-          .select("id, label, description")
-          .eq("is_active", true)
-          .order("sort_order"),
-      ]);
+      const { serviceCategories: s, teachingPlaces: p } = await fetchTaxonomy();
 
       setServices((s as ServiceOption[]) || []);
       setPlaces((p as TeachingPlace[]) || []);
