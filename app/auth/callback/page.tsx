@@ -42,11 +42,8 @@ function AuthCallback() {
         return;
       }
 
-      const data = { session };
-
       const result = await resolveProfileAndRedirect(
         router,
-        data.session.access_token,
         intendedRole === "seeker" || intendedRole === "provider" ? intendedRole : undefined,
         next
       );

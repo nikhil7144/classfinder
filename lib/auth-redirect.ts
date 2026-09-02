@@ -16,7 +16,6 @@ type Router = ReturnType<typeof useRouter>;
 // happened to click this time.
 export async function resolveProfileAndRedirect(
   router: Router,
-  accessToken: string,
   intendedRole?: "seeker" | "provider",
   /**
    * Where the user was headed before they were asked to sign in — a group
@@ -27,29 +26,41 @@ export async function resolveProfileAndRedirect(
   next?: string | null
 ): Promise<{ error?: string }> {
   const target = safeNextPath(next);
-  const response = await fetch("/api/auth/resolve-profile", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
 
-  const result = await response.json();
+  // Read straight from the table. "read own profile" (auth.uid() = id) covers
+  // this exactly, so the /api/auth/resolve-profile route this replaced was
+  // spending the service role — and a network hop — on a query the caller was
+  // always allowed to make. It also meant the mobile app could not resolve a
+  // profile at all, since it has no way to reach that key and should not.
+  //
+  // Deliberately NOT routed through api/ either: there is no shaping, no
+  // validation and no secret here, so a service in the middle would add a
+  // hop that does nothing — and put the login path behind a second process's
+  // uptime, which is a bad trade for nothing gained.
+  const { data: userData } = await supabase.auth.getUser();
 
-  if (!response.ok) {
-    return { error: result.error || "Unable to sign in." };
+  if (!userData.user) {
+    return { error: "Unable to sign in." };
   }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role, profile_complete")
+    .eq("id", userData.user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    return { error: profileError.message };
+  }
+
+  const result = profile
+    ? { isNew: false, role: profile.role, profileComplete: profile.profile_complete }
+    : { isNew: true, role: null as string | null, profileComplete: false };
 
   if (result.isNew) {
     if (!intendedRole) {
       router.push(withNext("/choose-role", target));
       return {};
-    }
-
-    const { data: userData } = await supabase.auth.getUser();
-
-    if (!userData.user) {
-      return { error: "Something went wrong — try again." };
     }
 
     // upsert so a retry, a double-submit, or a magic link opened twice can't

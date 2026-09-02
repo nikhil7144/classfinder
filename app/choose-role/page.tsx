@@ -76,24 +76,20 @@ function ChooseRolePage() {
     setSaving(true);
     setError("");
 
-    // Changing an existing role goes through the server, which enforces that
-    // it's only allowed while the profile is incomplete and clears the
-    // half-finished row for the role being left.
+    // Changing an existing role goes through switch_role(), a definer
+    // function: it enforces that switching is only allowed while the profile
+    // is incomplete, and clears the half-finished row for the role being
+    // left. That delete is the part RLS cannot express — seekers and
+    // providers have no delete policy, deliberately.
+    //
+    // It used to be a route holding the service role, which meant the mobile
+    // app could not switch roles at all. Same rules, somewhere both clients
+    // can reach.
     if (currentRole && currentRole !== role) {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const response = await fetch("/api/account/switch-role", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionData.session?.access_token || ""}`,
-        },
-        body: JSON.stringify({ role }),
-      });
+      const { error: switchError } = await supabase.rpc("switch_role", { p_role: role });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        setError(result.error || "Unable to change account type.");
+      if (switchError) {
+        setError(switchError.message || "Unable to change account type.");
         setSaving(false);
         return;
       }

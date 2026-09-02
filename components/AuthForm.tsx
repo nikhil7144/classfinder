@@ -41,7 +41,7 @@ export default function AuthForm({ eyebrow, heading, subheading, intendedRole }:
       if (!active) return;
 
       if (data.session) {
-        await resolveProfileAndRedirect(router, data.session.access_token, intendedRole, next);
+        await resolveProfileAndRedirect(router, intendedRole, next);
         return;
       }
 
@@ -115,12 +115,7 @@ export default function AuthForm({ eyebrow, heading, subheading, intendedRole }:
       return;
     }
 
-    const result = await resolveProfileAndRedirect(
-      router,
-      data.session.access_token,
-      intendedRole,
-      next
-    );
+    const result = await resolveProfileAndRedirect(router, intendedRole, next);
 
     if (result.error) {
       setFormError(result.error);
