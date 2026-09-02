@@ -1,0 +1,12 @@
+# Everything is LF in the index and in the working tree.
+#
+# core.autocrlf=true was rewriting files to CRLF on checkout while the index
+# held LF, which made every commit noisy and — more importantly — would make
+# the CI drift checks flap: `npm run spec` and `npm run gen:api` write LF, so
+# a CRLF working copy shows a diff against freshly generated output on Windows
+# and no diff on Linux. The check has to mean the same thing in both places.
+* text=auto eol=lf
+
+# Generated, and diffed by CI against a fresh run. Never hand-edit these.
+api/openapi.json linguist-generated=true
+lib/api/schema.d.ts linguist-generated=true

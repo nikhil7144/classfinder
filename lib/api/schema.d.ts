@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/api/v1/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Liveness — the process is up and serving */
+        get: operations["HealthController_get_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/feeds/cities": {
         parameters: {
             query?: never;
@@ -56,6 +73,46 @@ export interface paths {
          * @description Posts from coaches they follow, plus coaches in their city teaching what they said they are looking for. Each post carries a `reason` saying which of the two it is.
          */
         get: operations["FeedsController_myFeed_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Who is asking, and what they have finished
+         * @description The first call after signing in. `role: null` means a verified account that has not chosen a role yet — send them to pick one; it is not an error. The seeker or provider block is present only for that role.
+         */
+        get: operations["MeController_get_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reference": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cities, areas and the taxonomy, in one call
+         * @description Public and cached for a few minutes. Fetch once at startup and keep it — these change only when an admin edits the taxonomy or opens an area. Areas are returned whole, with `isLive` alongside: it gates seekers, not providers, so it is a flag and not a filter.
+         */
+        get: operations["ReferenceController_all_v1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -159,6 +216,105 @@ export interface components {
              */
             reason?: "following" | "interest";
         };
+        MeSeekerDto: {
+            name: string | null;
+            photoUrl: string | null;
+            /** Format: uuid */
+            areaId: string | null;
+            /** @description Service category ids they said they are looking for. Empty until they say. */
+            lookingFor: string[];
+            /** @description Whether coaches may approach them. */
+            openToOffers: boolean;
+        };
+        MeProviderDto: {
+            /**
+             * Format: uuid
+             * @description The listing id, which is not the user id.
+             */
+            id: string;
+            displayName: string | null;
+            photoUrl: string | null;
+            /** @enum {string} */
+            providerType: "individual" | "institution" | "event_planner";
+            /** @description Visible in search. False means waiting on an admin. */
+            approved: boolean;
+            /** @description Taken down. Different from never approved, and says so. */
+            isSuspended: boolean;
+        };
+        MeDto: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description Null when the account exists but no role has been chosen.
+             * @enum {string|null}
+             */
+            role: "seeker" | "provider" | "admin" | null;
+            /** @description Whether they finished the profile their role requires. */
+            profileComplete: boolean;
+            phone: string | null;
+            /** @description Present only for a seeker. Null when the role is set but the row is not. */
+            seeker?: components["schemas"]["MeSeekerDto"] | null;
+            /** @description Present only for a provider. */
+            provider?: components["schemas"]["MeProviderDto"] | null;
+        };
+        CityRefDto: {
+            /** Format: uuid */
+            id: string;
+            /** @example Indore */
+            name: string;
+            /** @example Madhya Pradesh */
+            state: string | null;
+        };
+        AreaRefDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            cityId: string;
+            /** @example Vijay Nagar */
+            name: string;
+            /** @description Centroid, the fallback search origin. */
+            lat: number | null;
+            lng: number | null;
+            /** @description Open to seekers. Providers may register in an area before it opens, so this is a flag rather than a filter — the seeker-facing screens honour it, signup does not. */
+            isLive: boolean;
+        };
+        ServiceCategoryRefDto: {
+            /** Format: uuid */
+            id: string;
+            /** @example Bharatanatyam */
+            name: string;
+            /**
+             * @description One of the eight taxonomy groups. Drives the colour a category renders in.
+             * @example dance
+             */
+            group: string;
+        };
+        ProviderCategoryRefDto: {
+            /** Format: uuid */
+            id: string;
+            /** @example Dance Teacher */
+            name: string;
+            /** @enum {string} */
+            providerType: "individual" | "institution";
+        };
+        TeachingPlaceRefDto: {
+            /**
+             * @description A short text id, not a uuid.
+             * @example individual_classes
+             */
+            id: string;
+            /** @example One-to-one */
+            label: string;
+            description: string | null;
+            sortOrder: number;
+        };
+        ReferenceDto: {
+            cities: components["schemas"]["CityRefDto"][];
+            areas: components["schemas"]["AreaRefDto"][];
+            serviceCategories: components["schemas"]["ServiceCategoryRefDto"][];
+            providerCategories: components["schemas"]["ProviderCategoryRefDto"][];
+            teachingPlaces: components["schemas"]["TeachingPlaceRefDto"][];
+        };
         CoachSuggestionDto: {
             /** @description A row as search_providers() returns it, passed through unchanged. */
             provider: {
@@ -218,6 +374,30 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    HealthController_get_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example ok */
+                        status?: string;
+                        /** @example 1234 */
+                        uptimeSeconds?: number;
+                    };
+                };
+            };
+        };
+    };
     FeedsController_cities_v1: {
         parameters: {
             query?: never;
@@ -281,6 +461,44 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FeedPostDto"][];
+                };
+            };
+        };
+    };
+    MeController_get_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeDto"];
+                };
+            };
+        };
+    };
+    ReferenceController_all_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceDto"];
                 };
             };
         };

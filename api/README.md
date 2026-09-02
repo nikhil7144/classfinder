@@ -79,6 +79,24 @@ is not a service role key and does not weaken the rule above: those endpoints
 still query Postgres as the caller, and their two writes — metering and the
 suggestion cache — go through definer functions added in phase3d.
 
+## Deploying
+
+`Dockerfile` builds a two-stage image that runs `node dist/main` as a non-root
+user, so any container host will take it. Set `SUPABASE_URL`,
+`SUPABASE_ANON_KEY`, `GOOGLE_API_KEY` and `CORS_ORIGINS`; most platforms
+inject `PORT` themselves.
+
+`GET /api/v1/health` is the readiness probe. It is deliberately shallow — it
+reports that the process is serving, not that Postgres is reachable, because a
+check that fails on a database blip pulls the whole service out of rotation
+over something a restart cannot fix.
+
+Then point the web app at it: **`NEXT_PUBLIC_API_URL`** in the site's
+environment. Without it the browser looks for the API on the visitor's own
+machine, and because every call here fails soft, the homepage feed and both
+suggestion panels come back empty rather than erroring. Quiet, and easy to
+miss.
+
 ## Status
 
 Two modules, five endpoints, twenty-two tests. The rest of the app still talks

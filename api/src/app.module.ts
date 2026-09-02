@@ -3,6 +3,9 @@ import { ConfigModule } from "@nestjs/config";
 import { APP_GUARD } from "@nestjs/core";
 import { AuthGuard } from "./auth/auth.guard";
 import { FeedsModule } from "./feeds/feeds.module";
+import { HealthController } from "./health/health.controller";
+import { MeModule } from "./me/me.module";
+import { ReferenceModule } from "./reference/reference.module";
 import { SuggestionsModule } from "./suggestions/suggestions.module";
 import { SupabaseModule } from "./supabase/supabase.module";
 
@@ -11,8 +14,11 @@ import { SupabaseModule } from "./supabase/supabase.module";
     ConfigModule.forRoot({ isGlobal: true, envFilePath: [".env.local", ".env"] }),
     SupabaseModule,
     FeedsModule,
+    MeModule,
+    ReferenceModule,
     SuggestionsModule,
   ],
+  controllers: [HealthController],
   providers: [
     // Global, so a new endpoint is private until it says @Public(). Failing
     // closed is the only sane default when the alternative leaks.

@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A second push to the same branch makes the first one's result irrelevant.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: API — tests and contract
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+
+      - run: npm ci
+
+      - run: npx tsc --noEmit -p tsconfig.json
+
+      # No database and no model key: every test stubs SupabaseService, which
+      # is the point of them. Anything needing a live project belongs in a
+      # separate job with secrets, not here.
+      - run: npm test
+
+      # The reason openapi.json is committed. It is generated from the DTOs by
+      # the same configureApp() that serves traffic, so a controller that
+      # changes shape without the contract moving with it is a diff — and the
+      # Dart and TypeScript clients generated from it would have been wrong.
+      - name: Contract is up to date
+        run: |
+          npm run spec
+          if ! git diff --quiet -- openapi.json; then
+            echo "::error::openapi.json is stale. Run 'npm run spec' in api/ and commit the result."
+            git diff -- openapi.json
+            exit 1
+          fi
+
+  web:
+    name: Web — lint, types, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - run: npm ci
+
+      # The generated client must match the committed contract too — the web
+      # app typechecks against lib/api/schema.d.ts, so a stale one passes
+      # locally and breaks on the next regeneration.
+      - name: Generated client is up to date
+        run: |
+          npm run gen:api
+          if ! git diff --quiet -- lib/api/schema.d.ts; then
+            echo "::error::lib/api/schema.d.ts is stale. Run 'npm run gen:api' and commit the result."
+            git diff -- lib/api/schema.d.ts
+            exit 1
+          fi
+
+      - run: npx tsc --noEmit
+
+      - run: npx eslint app components lib
+
+      # Placeholders: the build reads these at module scope and refuses to
+      # start without them. Nothing here is contacted — no page is prerendered
+      # that needs a live project.
+      - run: npx next build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://ci.invalid
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci
+          SUPABASE_SERVICE_ROLE_KEY: ci

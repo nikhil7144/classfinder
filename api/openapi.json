@@ -1,6 +1,38 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/api/v1/health": {
+      "get": {
+        "operationId": "HealthController_get_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "uptimeSeconds": {
+                      "type": "number",
+                      "example": 1234
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Liveness — the process is up and serving",
+        "tags": [
+          "health"
+        ]
+      }
+    },
     "/api/v1/feeds/cities": {
       "get": {
         "description": "Only cities with a live area and at least one approved coach in it, busiest first. The head of this list is the sensible default for a visitor who has not chosen.",
@@ -133,6 +165,57 @@
         "summary": "The caller's own feed",
         "tags": [
           "feeds"
+        ]
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "description": "The first call after signing in. `role: null` means a verified account that has not chosen a role yet — send them to pick one; it is not an error. The seeker or provider block is present only for that role.",
+        "operationId": "MeController_get_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Who is asking, and what they have finished",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/api/v1/reference": {
+      "get": {
+        "description": "Public and cached for a few minutes. Fetch once at startup and keep it — these change only when an admin edits the taxonomy or opens an area. Areas are returned whole, with `isLive` alongside: it gates seekers, not providers, so it is a flag and not a filter.",
+        "operationId": "ReferenceController_all_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Cities, areas and the taxonomy, in one call",
+        "tags": [
+          "reference"
         ]
       }
     },
@@ -352,6 +435,315 @@
           "likes",
           "wows",
           "surprises"
+        ]
+      },
+      "MeSeekerDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "areaId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "lookingFor": {
+            "description": "Service category ids they said they are looking for. Empty until they say.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "openToOffers": {
+            "type": "boolean",
+            "description": "Whether coaches may approach them."
+          }
+        },
+        "required": [
+          "name",
+          "photoUrl",
+          "areaId",
+          "lookingFor",
+          "openToOffers"
+        ]
+      },
+      "MeProviderDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The listing id, which is not the user id."
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "providerType": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "institution",
+              "event_planner"
+            ]
+          },
+          "approved": {
+            "type": "boolean",
+            "description": "Visible in search. False means waiting on an admin."
+          },
+          "isSuspended": {
+            "type": "boolean",
+            "description": "Taken down. Different from never approved, and says so."
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "photoUrl",
+          "providerType",
+          "approved",
+          "isSuspended"
+        ]
+      },
+      "MeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "seeker",
+              "provider",
+              "admin"
+            ],
+            "description": "Null when the account exists but no role has been chosen."
+          },
+          "profileComplete": {
+            "type": "boolean",
+            "description": "Whether they finished the profile their role requires."
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "seeker": {
+            "nullable": true,
+            "description": "Present only for a seeker. Null when the role is set but the row is not.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeSeekerDto"
+              }
+            ]
+          },
+          "provider": {
+            "nullable": true,
+            "description": "Present only for a provider.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeProviderDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "profileComplete",
+          "phone"
+        ]
+      },
+      "CityRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Indore"
+          },
+          "state": {
+            "type": "string",
+            "nullable": true,
+            "example": "Madhya Pradesh"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "state"
+        ]
+      },
+      "AreaRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Vijay Nagar"
+          },
+          "lat": {
+            "type": "number",
+            "nullable": true,
+            "description": "Centroid, the fallback search origin."
+          },
+          "lng": {
+            "type": "number",
+            "nullable": true
+          },
+          "isLive": {
+            "type": "boolean",
+            "description": "Open to seekers. Providers may register in an area before it opens, so this is a flag rather than a filter — the seeker-facing screens honour it, signup does not."
+          }
+        },
+        "required": [
+          "id",
+          "cityId",
+          "name",
+          "lat",
+          "lng",
+          "isLive"
+        ]
+      },
+      "ServiceCategoryRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Bharatanatyam"
+          },
+          "group": {
+            "type": "string",
+            "example": "dance",
+            "description": "One of the eight taxonomy groups. Drives the colour a category renders in."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "group"
+        ]
+      },
+      "ProviderCategoryRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Dance Teacher"
+          },
+          "providerType": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "institution"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "providerType"
+        ]
+      },
+      "TeachingPlaceRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "individual_classes",
+            "description": "A short text id, not a uuid."
+          },
+          "label": {
+            "type": "string",
+            "example": "One-to-one"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "description",
+          "sortOrder"
+        ]
+      },
+      "ReferenceDto": {
+        "type": "object",
+        "properties": {
+          "cities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CityRefDto"
+            }
+          },
+          "areas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AreaRefDto"
+            }
+          },
+          "serviceCategories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceCategoryRefDto"
+            }
+          },
+          "providerCategories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProviderCategoryRefDto"
+            }
+          },
+          "teachingPlaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeachingPlaceRefDto"
+            }
+          }
+        },
+        "required": [
+          "cities",
+          "areas",
+          "serviceCategories",
+          "providerCategories",
+          "teachingPlaces"
         ]
       },
       "CoachSuggestionDto": {
