@@ -1,0 +1,293 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/feeds/cities": {
+      "get": {
+        "description": "Only cities with a live area and at least one approved coach in it, busiest first. The head of this list is the sensible default for a visitor who has not chosen.",
+        "operationId": "FeedsController_cities_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CityDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Cities open for browsing",
+        "tags": [
+          "feeds"
+        ]
+      }
+    },
+    "/api/v1/feeds/cities/{cityId}": {
+      "get": {
+        "description": "Readable signed out. Posts appear here a few hours after they are written, because hiding a reported post needs signed-in reporters and a guest cannot report at all.",
+        "operationId": "FeedsController_cityFeed_v1",
+        "parameters": [
+          {
+            "name": "cityId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 60,
+              "default": 24,
+              "type": "number"
+            }
+          },
+          {
+            "name": "before",
+            "required": false,
+            "in": "query",
+            "description": "Return posts older than this. Pass the createdAt of the last post you have.",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FeedPostDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "What coaches in a city have been posting",
+        "tags": [
+          "feeds"
+        ]
+      }
+    },
+    "/api/v1/feeds/me": {
+      "get": {
+        "description": "Posts from coaches they follow, plus coaches in their city teaching what they said they are looking for. Each post carries a `reason` saying which of the two it is.",
+        "operationId": "FeedsController_myFeed_v1",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 60,
+              "default": 24,
+              "type": "number"
+            }
+          },
+          {
+            "name": "before",
+            "required": false,
+            "in": "query",
+            "description": "Return posts older than this. Pass the createdAt of the last post you have.",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FeedPostDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The caller's own feed",
+        "tags": [
+          "feeds"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "ClassFinder API",
+    "description": "The contract the web app and the Flutter app both speak.\n\nEvery request runs against Postgres as the caller, so the row-level security policies in `db/` remain the last word on who may see what. This API adds the contract, the validation and the tests; it does not replace those rules.",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "feeds",
+      "description": "What coaches have been posting, publicly and per parent"
+    }
+  ],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http",
+        "description": "The Supabase access token, exactly as the client SDK issues it."
+      }
+    },
+    "schemas": {
+      "CityDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Indore"
+          },
+          "state": {
+            "type": "string",
+            "nullable": true,
+            "example": "Madhya Pradesh"
+          },
+          "coachCount": {
+            "type": "number",
+            "description": "Approved coaches serving a live area of this city."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "state",
+          "coachCount"
+        ]
+      },
+      "FeedPostDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The coach who wrote it."
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "categoryName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Sports Academy"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "photo",
+              "video"
+            ]
+          },
+          "body": {
+            "type": "string",
+            "nullable": true
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Set when kind is photo."
+          },
+          "youtubeId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The 11-character YouTube id. Set when kind is video.",
+            "example": "dQw4w9WgXcQ"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "likes": {
+            "type": "number",
+            "description": "Total, across everyone."
+          },
+          "wows": {
+            "type": "number"
+          },
+          "surprises": {
+            "type": "number"
+          },
+          "myReaction": {
+            "type": "string",
+            "enum": [
+              "like",
+              "wow",
+              "surprise"
+            ],
+            "nullable": true,
+            "description": "This caller's own reaction. Absent on the public feed, which has no caller."
+          },
+          "iReported": {
+            "type": "boolean",
+            "description": "Whether this caller has already reported it."
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "following",
+              "interest"
+            ],
+            "description": "Why this post is in the feed. 'following' means the caller follows this coach; 'interest' means we suggested them. Absent on the public feed."
+          }
+        },
+        "required": [
+          "id",
+          "providerId",
+          "displayName",
+          "photoUrl",
+          "categoryName",
+          "kind",
+          "body",
+          "imageUrl",
+          "youtubeId",
+          "createdAt",
+          "likes",
+          "wows",
+          "surprises"
+        ]
+      }
+    }
+  }
+}

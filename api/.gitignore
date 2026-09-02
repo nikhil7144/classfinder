@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+
+# Real credentials. .env.example is the tracked one — the root .gitignore
+# ignores `.env*` wholesale, so it needs negating explicitly here.
+.env
+.env.local
+!.env.example
+
+*.tsbuildinfo
+
+# openapi.json is deliberately NOT ignored: it is the contract, and CI diffs
+# it against `npm run spec` to catch a controller changing shape without it.
