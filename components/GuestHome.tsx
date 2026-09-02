@@ -1,10 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import FeedItem from "@/components/spaces/FeedItem";
 import { BRAND } from "@/lib/brand";
+import type { City, FeedPost } from "@/lib/spaces";
 
-// Guest browse/search of real providers is Phase 1 step 5 — until that exists
-// this page promises only what the product can actually do today.
+type Props = {
+  /** Cities with a live area and at least one approved coach in it. */
+  cities: City[];
+  selectedCity: City | null;
+  posts: FeedPost[];
+};
 
 const VERTICALS = [
   { label: "Sports", tone: "sport", blurb: "Cricket, football, badminton, athletics, martial arts" },
@@ -24,7 +30,7 @@ const toneVar: Record<string, string> = {
   mind: "var(--mind)",
 };
 
-export default function GuestHome() {
+export default function GuestHome({ cities, selectedCity, posts }: Props) {
   return (
     <main className="min-h-screen bg-bg">
       <section className="mx-auto max-w-4xl px-6 pt-24 pb-16 text-center">
@@ -88,6 +94,55 @@ export default function GuestHome() {
           We open area by area — search yours to see who&apos;s teaching there now.
         </p>
       </section>
+
+      {/* What coaches here are actually doing.
+          
+          The section above says what the product covers; this says who is on
+          it. A signed-out visitor can read all of it and react to none of it —
+          reactions, following and reporting each need an account, which is the
+          same line every other consent rule in this product draws. */}
+      {selectedCity && posts.length > 0 && (
+        <section className="mx-auto max-w-2xl px-6 pb-28">
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <div>
+              <p className="cf-eyebrow">Lately on ClassFinder</p>
+              <h2 className="cf-display mt-2 text-2xl text-ink">
+                From coaches in {selectedCity.name}
+              </h2>
+            </div>
+
+            {/* Links, not a dropdown: each city is a real URL that renders its
+                own posts on the server, which is what makes them findable. */}
+            {cities.length > 1 && (
+              <div className="flex flex-wrap gap-2">
+                {cities.slice(0, 6).map((c) => (
+                  <Link
+                    key={c.id}
+                    href={`/?city=${c.id}`}
+                    className={`cf-badge ${
+                      c.id === selectedCity.id ? "cf-badge-ok" : "cf-badge-neutral"
+                    }`}
+                  >
+                    {c.name}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-8 space-y-8">
+            {posts.map((post) => (
+              <FeedItem key={post.id} post={post} canReact={false} onChanged={() => {}} />
+            ))}
+          </div>
+
+          <div className="mt-10 text-center">
+            <Link href="/signup/seeker" className="cf-btn-primary">
+              Join to follow and get in touch
+            </Link>
+          </div>
+        </section>
+      )}
     </main>
   );
 }

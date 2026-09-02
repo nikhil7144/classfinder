@@ -12,6 +12,7 @@ import {
 } from "@/lib/requirements";
 import SuggestedCoaches from "@/components/seeker/SuggestedCoaches";
 import FollowedSpaces from "@/components/spaces/FollowedSpaces";
+import InterestFeed from "@/components/spaces/InterestFeed";
 
 /** What this parent told us they want — see phase2r. */
 export type SeekerRequirement = {
@@ -236,6 +237,8 @@ export default function SeekerHome({
         {published && <SuggestedCoaches variant="dashboard" />}
 
         <FollowedSpaces />
+
+        <InterestFeed />
 
         <section className="cf-card p-7">
           <h2 className="cf-display text-lg text-ink">Start a group</h2>

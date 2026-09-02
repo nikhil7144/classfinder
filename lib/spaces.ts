@@ -192,3 +192,77 @@ export function postAge(iso: string): string {
     year: "numeric",
   });
 }
+
+// ---------------------------------------------------------------------
+// Feeds (phase 3B)
+//
+// Two reads over the same posts, for two different audiences. See the header
+// of db/2026-09-05-phase3b-feeds.sql for why the public one lags and why both
+// are scoped to a city rather than an area.
+// ---------------------------------------------------------------------
+
+export type City = {
+  id: string;
+  name: string;
+  state: string | null;
+  coach_count: number;
+};
+
+/** A post as it arrives from a feed: the post, plus who wrote it. */
+export type FeedPost = {
+  id: string;
+  provider_id: string;
+  display_name: string | null;
+  photo_url: string | null;
+  category_name: string | null;
+  kind: "photo" | "video";
+  body: string | null;
+  image_url: string | null;
+  youtube_id: string | null;
+  created_at: string;
+  likes: number;
+  wows: number;
+  surprises: number;
+  /** Signed-in feed only; the public feed cannot know. */
+  my_reaction?: Reaction | null;
+  i_reported?: boolean;
+  /** Signed-in feed only. Why this post is in front of me. */
+  reason?: "following" | "interest";
+};
+
+/**
+ * A feed row in the shape PostCard already renders.
+ *
+ * The feed carries the coach's identity alongside each post; PostCard is
+ * about the post alone and is used on the Space page too. The attribution
+ * header is the feed's job, so nothing here needs to change to reuse it.
+ */
+export function feedPostToSpacePost(row: FeedPost): SpacePost {
+  return {
+    id: row.id,
+    kind: row.kind,
+    body: row.body,
+    image_url: row.image_url,
+    youtube_id: row.youtube_id,
+    created_at: row.created_at,
+    // A feed never carries hidden posts — both functions filter them out, and
+    // the owner's view of their own hidden post is the Space page's job.
+    is_hidden: false,
+    hidden_reason: null,
+    likes: row.likes,
+    wows: row.wows,
+    surprises: row.surprises,
+    my_reaction: row.my_reaction ?? null,
+    i_reported: row.i_reported ?? false,
+  };
+}
+
+/** Followed coaches, plus coaches in their city teaching what they want. */
+export async function fetchMyFeed(before?: string | null) {
+  const { data, error } = await supabase.rpc("my_space_feed", {
+    p_limit: 24,
+    p_before: before ?? null,
+  });
+  if (error) return { posts: [] as FeedPost[], error: error.message };
+  return { posts: (data as FeedPost[]) || [], error: null };
+}

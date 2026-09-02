@@ -445,6 +445,8 @@ no name, and the parent decides whether anyone is introduced.
 | Photo posts and YouTube video posts (3A) | done |
 | Reactions: like, wow, surprise (3A) | done |
 | Report, auto-hide at 3, admin queue, suspend (3A) | done |
+| Public city feed on the guest homepage (3B) | done |
+| Followed + interest-matched feed for seekers (3B) | done |
 
 A Space is a provider's own page: what they do, what they know, how they
 teach. Created automatically with the listing, one per provider, reached as a
@@ -484,6 +486,26 @@ known before it is enforced rather than after.
 Coaches only. Event planners are a separate entity — they share the providers
 table today, and are excluded from coach search, Groups and the demand feed —
 and a teaching page is not what they need. Phase 4 is where they get theirs.
+
+**The feeds (3B)** are what made following worth doing. 3A shipped the follow
+button and then gave it nowhere to lead: `my_followed_spaces()` returned names
+and post counts, so a parent who followed four coaches had to click into each
+to read anything. Two reads fix it, and they are deliberately different
+products — a signed-out **city feed** on the homepage, which is a shop window,
+and a signed-in **feed** of followed coaches plus coaches in the same city
+teaching what the parent said they are looking for.
+
+Both are scoped to a **city**, not an area. Search is area-and-radius because
+"who can teach my child" is a distance question; reading what a coach posted is
+not, and an area-sized feed would be empty this early. `areas.is_live` still
+gates it.
+
+The public feed **lags** by six hours. Auto-hide needs three signed-in
+reporters and a guest cannot report at all, so showing posts to the largest
+audience the moment they are written would put them in front of exactly the
+people who cannot trigger the safety mechanism. Followers are exempt — they
+chose that coach. This is the one place the product deliberately shows
+signed-in users something before everybody else.
 
 ### Phase 4 — Events & bookings
 
