@@ -155,33 +155,79 @@ and the phases at risk are in the porting doc.
 
 ---
 
-## API shape — built for the mobile app too
+## API shape — a service in front, RLS underneath
 
-A mobile app is coming and will talk to Supabase directly, with the same anon
-key and the same RLS. That makes one rule worth holding to:
+**This section was rewritten on 2026-09-03.** It used to say the opposite, and
+the reasoning it gave was sound, so the change is recorded rather than quietly
+applied.
 
-> Anything the app will need must be an **RPC function** or an **RLS-governed
-> table read**. Logic that only a Next.js server component can perform is
-> logic the app cannot reuse.
+The original rule was that a mobile app would talk to Supabase directly with
+the same anon key and the same RLS, so *"anything the app will need must be an
+RPC function or an RLS-governed table read"*. That held for two and a half
+phases and produced 6,174 lines of SQL: 74 policies, 72 functions, every rule
+in one place and impossible to forget.
 
-This is why RLS being on matters beyond security: the rules live in the
-database, so web and mobile inherit the same ones instead of each
-re-implementing them. MentBridge's RLS-off approach — client-side redirects
-plus per-route server checks — would have transferred nothing.
+What it never produced was anywhere to put a test. It also left a second
+client reading the schema and guessing — `returns table(...)` and `returns
+jsonb` are not a contract — and no seam for logic that is judgement rather
+than permission.
 
-| Surface | Reusable by mobile? |
+So there is now an API: **`api/`, a NestJS service**, deployed separately from
+the web app so the mobile client does not ride the website's uptime and
+release cadence.
+
+### The rule that replaces it
+
+> Postgres decides **who may see what**. The API decides **what shape it
+> arrives in, and which of it is worth showing**.
+
+Concretely, and this is the part that must not erode:
+
+- The API **never holds the service role key**. Every authenticated request
+  queries Postgres as the caller, so all 74 policies still apply. A forgotten
+  ownership check in a controller returns too little; it cannot leak.
+- **Definer writes stay in `db/`.** `respond_to_approach`, `set_reaction`,
+  `resolve_report`, `set_enquiry_phone_sharing` and the rest exist because RLS
+  cannot restrict *which columns* an UPDATE touches. Reimplementing them in
+  TypeScript would hand the client the columns they exist to withhold.
+- **Read functions may migrate freely.** They make no security decision RLS is
+  not already making.
+- The contract is **generated, never written**: `api/openapi.json` comes from
+  the same DTOs that validate at runtime, emitted by the same `configureApp()`
+  that serves the traffic. Clients are generated from it — `lib/api/schema.d.ts`
+  for the web, `openapi-generator -g dart-dio` for Flutter.
+
+### Two things stay direct to Supabase
+
+- **Realtime.** Thread subscriptions are websockets with RLS applied per
+  connection; proxying them rebuilds that for no gain. This is also what
+  settles the question permanently: **RLS can never be switched off**, however
+  much else moves.
+- **File bytes.** Uploads go to Storage against a signed URL and images serve
+  from the CDN. Forwarding 5 MB through the API to hand it to Supabase is
+  waste.
+
+### Which door does a surface use?
+
+Both patterns coexist during the transition, so the rule is written down
+rather than decided per file:
+
+> A **surface** reads one way or the other, never both. Migrate a whole
+> surface or none of it.
+
+| Surface | Reads via |
 |---|---|
-| `search_providers()`, `groups_for_provider()`, `get_provider_profile()` | Yes — call over RPC |
-| `my_threads()` — every conversation, group and direct, in one call | Yes, and built for it: the app would otherwise assemble an inbox from four queries |
-| `thread_trials()`, `propose_trial()`, `respond_to_trial()`, `mark_trial_outcome()` | Yes — the trial's rules are all in the database |
-| Any table read (providers, areas, groups…) | Yes — RLS applies identically |
-| `/api/admin/*` | No, and fine: admin is a web-only console |
-| Server components rendering HTML | No — they must stay thin wrappers over the above |
+| Spaces feeds — guest city feed, seeker feed | **API** — first surface migrated (3B) |
+| Search, groups, threads, trials, enquiries | Supabase direct — migrate when touched |
+| A Space's own page (`space_feed`) | Supabase direct — still snake_case |
+| `/api/admin/*` | Next route handlers, web-only console, staying put |
+| Phase 4 onward | **API from the start** — no new SQL read functions |
 
-The trap to avoid is a server component reading with the **service role** and
-re-checking the rule in TypeScript. That writes the same security rule twice,
-and the copies drift. `app/provider/[id]` did exactly this before
-`get_provider_profile()` replaced it.
+The old trap is still a trap: a server component reading with the **service
+role** and re-checking the rule in TypeScript writes the same security rule
+twice, and the copies drift. `app/provider/[id]` did exactly this before
+`get_provider_profile()` replaced it. The API tier does not license that — it
+queries as the caller precisely so it never has to.
 
 ---
 
@@ -337,8 +383,9 @@ sit in a dashboard unopened for a week.
 
 Two rules:
 
-- **It fires in the database, not the web client.** The mobile app writes to
-  Supabase directly, so an enquiry sent from a phone would send no mail at all
+- **It fires in the database, not the web client.** Other clients write
+  without touching the web app at all, so an enquiry sent from a phone would
+  send no mail at all
   if the web app were the thing that noticed. Triggers, not API routes.
 - **A notification can never break what caused it.** Every trigger swallows its
   own errors. `respond_to_trial` raises on `not found`, so a trigger error
@@ -576,6 +623,10 @@ is what makes it straightforward rather than a rewrite.
 | Event planners hidden from search | They run spaces, they aren't "found" like coaches |
 | No self-serve advertiser accounts | Admin-managed banners plus a lead form is enough |
 | Payments deferred to Phase 6 | Model the booking data now, wire the gateway later |
+| An API tier in front, RLS still underneath | 6,174 lines of SQL had nowhere to put a test and no contract a second client could build against; RLS stays because it cannot be forgotten |
+| The API never holds the service role key | Querying as the caller means a missed check in a controller returns too little rather than leaking |
+| Definer writes stay in the database | They exist because RLS cannot restrict which columns an UPDATE touches; moving them hands the client those columns |
+| A surface reads one way or the other, never both | Two doors into one dataset is two implementations of one rule, which is what the API tier was added to stop |
 | Groups before Spaces | Demand generation beats content marketing at cold start |
 | Groups need 3 members to activate | Quality gate and growth loop in one action |
 | Society name hidden from the public | It describes where children gather; approved providers only |
@@ -592,7 +643,7 @@ is what makes it straightforward rather than a rewrite.
 | Trials on group threads too | A group ends in the same first session, and Groups exists to produce them |
 | The parent marks attendance | A coach certifying their own trials would void the review rule built on it |
 | One de-duplicated alert count | Summing per-feature counts told people they had twice as much waiting |
-| Notifications fire from triggers | The mobile app writes straight to Supabase; a web-side hook would notify nobody |
+| Notifications fire from triggers | A trigger catches every write whatever made it — web, API or mobile; a hook in any one client misses the others |
 | Queue first, send from a worker | A mail outage must delay a notification, not fail the message that caused it |
 | Notification triggers swallow errors | A failed email must never roll back a confirmed trial class |
 | Chat mail debounced 30 min | One mail per conversation beats five, which is how people learn to filter you |
@@ -614,6 +665,6 @@ is what makes it straightforward rather than a rewrite.
 | Who the learner is sits with identity, and is required | It is true of the person, not of this month's search; asked inside the optional requirement it was missing for exactly the people an audience is made of |
 | Mother and father kept apart, collapsed in aggregate | It is a thing people state about themselves; it is nobody's business in a count |
 | Interests are appended, never overwritten | "Dropped cricket, took up football" is the signal, and a snapshot destroys it |
-| The history is written by a trigger | The mobile app writes to Supabase directly; a client-side log has holes exactly where the other client's users are |
+| The history is written by a trigger | A client-side log has holes exactly where the other client's users are, and now where the API's callers are too |
 | Advertisers get an aggregate function, not a table | Counts with a five-family floor cannot be turned back into a household |
 | marketing_opt_in is separate and defaults off | "Coaches may write to me" is not consent to be marketed at |
