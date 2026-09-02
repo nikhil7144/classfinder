@@ -3,7 +3,7 @@
 import Link from "next/link";
 import FeedItem from "@/components/spaces/FeedItem";
 import { BRAND } from "@/lib/brand";
-import type { City, FeedPost } from "@/lib/spaces";
+import type { City, FeedPost } from "@/lib/api/client";
 
 type Props = {
   /** Cities with a live area and at least one approved coach in it. */

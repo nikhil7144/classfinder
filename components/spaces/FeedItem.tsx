@@ -22,26 +22,26 @@ export default function FeedItem({ post, canReact, onChanged }: Props) {
   return (
     <article className="space-y-3">
       <Link
-        href={`/provider/${post.provider_id}/space`}
+        href={`/provider/${post.providerId}/space`}
         className="flex items-center gap-3 transition hover:opacity-80"
       >
-        {post.photo_url ? (
+        {post.photoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={post.photo_url}
+            src={post.photoUrl}
             alt=""
             className="h-10 w-10 shrink-0 rounded-xl border border-line object-cover"
           />
         ) : (
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-line bg-surface-3 font-semibold text-faint">
-            {(post.display_name || "?").charAt(0).toUpperCase()}
+            {(post.displayName || "?").charAt(0).toUpperCase()}
           </div>
         )}
 
         <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold text-ink">{post.display_name || "Unnamed"}</p>
-          {post.category_name && (
-            <p className="truncate text-xs text-muted">{post.category_name}</p>
+          <p className="truncate font-semibold text-ink">{post.displayName || "Unnamed"}</p>
+          {post.categoryName && (
+            <p className="truncate text-xs text-muted">{post.categoryName}</p>
           )}
         </div>
 

@@ -194,57 +194,41 @@ export function postAge(iso: string): string {
 }
 
 // ---------------------------------------------------------------------
-// Feeds (phase 3B)
+// Feeds (phase 3B), now read through the API
 //
-// Two reads over the same posts, for two different audiences. See the header
-// of db/2026-09-05-phase3b-feeds.sql for why the public one lags and why both
-// are scoped to a city rather than an area.
+// The two feed reads moved to the Nest service in api/. The types and the
+// fetchers live in lib/api/client.ts, generated from its OpenAPI document —
+// importing FeedPost from there rather than declaring it here is the point:
+// nobody hand-maintains the wire shape twice.
+//
+// This surface reads one way only. A page that read the feed from the API and
+// the same posts from Supabase would be two implementations of one rule,
+// which is the thing the API tier exists to stop.
 // ---------------------------------------------------------------------
 
-export type City = {
-  id: string;
-  name: string;
-  state: string | null;
-  coach_count: number;
-};
+export type { FeedPost, City } from "@/lib/api/client";
+export { fetchCities, fetchCityFeed } from "@/lib/api/client";
+// Browser-only — it reads the session for a token. Kept apart from the public
+// fetchers so a server component can import those without pulling it in.
+export { fetchMyFeed } from "@/lib/api/my-feed";
 
-/** A post as it arrives from a feed: the post, plus who wrote it. */
-export type FeedPost = {
-  id: string;
-  provider_id: string;
-  display_name: string | null;
-  photo_url: string | null;
-  category_name: string | null;
-  kind: "photo" | "video";
-  body: string | null;
-  image_url: string | null;
-  youtube_id: string | null;
-  created_at: string;
-  likes: number;
-  wows: number;
-  surprises: number;
-  /** Signed-in feed only; the public feed cannot know. */
-  my_reaction?: Reaction | null;
-  i_reported?: boolean;
-  /** Signed-in feed only. Why this post is in front of me. */
-  reason?: "following" | "interest";
-};
+import type { FeedPost } from "@/lib/api/client";
 
 /**
- * A feed row in the shape PostCard already renders.
+ * A feed row in the shape PostCard renders.
  *
- * The feed carries the coach's identity alongside each post; PostCard is
- * about the post alone and is used on the Space page too. The attribution
- * header is the feed's job, so nothing here needs to change to reuse it.
+ * PostCard is still fed by space_feed() on a Space's own page, which has not
+ * migrated and still returns snake_case. So this bridges the two until it
+ * does — at which point this function disappears rather than growing.
  */
 export function feedPostToSpacePost(row: FeedPost): SpacePost {
   return {
     id: row.id,
     kind: row.kind,
     body: row.body,
-    image_url: row.image_url,
-    youtube_id: row.youtube_id,
-    created_at: row.created_at,
+    image_url: row.imageUrl,
+    youtube_id: row.youtubeId,
+    created_at: row.createdAt,
     // A feed never carries hidden posts — both functions filter them out, and
     // the owner's view of their own hidden post is the Space page's job.
     is_hidden: false,
@@ -252,17 +236,7 @@ export function feedPostToSpacePost(row: FeedPost): SpacePost {
     likes: row.likes,
     wows: row.wows,
     surprises: row.surprises,
-    my_reaction: row.my_reaction ?? null,
-    i_reported: row.i_reported ?? false,
+    my_reaction: (row.myReaction as Reaction | null) ?? null,
+    i_reported: row.iReported ?? false,
   };
-}
-
-/** Followed coaches, plus coaches in their city teaching what they want. */
-export async function fetchMyFeed(before?: string | null) {
-  const { data, error } = await supabase.rpc("my_space_feed", {
-    p_limit: 24,
-    p_before: before ?? null,
-  });
-  if (error) return { posts: [] as FeedPost[], error: error.message };
-  return { posts: (data as FeedPost[]) || [], error: null };
 }

@@ -30,7 +30,7 @@ export default function InterestFeed() {
     let alive = true;
 
     const load = async () => {
-      const { posts: rows } = await fetchMyFeed();
+      const rows = await fetchMyFeed();
       if (!alive) return;
       setPosts(rows);
       setDone(rows.length < 24);
@@ -43,7 +43,7 @@ export default function InterestFeed() {
   }, []);
 
   const refresh = useCallback(async () => {
-    const { posts: rows } = await fetchMyFeed();
+    const rows = await fetchMyFeed();
     setPosts(rows);
     setDone(rows.length < 24);
   }, []);
@@ -51,7 +51,7 @@ export default function InterestFeed() {
   const loadMore = async () => {
     if (!posts?.length || loadingMore) return;
     setLoadingMore(true);
-    const { posts: older } = await fetchMyFeed(posts[posts.length - 1].created_at);
+    const older = await fetchMyFeed(posts[posts.length - 1].createdAt);
     setLoadingMore(false);
     if (older.length < 24) setDone(true);
     setPosts([...posts, ...older]);

@@ -31,5 +31,8 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  // api/ is a separate service with its own tsconfig — it needs decorator
+  // support the web app does not, so typechecking it from here fails on every
+  // @ApiProperty. `cd api && npm test` covers it.
+  "exclude": ["node_modules", "api"]
 }

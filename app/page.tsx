@@ -2,8 +2,8 @@ import { unstable_cache } from "next/cache";
 import { redirect } from "next/navigation";
 import GuestHome from "@/components/GuestHome";
 import { createSupabaseServerClient } from "@/lib/supabase-server-client";
-import { supabaseServerAdmin, supabaseServerAuth } from "@/lib/supabase-server";
-import type { City, FeedPost } from "@/lib/spaces";
+import { supabaseServerAdmin } from "@/lib/supabase-server";
+import { fetchCities, fetchCityFeed } from "@/lib/api/client";
 
 /**
  * The feed, cached for five minutes across every visitor.
@@ -13,19 +13,12 @@ import type { City, FeedPost } from "@/lib/spaces";
  * the queries instead, which is where the cost actually was: two Postgres
  * round trips on the busiest and least personal route in the product.
  *
- * Deliberately the plain anon client, not the cookie-bound one. This data is
- * identical for everybody and the cache is shared, so reading it as a
- * particular user would be both pointless and wrong.
+ * Read through the API rather than Supabase, like every other feed call. The
+ * endpoint is public and identical for everybody, which is what makes it safe
+ * to share one cache entry across all visitors.
  */
 const getCityFeed = unstable_cache(
-  async (cityId: string) => {
-    const { data } = await supabaseServerAuth.rpc("public_city_feed", {
-      p_city_id: cityId,
-      p_limit: 12,
-      p_before: null,
-    });
-    return (data as FeedPost[]) || [];
-  },
+  async (cityId: string) => fetchCityFeed(cityId, 12),
   ["public-city-feed"],
   // Content is already six hours stale by design (space_public_delay), so
   // five minutes of cache costs the reader nothing they would notice.
@@ -33,10 +26,7 @@ const getCityFeed = unstable_cache(
 );
 
 const getLiveCities = unstable_cache(
-  async () => {
-    const { data } = await supabaseServerAuth.rpc("live_cities");
-    return (data as City[]) || [];
-  },
+  async () => fetchCities(),
   ["live-cities"],
   // Changes only when an admin opens an area or approves a coach.
   { revalidate: 3600, tags: ["city-feed"] },
