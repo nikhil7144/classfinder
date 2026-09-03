@@ -96,7 +96,26 @@ export default function RaiseQueryForm({ providerId, providerName, services }: P
     refresh();
   };
 
-  if (gate.state === "loading" || gate.state === "provider") return null;
+  // A coach looking at another coach gets nothing, which is right. Everything
+  // else says something — an absent form is the one outcome nobody can debug,
+  // and it is how this shipped broken.
+  if (gate.state === "provider") return null;
+
+  if (gate.state === "loading") {
+    return <section className="cf-card h-40 animate-pulse p-7" />;
+  }
+
+  if (gate.state === "error") {
+    return (
+      <section className="cf-card p-7">
+        <h2 className="cf-display text-lg text-ink">Ask {providerName} to call you</h2>
+        <p className="mt-2 text-sm text-muted">
+          Couldn&apos;t check whether you can right now. Refresh and try again.
+        </p>
+        <p className="mt-2 text-xs text-faint">{gate.reason}</p>
+      </section>
+    );
+  }
 
   if (sent || gate.state === "existing") {
     return (

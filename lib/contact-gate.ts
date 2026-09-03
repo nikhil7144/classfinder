@@ -18,7 +18,9 @@ export type ContactGate =
   | { state: "incomplete" }
   | { state: "provider" }
   | { state: "existing" }
-  | { state: "ready" };
+  | { state: "ready" }
+  /** We could not work out whether they may. Never silently the same as "no". */
+  | { state: "error"; reason: string };
 
 type Options = {
   providerId: string;
@@ -54,7 +56,10 @@ export function useContactGate({ providerId, table, closedStatuses }: Options): 
       }
       setMe(auth.user.id);
 
-      const [{ data: profile }, { data: existing }] = await Promise.all([
+      const [
+        { data: profile, error: profileError },
+        { data: existing, error: existingError },
+      ] = await Promise.all([
         supabase.from("profiles").select("role, profile_complete").eq("id", auth.user.id).maybeSingle(),
         // The same rule the partial unique index enforces, said before they
         // write rather than as a constraint violation afterwards.
@@ -68,13 +73,27 @@ export function useContactGate({ providerId, table, closedStatuses }: Options): 
       ]);
 
       if (!alive) return;
+
+      // A failed read is not a role. Mapping "we don't know" onto "you're a
+      // coach" is what made this invisible: the form rendered nothing, and
+      // nothing is indistinguishable from a coach looking at another coach.
+      if (profileError) return setGate({ state: "error", reason: profileError.message });
+      if (existingError) return setGate({ state: "error", reason: existingError.message });
+      if (!profile) return setGate({ state: "error", reason: "No profile found for this account." });
+
       if (existing) return setGate({ state: "existing" });
-      if (profile?.role !== "seeker") return setGate({ state: "provider" });
-      if (!profile?.profile_complete) return setGate({ state: "incomplete" });
+      if (profile.role !== "seeker") return setGate({ state: "provider" });
+      if (!profile.profile_complete) return setGate({ state: "incomplete" });
       setGate({ state: "ready" });
     };
 
-    check();
+    check().catch((e: unknown) => {
+      // Anything thrown here used to leave the gate on "loading" for ever,
+      // which renders as an absent form rather than a broken one.
+      if (alive) {
+        setGate({ state: "error", reason: e instanceof Error ? e.message : "Unknown error" });
+      }
+    });
     return () => {
       alive = false;
     };
