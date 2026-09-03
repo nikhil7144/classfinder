@@ -25,21 +25,36 @@ export const api = createClient<paths>({ baseUrl });
 /**
  * Every read here fails soft, returning an empty list.
  *
- * The API is a second service now, and both feeds render nothing when empty.
- * So a sidecar that is restarting costs a section on a page rather than the
- * page — the homepage falls back to the brochure it was before 3B, which is
- * the right failure for a shop window.
+ * Both feed sections render nothing when empty, so an API that is down or
+ * unreachable costs a section rather than the page — the homepage falls back
+ * to the brochure it was before 3B, which is the right failure for a shop
+ * window.
+ *
+ * try/catch, not just the error field. openapi-fetch returns `{ error }` for
+ * an HTTP error but lets a *network* failure reject, so a refused connection
+ * throws straight past that check. That is exactly what an unset
+ * NEXT_PUBLIC_API_URL produces in production — the server dials localhost:4000
+ * and gets ECONNREFUSED — and it took down the whole page rather than one
+ * section of it.
  */
 export async function fetchCities(): Promise<City[]> {
-  const { data, error } = await api.GET("/api/v1/feeds/cities", {});
-  if (error || !data) return [];
-  return data;
+  try {
+    const { data, error } = await api.GET("/api/v1/feeds/cities", {});
+    if (error || !data) return [];
+    return data;
+  } catch {
+    return [];
+  }
 }
 
 export async function fetchCityFeed(cityId: string, limit = 12): Promise<FeedPost[]> {
-  const { data, error } = await api.GET("/api/v1/feeds/cities/{cityId}", {
-    params: { path: { cityId }, query: { limit } },
-  });
-  if (error || !data) return [];
-  return data;
+  try {
+    const { data, error } = await api.GET("/api/v1/feeds/cities/{cityId}", {
+      params: { path: { cityId }, query: { limit } },
+    });
+    if (error || !data) return [];
+    return data;
+  } catch {
+    return [];
+  }
 }

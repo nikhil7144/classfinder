@@ -25,12 +25,18 @@ export async function fetchMyFeed(before?: string | null, limit = 24): Promise<F
   const token = await accessToken();
   if (!token) return [];
 
-  const { data, error } = await api.GET("/api/v1/feeds/me", {
-    headers: { Authorization: `Bearer ${token}` },
-    params: { query: { limit, ...(before ? { before } : {}) } },
-  });
-  if (error || !data) return [];
-  return data;
+  try {
+    const { data, error } = await api.GET("/api/v1/feeds/me", {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { query: { limit, ...(before ? { before } : {}) } },
+    });
+    if (error || !data) return [];
+    return data;
+  } catch {
+    // Unreachable API — see the note in ./client. The feed section renders
+    // nothing rather than the dashboard failing.
+    return [];
+  }
 }
 
 /**
@@ -48,11 +54,15 @@ export async function fetchCoachSuggestions(): Promise<{
   const token = await accessToken();
   if (!token) return { suggestions: [], reason: null };
 
-  const { data, error } = await api.POST("/api/v1/suggestions/coaches", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (error || !data) return { suggestions: [], reason: null };
-  return { suggestions: data.suggestions, reason: data.reason ?? null };
+  try {
+    const { data, error } = await api.POST("/api/v1/suggestions/coaches", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (error || !data) return { suggestions: [], reason: null };
+    return { suggestions: data.suggestions, reason: data.reason ?? null };
+  } catch {
+    return { suggestions: [], reason: null };
+  }
 }
 
 export async function fetchStudentSuggestions(body: {
@@ -64,13 +74,17 @@ export async function fetchStudentSuggestions(body: {
   const token = await accessToken();
   if (!token) return { suggestions: [], error: "Log in again." };
 
-  const { data, error } = await api.POST("/api/v1/suggestions/students", {
-    headers: { Authorization: `Bearer ${token}` },
-    // The generated type treats a documented default as always sent, so the
-    // client supplies it rather than relying on the server's copy. Same
-    // number, named in one place either way.
-    body: { ...body, radiusKm: body.radiusKm ?? 15 },
-  });
-  if (error || !data) return { suggestions: [], error: "Couldn't rank these." };
-  return { suggestions: data.suggestions, error: null };
+  try {
+    const { data, error } = await api.POST("/api/v1/suggestions/students", {
+      headers: { Authorization: `Bearer ${token}` },
+      // The generated type treats a documented default as always sent, so the
+      // client supplies it rather than relying on the server's copy. Same
+      // number, named in one place either way.
+      body: { ...body, radiusKm: body.radiusKm ?? 15 },
+    });
+    if (error || !data) return { suggestions: [], error: "Couldn't rank these." };
+    return { suggestions: data.suggestions, error: null };
+  } catch {
+    return { suggestions: [], error: "Couldn't rank these." };
+  }
 }
