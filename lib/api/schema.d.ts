@@ -125,6 +125,87 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/queries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Queries the caller is party to
+         * @description A coach gets the ones raised with them, a parent gets their own. One endpoint for both sides — the row policy decides which rows those are, so neither has to say who it is.
+         */
+        get: operations["QueriesController_list_v1"];
+        put?: never;
+        /**
+         * Ask a coach to get in touch
+         * @description One live query per coach — asking twice returns 400 rather than making a second lead. Needs a completed seeker profile and an approved coach, both enforced by the row policy.
+         */
+        post: operations["QueriesController_raise_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/queries/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Move a lead along
+         * @description The coach's own queries only. callbackAt is required for callback_scheduled.
+         */
+        patch: operations["QueriesController_setStatus_v1"];
+        trace?: never;
+    };
+    "/api/v1/queries/{id}/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reply in writing, opening a conversation
+         * @description Returns the enquiry to open. If a thread with this family already exists the message lands there instead of starting a second one, and the query is attached to it either way.
+         */
+        post: operations["QueriesController_answer_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/queries/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark it read, for whichever side is asking */
+        post: operations["QueriesController_markRead_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reference": {
         parameters: {
             query?: never;
@@ -314,6 +395,72 @@ export interface components {
             areaId?: string;
             venueName?: string;
             venueAddress?: string;
+        };
+        QueryDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            providerId: string;
+            /** @description The coach's name, for the parent's list. */
+            providerName: string | null;
+            /** Format: uuid */
+            seekerId: string;
+            /** @description As given when the query was raised, not as the profile reads now. */
+            contactName: string;
+            /** @description Only ever visible to the two parties. */
+            contactPhone: string;
+            /** Format: uuid */
+            serviceCategoryId: string | null;
+            serviceName: string | null;
+            details: string | null;
+            /** @enum {string} */
+            status: "new" | "contacted" | "callback_scheduled" | "completed" | "closed";
+            /** Format: date-time */
+            callbackAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            respondedAt: string | null;
+            /**
+             * Format: uuid
+             * @description The conversation this query produced, once one exists.
+             */
+            enquiryId: string | null;
+        };
+        RaiseQueryDto: {
+            /**
+             * Format: uuid
+             * @description The coach being asked. Must be approved.
+             */
+            providerId: string;
+            contactName: string;
+            /**
+             * @description Required, unlike on an enquiry. The point of a query is to be called, so one without a number is a request nobody can act on. Prefilled from the profile and editable, so a second number can be used without changing the account.
+             * @example +91 98765 43210
+             */
+            contactPhone: string;
+            /** Format: uuid */
+            serviceCategoryId?: string;
+            details?: string;
+        };
+        UpdateQueryStatusDto: {
+            /** @enum {string} */
+            status: "new" | "contacted" | "callback_scheduled" | "completed" | "closed";
+            /**
+             * Format: date-time
+             * @description Required when status is callback_scheduled, ignored otherwise.
+             */
+            callbackAt?: string;
+        };
+        AnswerQueryDto: {
+            message: string;
+        };
+        AnsweredQueryDto: {
+            /**
+             * Format: uuid
+             * @description The conversation to open. An existing thread with this family if there was one, so a parent never ends up with two conversations for one coach.
+             */
+            enquiryId: string;
         };
         CityRefDto: {
             /** Format: uuid */
@@ -582,6 +729,119 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["OrganiserDto"];
                 };
+            };
+        };
+    };
+    QueriesController_list_v1: {
+        parameters: {
+            query?: {
+                status?: "new" | "contacted" | "callback_scheduled" | "completed" | "closed";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryDto"][];
+                };
+            };
+        };
+    };
+    QueriesController_raise_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RaiseQueryDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryDto"];
+                };
+            };
+        };
+    };
+    QueriesController_setStatus_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateQueryStatusDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryDto"];
+                };
+            };
+        };
+    };
+    QueriesController_answer_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnswerQueryDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnsweredQueryDto"];
+                };
+            };
+        };
+    };
+    QueriesController_markRead_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

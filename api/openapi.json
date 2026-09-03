@@ -260,6 +260,212 @@
         ]
       }
     },
+    "/api/v1/queries": {
+      "get": {
+        "description": "A coach gets the ones raised with them, a parent gets their own. One endpoint for both sides — the row policy decides which rows those are, so neither has to say who it is.",
+        "operationId": "QueriesController_list_v1",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "new",
+                "contacted",
+                "callback_scheduled",
+                "completed",
+                "closed"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QueryDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Queries the caller is party to",
+        "tags": [
+          "queries"
+        ]
+      },
+      "post": {
+        "description": "One live query per coach — asking twice returns 400 rather than making a second lead. Needs a completed seeker profile and an approved coach, both enforced by the row policy.",
+        "operationId": "QueriesController_raise_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RaiseQueryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask a coach to get in touch",
+        "tags": [
+          "queries"
+        ]
+      }
+    },
+    "/api/v1/queries/{id}/status": {
+      "patch": {
+        "description": "The coach's own queries only. callbackAt is required for callback_scheduled.",
+        "operationId": "QueriesController_setStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateQueryStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Move a lead along",
+        "tags": [
+          "queries"
+        ]
+      }
+    },
+    "/api/v1/queries/{id}/answer": {
+      "post": {
+        "description": "Returns the enquiry to open. If a thread with this family already exists the message lands there instead of starting a second one, and the query is attached to it either way.",
+        "operationId": "QueriesController_answer_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnswerQueryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnsweredQueryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reply in writing, opening a conversation",
+        "tags": [
+          "queries"
+        ]
+      }
+    },
+    "/api/v1/queries/{id}/read": {
+      "post": {
+        "operationId": "QueriesController_markRead_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark it read, for whichever side is asking",
+        "tags": [
+          "queries"
+        ]
+      }
+    },
     "/api/v1/reference": {
       "get": {
         "description": "Public and cached for a few minutes. Fetch once at startup and keep it — these change only when an admin edits the taxonomy or opens an area. Areas are returned whole, with `isLive` alongside: it gates seekers, not providers, so it is a flag and not a filter.",
@@ -741,6 +947,177 @@
             "maxLength": 500
           }
         }
+      },
+      "QueryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerName": {
+            "type": "string",
+            "nullable": true,
+            "description": "The coach's name, for the parent's list."
+          },
+          "seekerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contactName": {
+            "type": "string",
+            "description": "As given when the query was raised, not as the profile reads now."
+          },
+          "contactPhone": {
+            "type": "string",
+            "description": "Only ever visible to the two parties."
+          },
+          "serviceCategoryId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "serviceName": {
+            "type": "string",
+            "nullable": true
+          },
+          "details": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "new",
+              "contacted",
+              "callback_scheduled",
+              "completed",
+              "closed"
+            ]
+          },
+          "callbackAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "respondedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "enquiryId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid",
+            "description": "The conversation this query produced, once one exists."
+          }
+        },
+        "required": [
+          "id",
+          "providerId",
+          "providerName",
+          "seekerId",
+          "contactName",
+          "contactPhone",
+          "serviceCategoryId",
+          "serviceName",
+          "details",
+          "status",
+          "callbackAt",
+          "createdAt",
+          "respondedAt",
+          "enquiryId"
+        ]
+      },
+      "RaiseQueryDto": {
+        "type": "object",
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The coach being asked. Must be approved."
+          },
+          "contactName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "contactPhone": {
+            "type": "string",
+            "example": "+91 98765 43210",
+            "description": "Required, unlike on an enquiry. The point of a query is to be called, so one without a number is a request nobody can act on. Prefilled from the profile and editable, so a second number can be used without changing the account."
+          },
+          "serviceCategoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "details": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "providerId",
+          "contactName",
+          "contactPhone"
+        ]
+      },
+      "UpdateQueryStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "new",
+              "contacted",
+              "callback_scheduled",
+              "completed",
+              "closed"
+            ]
+          },
+          "callbackAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Required when status is callback_scheduled, ignored otherwise."
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "AnswerQueryDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "AnsweredQueryDto": {
+        "type": "object",
+        "properties": {
+          "enquiryId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The conversation to open. An existing thread with this family if there was one, so a parent never ends up with two conversations for one coach."
+          }
+        },
+        "required": [
+          "enquiryId"
+        ]
       },
       "CityRefDto": {
         "type": "object",
