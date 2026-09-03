@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import SeekerHome from "@/components/SeekerHome";
 import ProviderHome from "@/components/ProviderHome";
+import OrganiserHome from "@/components/OrganiserHome";
 import { isSeekerProfileComplete, isProviderProfileComplete } from "@/lib/profile-rules";
 import { createSupabaseServerClient } from "@/lib/supabase-server-client";
 import { supabaseServerAdmin } from "@/lib/supabase-server";
@@ -212,6 +213,40 @@ export default async function DashboardPage() {
                 areaNames: Array.from(new Set(areaNames)),
                 branchCount: (branches || []).length,
                 availabilityCount: (providerProfile.availability || []).length,
+              }
+            : null
+        }
+      />
+    );
+  }
+
+  if (userRole === "organiser") {
+    // Read as the caller, not with the service role: "owner read own organiser
+    // row" covers it exactly, and an unapproved company still sees its own
+    // listing. The seeker and provider branches above predate that rule and
+    // still use admin rights; they move when they are next touched.
+    const { data: listing } = await supabase
+      .from("organisers")
+      .select("name, venue_name, area_id, contact_email, contact_phone, approved, is_suspended")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const areaName = listing?.area_id
+      ? ((await fetchReference()).areas.find((a) => a.id === listing.area_id)?.name ?? null)
+      : null;
+
+    return (
+      <OrganiserHome
+        listing={
+          listing
+            ? {
+                name: listing.name,
+                venueName: listing.venue_name,
+                areaName,
+                contactEmail: listing.contact_email,
+                contactPhone: listing.contact_phone,
+                approved: listing.approved,
+                isSuspended: listing.is_suspended,
               }
             : null
         }

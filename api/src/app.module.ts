@@ -5,6 +5,7 @@ import { AuthGuard } from "./auth/auth.guard";
 import { FeedsModule } from "./feeds/feeds.module";
 import { HealthController } from "./health/health.controller";
 import { MeModule } from "./me/me.module";
+import { OrganisersModule } from "./organisers/organisers.module";
 import { ReferenceModule } from "./reference/reference.module";
 import { SuggestionsModule } from "./suggestions/suggestions.module";
 import { SupabaseModule } from "./supabase/supabase.module";
@@ -15,6 +16,7 @@ import { SupabaseModule } from "./supabase/supabase.module";
     SupabaseModule,
     FeedsModule,
     MeModule,
+    OrganisersModule,
     ReferenceModule,
     SuggestionsModule,
   ],

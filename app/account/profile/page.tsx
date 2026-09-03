@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import OrganiserProfileForm from "@/components/organiser/OrganiserProfileForm";
 import ProviderProfileForm from "@/components/provider/ProviderProfileForm";
 import SeekerProfileForm from "@/components/seeker/SeekerProfileForm";
 import { createSupabaseServerClient } from "@/lib/supabase-server-client";
@@ -28,17 +29,23 @@ export default async function AccountProfilePage() {
       <header className="cf-card mb-5 p-7">
         <p className="cf-eyebrow">Profile</p>
         <h1 className="cf-display mt-2 text-2xl text-ink">
-          {profile.role === "provider" ? "Your listing" : "Your details"}
+          {profile.role === "provider" || profile.role === "organiser"
+            ? "Your listing"
+            : "Your details"}
         </h1>
         <p className="mt-2 text-sm text-muted">
           {profile.role === "provider"
             ? "What parents see when they find you. Changes save when you press Save at the bottom."
-            : "Used when you get in touch with a coach or tutor."}
+            : profile.role === "organiser"
+              ? "What parents see on your events. Changes save when you press Save at the bottom."
+              : "Used when you get in touch with a coach or tutor."}
         </p>
       </header>
 
       {profile.role === "provider" ? (
         <ProviderProfileForm redirectTo={null} variant="account" />
+      ) : profile.role === "organiser" ? (
+        <OrganiserProfileForm redirectTo="/dashboard" variant="edit" />
       ) : (
         <SeekerProfileForm redirectTo={null} variant="account" />
       )}

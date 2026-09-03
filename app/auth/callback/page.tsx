@@ -44,7 +44,9 @@ function AuthCallback() {
 
       const result = await resolveProfileAndRedirect(
         router,
-        intendedRole === "seeker" || intendedRole === "provider" ? intendedRole : undefined,
+        intendedRole === "seeker" || intendedRole === "provider" || intendedRole === "organiser"
+          ? intendedRole
+          : undefined,
         next
       );
 

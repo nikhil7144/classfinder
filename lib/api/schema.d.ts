@@ -101,6 +101,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/organisers/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The caller's own organiser listing
+         * @description Null before they have created one — a normal state for an account that has picked the role and not filled the form in yet, not an error. Visible while unapproved, so a company waiting on an admin can see what it submitted.
+         */
+        get: operations["OrganisersController_mine_v1"];
+        /**
+         * Create or update it
+         * @description One listing per account, so this upserts. Approval and suspension are absent from the body by design and withheld by column privileges besides — naming either is refused by Postgres, not just by this contract.
+         */
+        put: operations["OrganisersController_save_v1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reference": {
         parameters: {
             query?: never;
@@ -256,6 +280,40 @@ export interface components {
             seeker?: components["schemas"]["MeSeekerDto"] | null;
             /** @description Present only for a provider. */
             provider?: components["schemas"]["MeProviderDto"] | null;
+        };
+        OrganiserDto: {
+            /** Format: uuid */
+            id: string;
+            name: string | null;
+            about: string | null;
+            logoUrl: string | null;
+            contactEmail: string | null;
+            contactPhone: string | null;
+            websiteUrl: string | null;
+            /** Format: uuid */
+            areaId: string | null;
+            venueName: string | null;
+            venueAddress: string | null;
+            /** @description Visible publicly. False means waiting on an admin. */
+            approved: boolean;
+            /** @description Taken down. Different from never approved, and says so. */
+            isSuspended: boolean;
+        };
+        UpdateOrganiserDto: {
+            name?: string;
+            about?: string;
+            /** Format: uri */
+            logoUrl?: string;
+            /** Format: email */
+            contactEmail?: string;
+            /** @example 9876543210 */
+            contactPhone?: string;
+            /** Format: uri */
+            websiteUrl?: string;
+            /** Format: uuid */
+            areaId?: string;
+            venueName?: string;
+            venueAddress?: string;
         };
         CityRefDto: {
             /** Format: uuid */
@@ -480,6 +538,49 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MeDto"];
+                };
+            };
+        };
+    };
+    OrganisersController_mine_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Null when no listing exists yet. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrganiserDto"];
+                };
+            };
+        };
+    };
+    OrganisersController_save_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateOrganiserDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrganiserDto"];
                 };
             };
         };

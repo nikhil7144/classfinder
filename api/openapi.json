@@ -196,6 +196,70 @@
         ]
       }
     },
+    "/api/v1/organisers/me": {
+      "get": {
+        "description": "Null before they have created one — a normal state for an account that has picked the role and not filled the form in yet, not an error. Visible while unapproved, so a company waiting on an admin can see what it submitted.",
+        "operationId": "OrganisersController_mine_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Null when no listing exists yet.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganiserDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The caller's own organiser listing",
+        "tags": [
+          "organisers"
+        ]
+      },
+      "put": {
+        "description": "One listing per account, so this upserts. Approval and suspension are absent from the body by design and withheld by column privileges besides — naming either is refused by Postgres, not just by this contract.",
+        "operationId": "OrganisersController_save_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrganiserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganiserDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create or update it",
+        "tags": [
+          "organisers"
+        ]
+      }
+    },
     "/api/v1/reference": {
       "get": {
         "description": "Public and cached for a few minutes. Fetch once at startup and keep it — these change only when an admin edits the taxonomy or opens an area. Areas are returned whole, with `isLive` alongside: it gates seekers, not providers, so it is a flag and not a filter.",
@@ -567,6 +631,116 @@
           "profileComplete",
           "phone"
         ]
+      },
+      "OrganiserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "about": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "contactPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "websiteUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "areaId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "venueName": {
+            "type": "string",
+            "nullable": true
+          },
+          "venueAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "approved": {
+            "type": "boolean",
+            "description": "Visible publicly. False means waiting on an admin."
+          },
+          "isSuspended": {
+            "type": "boolean",
+            "description": "Taken down. Different from never approved, and says so."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "about",
+          "logoUrl",
+          "contactEmail",
+          "contactPhone",
+          "websiteUrl",
+          "areaId",
+          "venueName",
+          "venueAddress",
+          "approved",
+          "isSuspended"
+        ]
+      },
+      "UpdateOrganiserDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "about": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "logoUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "contactEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "contactPhone": {
+            "type": "string",
+            "example": "9876543210"
+          },
+          "websiteUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "areaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "venueName": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "venueAddress": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
       },
       "CityRefDto": {
         "type": "object",

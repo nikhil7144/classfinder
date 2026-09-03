@@ -16,7 +16,7 @@ type Router = ReturnType<typeof useRouter>;
 // happened to click this time.
 export async function resolveProfileAndRedirect(
   router: Router,
-  intendedRole?: "seeker" | "provider",
+  intendedRole?: "seeker" | "provider" | "organiser",
   /**
    * Where the user was headed before they were asked to sign in — a group
    * invite, usually. Carried through role choice and profile completion, so
@@ -76,12 +76,7 @@ export async function resolveProfileAndRedirect(
       return { error: saveError.message };
     }
 
-    router.push(
-      withNext(
-        intendedRole === "seeker" ? "/complete-profile/seeker" : "/complete-profile/provider",
-        target
-      )
-    );
+    router.push(withNext(`/complete-profile/${intendedRole}`, target));
     return {};
   }
 
@@ -91,13 +86,14 @@ export async function resolveProfileAndRedirect(
     // Only once they can actually act there; an incomplete profile still has
     // to be finished first, and that flow carries `next` onward itself.
     router.push(target);
-  } else if (result.role === "seeker" || result.role === "provider") {
+  } else if (
+    result.role === "seeker" ||
+    result.role === "provider" ||
+    result.role === "organiser"
+  ) {
     router.push(
       target && !result.profileComplete
-        ? withNext(
-            result.role === "seeker" ? "/complete-profile/seeker" : "/complete-profile/provider",
-            target
-          )
+        ? withNext(`/complete-profile/${result.role}`, target)
         : "/dashboard"
     );
   } else {

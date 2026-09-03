@@ -574,10 +574,35 @@ signed-in users something before everybody else.
 | | Status |
 |---|---|
 | Organisers as their own table and role (3E) | done |
-| Events, bookings, organiser dashboard | not started |
+| Organiser signup, listing, approval gate, dashboard shell | done |
+| Events, entries, bookings | not started |
 
 Organisers, events, bookings, and a dashboard of their own. Payment status
 tracked manually; no gateway yet.
+
+**Onboarding first**, built API-first — `/api/v1/organisers/me` is the first
+endpoint written for a feature rather than migrated onto one. `/signup/organiser`
+mirrors the other two entry points, and the listing is deliberately not a
+cut-down provider form: a coach is asked what they teach and what they charge,
+and none of that describes a business that runs a tournament at a ground.
+
+Three decisions taken before any of it, worth not relitigating:
+
+**Events can be created by coaches as well as organisers.** A cricket coach
+running an inter-academy tournament is a real case that organiser-only would
+block. The events table will carry nullable `provider_id` and `organiser_id`
+with a check that exactly one is set — two nullable foreign keys rather than a
+polymorphic owner id, so referential integrity survives.
+
+**Entries are individual or team, declared per event.** Most competitions need
+both across their categories: under-10 singles and under-14 team in the same
+tournament.
+
+**Capacity, not seat allocation.** The BookMyShow model is assigned-seat
+ticketing — a venue layout, seat holds, a seat map. A ground, a hall and a
+masterclass all have a capacity and a set of categories instead, and building
+seat maps for events that do not have seats is a large amount of work for
+nobody. The nearer model is a registration platform, not a cinema.
 
 The table landed early, in 3E, because it had to: building events on top of a
 providers row would have deepened the mistake it was already causing, and

@@ -15,7 +15,7 @@ type AuthFormProps = {
   // step. Ignored entirely for a returning user — they always land on
   // their own real dashboard, never re-routed by whichever link they
   // happened to click.
-  intendedRole?: "seeker" | "provider";
+  intendedRole?: "seeker" | "provider" | "organiser";
 };
 
 export default function AuthForm({ eyebrow, heading, subheading, intendedRole }: AuthFormProps) {

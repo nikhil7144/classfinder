@@ -17,6 +17,13 @@ const roleOptions = [
     title: "I'm a coach, tutor, or coaching center",
     description: "List your services, run your own space, and connect with parents and students.",
   },
+  {
+    value: "organiser",
+    title: "I run events",
+    description:
+      "Tournaments, competitions and showcases. You won't appear in coach or tutor search — " +
+      "parents find your events instead.",
+  },
 ];
 
 function ChooseRolePage() {
@@ -32,10 +39,8 @@ function ChooseRolePage() {
   // here is still waiting once their profile exists.
   const destinationFor = (role: string) => {
     if (role === "admin") return "/admin";
-    return withNext(
-      role === "provider" ? "/complete-profile/provider" : "/complete-profile/seeker",
-      next
-    );
+    // seeker, provider and organiser each have a route of the same shape.
+    return withNext(`/complete-profile/${role}`, next);
   };
 
   useEffect(() => {
@@ -70,7 +75,7 @@ function ChooseRolePage() {
     check();
   }, [router]);
 
-  const chooseRole = async (role: "seeker" | "provider") => {
+  const chooseRole = async (role: "seeker" | "provider" | "organiser") => {
     if (!userId || saving) return;
 
     setSaving(true);
@@ -144,7 +149,7 @@ function ChooseRolePage() {
               key={option.value}
               type="button"
               disabled={saving}
-              onClick={() => chooseRole(option.value as "seeker" | "provider")}
+              onClick={() => chooseRole(option.value as "seeker" | "provider" | "organiser")}
               className={`cf-card p-6 text-left transition disabled:cursor-not-allowed disabled:opacity-70 ${
                 currentRole === option.value ? "border-gold" : "hover:border-faint"
               }`}
