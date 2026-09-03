@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server-client";
 import { fetchTaxonomy } from "@/lib/api/reference";
 import EnquiryForm from "@/components/provider/EnquiryForm";
+import RaiseQueryForm from "@/components/provider/RaiseQueryForm";
 import { formatExperience, formatFees } from "@/lib/search";
 import { WEEK_DAYS } from "@/lib/profile-rules";
 
@@ -252,6 +253,14 @@ export default async function ProviderProfilePage({ params }: Params) {
             <p className="mt-2 text-sm text-muted">{provider.fees_note}</p>
           </section>
         )}
+
+        {/* Two ways to make contact, in the order most parents want them:
+            a call back first, a conversation for anyone with a question. */}
+        <RaiseQueryForm
+          providerId={provider.id}
+          providerName={provider.display_name || "This coach"}
+          services={provider.services || []}
+        />
 
         <EnquiryForm
           providerId={provider.id}

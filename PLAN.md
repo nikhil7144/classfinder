@@ -473,6 +473,7 @@ areas or branches, and **day- and place-wise availability**.
 | Parents state a requirement; coaches find students (2R) | done |
 | Suggested coaches for a parent, cached per requirement (2S) | done |
 | Who the learner is, and a kept history of interests (2T) | done |
+| Queries — ask a coach to call, worked as a lead (3H) | done |
 
 Parent-created demand, per the section above, plus the request → accept → chat
 pipeline it depends on. Chosen ahead of Spaces because it is what stops approved
@@ -687,6 +688,9 @@ is what makes it straightforward rather than a rewrite.
 | Groups expire after ~10 days | Stale demand poisons provider trust faster than no demand |
 | Chat now, bookings much later | Coaching is a monthly relationship, not a slot; a calendar would sit empty |
 | Enquiries are their own table | Same shape as a group pitch, opposite direction; merging means rewriting RLS that works |
+| A query is not an enquiry | One is a lead a coach works through, the other a conversation; enquiries_one_live would have made them mutually exclusive with the same coach |
+| A conversation opened from a query says so | A message from someone you never wrote to is what makes contact feel unsolicited |
+| Phone required on a query, optional on an enquiry | Being called is the point of one and not the other; a query with no number is a request nobody can act on |
 | A coach needn't accept an enquiry | The parent chose them — consent is the act of writing |
 | Contact sharing is not blocked | Unenforceable, and a wall at cold start loses both sides |
 | A trial class object from day one | The only cheap way to learn whether a match happened |

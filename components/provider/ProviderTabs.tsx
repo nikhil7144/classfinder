@@ -28,6 +28,9 @@ export default function ProviderTabs({
     // Parents who found the listing and wrote directly, alongside the group
     // pitches — one inbox, because a coach does not sort their replies by
     // which feature produced them.
+    // Before Messages on purpose: a parent who left a number is waiting on a
+    // call, not on a reply, and that is the more perishable of the two.
+    { href: "/dashboard/queries", label: "Queries" },
     { href: "/dashboard/messages", label: "Messages", badge: messageCount },
     { href: "/dashboard/space", label: "My Space" },
     { href: "/dashboard/events", label: "Events", soon: true },

@@ -46,6 +46,9 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
             label: "Messages",
             badge: Number(alerts?.unread_threads || 0),
           },
+          // Asking for a call is not a conversation, so it is not in the
+          // inbox — but a parent still needs to see what they asked for.
+          { href: "/account/queries", label: "Requests" },
         ]
       : []),
     { href: "/account/settings", label: "Settings" },

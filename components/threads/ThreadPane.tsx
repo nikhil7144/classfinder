@@ -51,6 +51,7 @@ export default function ThreadPane({ thread, me, onChanged, onBack }: Props) {
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [contact, setContact] = useState<Contact | null>(null);
+  const [fromQuery, setFromQuery] = useState<{ service: string | null; at: string } | null>(null);
   const [sharing, setSharing] = useState<boolean | null>(null);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -90,6 +91,34 @@ export default function ThreadPane({ thread, me, onChanged, onBack }: Props) {
           .eq("id", id)
           .maybeSingle();
         if (alive) setSharing((data as { show_phone: boolean } | null)?.show_phone ?? null);
+      }
+
+      // Where this conversation came from, if it came from a request for a
+      // call. A coach answering a query writes first, and a message from
+      // nobody you wrote to is what makes contact feel unsolicited — so the
+      // parent is told which of their own requests produced it.
+      //
+      // Read here rather than added to my_threads: changing that function's
+      // return columns needs a drop and recreate, which is a live error
+      // window for every inbox, and this is one row on one screen.
+      if (thread.kind === "enquiry") {
+        const { data } = await supabase
+          .from("enquiries")
+          .select("query_id, queries(created_at, service_category_master(name))")
+          .eq("id", id)
+          .maybeSingle();
+
+        const row = data as {
+          query_id: string | null;
+          queries: { created_at: string; service_category_master: { name: string } | null } | null;
+        } | null;
+
+        if (alive && row?.query_id && row.queries) {
+          setFromQuery({
+            service: row.queries.service_category_master?.name ?? null,
+            at: row.queries.created_at,
+          });
+        }
       }
 
       if (thread.unread) {
@@ -313,6 +342,19 @@ export default function ThreadPane({ thread, me, onChanged, onBack }: Props) {
       >
         {/* Whatever opened the thread stays visible: it is what the other side
             was judged on, and it is the question a coach is answering. */}
+        {fromQuery && (
+          <div className="rounded-2xl border border-gold/40 bg-surface-2 p-4">
+            <p className="cf-eyebrow text-gold">
+              {thread.i_am_seeker ? "From your request" : "From their request"}
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              {thread.i_am_seeker ? "You asked" : "They asked"} for a call
+              {fromQuery.service ? ` about ${fromQuery.service}` : ""} on{" "}
+              {new Date(fromQuery.at).toLocaleDateString()}.
+            </p>
+          </div>
+        )}
+
         <div className="rounded-2xl border border-line bg-surface-2 p-4">
           <p className="cf-eyebrow">
             {thread.kind === "group" ? "First message" : "The enquiry"}
