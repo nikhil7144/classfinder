@@ -10,6 +10,11 @@ import {
   threadIsOpen,
   threadStatusLabel,
 } from "@/lib/threads";
+/** "3 Sep" — unambiguous, unlike 9/3 which reads two ways depending on where
+ *  the reader is, and this product is used in India. */
+const dayMonth = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+
 import TrialCard from "./TrialCard";
 import MessageComposer from "./MessageComposer";
 
@@ -252,8 +257,8 @@ export default function ThreadPane({ thread, me, onChanged, onBack }: Props) {
     // thing that scrolls. Without it the list grows to fit its content — a
     // flex child defaults to min-height:auto — the card grows with it, and the
     // page scrolls instead, carrying the header and composer off screen.
-    <section className="cf-card flex h-[70vh] min-h-[30rem] flex-col overflow-hidden p-0">
-      <header className="flex shrink-0 items-center gap-3 border-b border-line px-5 py-4">
+    <section className="cf-card flex h-[78vh] min-h-[34rem] flex-col overflow-hidden p-0">
+      <header className="flex shrink-0 items-center gap-3 border-b border-line px-5 py-3">
         <button
           onClick={onBack}
           className="shrink-0 text-sm text-muted transition hover:text-ink lg:hidden"
@@ -272,7 +277,7 @@ export default function ThreadPane({ thread, me, onChanged, onBack }: Props) {
           ) : (
             <p className="truncate font-semibold text-ink">{thread.title}</p>
           )}
-          <p className="truncate text-xs text-muted">{threadStatusLabel(thread)}</p>
+          <p className="truncate text-[0.7rem] leading-tight text-muted">{threadStatusLabel(thread)}</p>
         </div>
         {thread.group_id && (
           <Link
@@ -300,7 +305,7 @@ export default function ThreadPane({ thread, me, onChanged, onBack }: Props) {
       {/* One row, like every other strip. This was a four-line block, and on a
           phone it and the trial panel together left no conversation visible. */}
       {contact && (
-        <div className="flex shrink-0 items-center gap-3 border-b border-line bg-surface-2 px-5 py-2.5">
+        <div className="flex shrink-0 items-center gap-3 border-b border-line bg-surface-2 px-5 py-1.5">
           <span className="cf-eyebrow shrink-0">Talking to</span>
           <span className="min-w-0 flex-1 truncate text-xs text-ink">
             {contact.name || "A parent"}
@@ -309,7 +314,7 @@ export default function ThreadPane({ thread, me, onChanged, onBack }: Props) {
           {contact.shared && contact.phone && (
             <a
               href={`tel:${contact.phone}`}
-              className="cf-btn-ghost shrink-0 px-3 py-1.5 font-mono text-xs"
+              className="cf-btn-ghost shrink-0 px-3 py-1 font-mono text-xs"
             >
               {contact.phone}
             </a>
@@ -318,12 +323,12 @@ export default function ThreadPane({ thread, me, onChanged, onBack }: Props) {
       )}
 
       {sharing !== null && (
-        <div className="flex shrink-0 items-center gap-3 border-b border-line bg-surface-2 px-5 py-2.5">
+        <div className="flex shrink-0 items-center gap-3 border-b border-line bg-surface-2 px-5 py-1.5">
           <span className="cf-eyebrow shrink-0">Your number</span>
           <span className="min-w-0 flex-1 truncate text-xs text-muted">
             {sharing ? "Shared with this coach" : "Not shared"}
           </span>
-          <button onClick={toggleSharing} className="cf-btn-ghost shrink-0 px-3 py-1.5 text-xs">
+          <button onClick={toggleSharing} className="cf-btn-ghost shrink-0 px-3 py-1 text-xs">
             {sharing ? "Stop sharing" : "Let them call me"}
           </button>
         </div>
@@ -342,24 +347,21 @@ export default function ThreadPane({ thread, me, onChanged, onBack }: Props) {
       >
         {/* Whatever opened the thread stays visible: it is what the other side
             was judged on, and it is the question a coach is answering. */}
-        {fromQuery && (
-          <div className="rounded-2xl border border-gold/40 bg-surface-2 p-4">
-            <p className="cf-eyebrow text-gold">
-              {thread.i_am_seeker ? "From your request" : "From their request"}
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-muted">
-              {thread.i_am_seeker ? "You asked" : "They asked"} for a call
-              {fromQuery.service ? ` about ${fromQuery.service}` : ""} on{" "}
-              {new Date(fromQuery.at).toLocaleDateString()}.
-            </p>
-          </div>
-        )}
-
-        <div className="rounded-2xl border border-line bg-surface-2 p-4">
+        <div className="rounded-2xl border border-line bg-surface-2 px-4 py-3">
           <p className="cf-eyebrow">
             {thread.kind === "group" ? "First message" : "The enquiry"}
           </p>
-          <p className="mt-2 text-sm leading-relaxed text-muted">{thread.opening}</p>
+          <p className="mt-1.5 text-sm leading-relaxed text-muted">{thread.opening}</p>
+
+          {/* Inside the opening block rather than above it. As its own card
+              this was a second large box in a pane that already had four, and
+              between them there was no room left for the conversation. */}
+          {fromQuery && (
+            <p className="mt-3 border-t border-line pt-3 text-xs text-gold">
+              {thread.i_am_seeker ? "You asked" : "They asked"} for a call
+              {fromQuery.service ? ` about ${fromQuery.service}` : ""} on {dayMonth(fromQuery.at)}
+            </p>
+          )}
         </div>
 
         {messages.map((m) => {

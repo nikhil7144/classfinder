@@ -25,6 +25,10 @@ const badgeFor = (status: string) =>
       ? "cf-badge-ok"
       : "cf-badge-neutral";
 
+/** "3 Sep 2026" — 9/3/2026 reads two ways, and this product is used in India. */
+const onDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+
 /** "in 2 days" / "yesterday" — a booked call is about when, not what date. */
 function when(iso: string): string {
   const days = Math.round((new Date(iso).getTime() - Date.now()) / 86_400_000);
@@ -54,6 +58,8 @@ export default function QueryList({ side }: Props) {
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [schedulingId, setSchedulingId] = useState<string | null>(null);
+  const [when$, setWhen$] = useState("");
   const [reply, setReply] = useState("");
   const [showDone, setShowDone] = useState(false);
 
@@ -84,13 +90,12 @@ export default function QueryList({ side }: Props) {
   };
 
   const scheduleCall = async (id: string) => {
-    // A date input rather than a picker component: the coach is agreeing a
-    // time on the phone, and anything more elaborate is in the way.
-    const answer = window.prompt("When is the call? e.g. 2026-09-10 17:30");
-    if (!answer) return;
-    const at = new Date(answer.replace(" ", "T"));
+    if (!when$) return;
+    const at = new Date(when$);
     if (Number.isNaN(at.getTime())) return setError("Couldn't read that date.");
     await move(id, "callback_scheduled", at.toISOString());
+    setSchedulingId(null);
+    setWhen$("");
   };
 
   const send = async (id: string) => {
@@ -157,7 +162,7 @@ export default function QueryList({ side }: Props) {
                   </h3>
                   <p className="mt-1 text-xs text-faint">
                     {q.serviceName ? `${q.serviceName} · ` : ""}
-                    {new Date(q.createdAt).toLocaleDateString()}
+                    {onDate(q.createdAt)}
                   </p>
                 </div>
                 <span className={`cf-badge ${badgeFor(q.status)}`}>
@@ -191,9 +196,24 @@ export default function QueryList({ side }: Props) {
                       Mark contacted
                     </button>
                   )}
+                  {/* Finished is not a one-way door. Completed and Close are a
+                      click each and nothing warned before; a misfire had no
+                      way back. */}
+                  {(q.status === "completed" || q.status === "closed") && (
+                    <button onClick={() => move(q.id, "contacted")} disabled={busyId === q.id} className="cf-btn-ghost">
+                      Reopen
+                    </button>
+                  )}
                   {q.status !== "completed" && q.status !== "closed" && (
                     <>
-                      <button onClick={() => scheduleCall(q.id)} disabled={busyId === q.id} className="cf-btn-ghost">
+                      <button
+                        onClick={() => {
+                          setSchedulingId(schedulingId === q.id ? null : q.id);
+                          setWhen$("");
+                        }}
+                        disabled={busyId === q.id}
+                        className="cf-btn-ghost"
+                      >
                         {q.callbackAt ? "Change call time" : "Schedule a call"}
                       </button>
                       <button
@@ -205,7 +225,19 @@ export default function QueryList({ side }: Props) {
                       <button onClick={() => move(q.id, "completed")} disabled={busyId === q.id} className="cf-btn-primary">
                         Completed
                       </button>
-                      <button onClick={() => move(q.id, "closed")} disabled={busyId === q.id} className="cf-btn-ghost">
+                      <button
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              `Close ${q.contactName}'s request without taking it on? They won't be told, and it moves to Finished.`,
+                            )
+                          ) {
+                            move(q.id, "closed");
+                          }
+                        }}
+                        disabled={busyId === q.id}
+                        className="cf-btn-ghost"
+                      >
                         Close
                       </button>
                     </>
@@ -220,6 +252,27 @@ export default function QueryList({ side }: Props) {
                 >
                   Open the conversation
                 </button>
+              )}
+
+              {schedulingId === q.id && (
+                <div className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-surface-2 p-4">
+                  <label className="flex-1">
+                    <span className="cf-eyebrow mb-2 block">When is the call?</span>
+                    <input
+                      type="datetime-local"
+                      className="w-full rounded-2xl border border-line bg-surface px-4 py-2.5 text-sm text-ink outline-none focus:border-gold"
+                      value={when$}
+                      onChange={(e) => setWhen$(e.target.value)}
+                    />
+                  </label>
+                  <button
+                    onClick={() => scheduleCall(q.id)}
+                    disabled={!when$ || busyId === q.id}
+                    className="cf-btn-primary self-end"
+                  >
+                    Book it
+                  </button>
+                </div>
               )}
 
               {replyTo === q.id && (
