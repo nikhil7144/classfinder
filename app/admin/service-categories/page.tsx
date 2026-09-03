@@ -19,6 +19,7 @@ const groupOptions = [
   { value: "music", label: "Music" },
   { value: "subject", label: "Subject" },
   { value: "exam_board", label: "Exam Board" },
+  { value: "acting", label: "Acting & Theatre" },
 ];
 
 export default function ServiceCategoriesAdmin() {

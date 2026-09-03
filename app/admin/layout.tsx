@@ -9,6 +9,7 @@ import PageSkeleton from "@/components/ui/PageSkeleton";
 const navItems = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/providers", label: "Providers" },
+  { href: "/admin/organisers", label: "Organisers" },
   { href: "/admin/locations", label: "Cities & Areas" },
   { href: "/admin/provider-categories", label: "Provider Categories" },
   { href: "/admin/service-categories", label: "Service Categories" },

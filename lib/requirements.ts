@@ -65,6 +65,7 @@ export const SERVICE_GROUP_LABEL: Record<string, string> = {
   indoor_game: "Indoor Games",
   dance: "Dance",
   music: "Music",
+  acting: "Acting & Theatre",
   subject: "School Subjects",
   exam_board: "Boards & Exams",
 };

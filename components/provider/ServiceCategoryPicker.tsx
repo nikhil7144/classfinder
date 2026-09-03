@@ -14,6 +14,7 @@ export const SERVICE_GROUP_ORDER: { key: string; label: string }[] = [
   { key: "indoor_game", label: "Indoor Games" },
   { key: "dance", label: "Dance" },
   { key: "music", label: "Music" },
+  { key: "acting", label: "Acting & Theatre" },
   { key: "subject", label: "School Subjects" },
   { key: "exam_board", label: "Boards & Exams" },
 ];
@@ -32,6 +33,8 @@ export const CATEGORY_GROUP_HINTS: Record<string, string[]> = {
   "Music Teacher": ["music"],
   "Dance Academy": ["dance"],
   "Music School": ["music"],
+  "Acting Teacher": ["acting"],
+  "Acting School": ["acting"],
 };
 
 const GROUP_TONE: Record<string, string> = {

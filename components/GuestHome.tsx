@@ -16,6 +16,7 @@ const VERTICALS = [
   { label: "Sports", tone: "sport", blurb: "Cricket, football, badminton, athletics, martial arts" },
   { label: "Dance", tone: "dance", blurb: "Bharatanatyam, Kathak, Bollywood, hip hop, ballet" },
   { label: "Music", tone: "music", blurb: "Vocals, guitar, tabla, keyboard, sitar, flute" },
+  { label: "Acting & Theatre", tone: "acting", blurb: "Acting, drama, public speaking, anchoring" },
   { label: "School Subjects", tone: "subject", blurb: "Maths, science, languages, commerce" },
   { label: "Boards & Exams", tone: "exam", blurb: "CBSE, ICSE, IB, JEE, NEET, UPSC" },
   { label: "Mind & Indoor Games", tone: "mind", blurb: "Chess, abacus, vedic maths, carrom" },
@@ -28,6 +29,7 @@ const toneVar: Record<string, string> = {
   subject: "var(--subject)",
   exam: "var(--exam)",
   mind: "var(--mind)",
+  acting: "var(--acting)",
 };
 
 export default function GuestHome({ cities, selectedCity, posts }: Props) {

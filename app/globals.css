@@ -47,6 +47,7 @@
   --music: #8b93f8;
   --subject: #4cc9f0;
   --exam: #f472b6;
+  --acting: #f0a05a;
 }
 
 @theme inline {
@@ -78,6 +79,7 @@
   --color-dance: var(--dance);
   --color-music: var(--music);
   --color-subject: var(--subject);
+  --color-acting: var(--acting);
   --color-exam: var(--exam);
 
   --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
