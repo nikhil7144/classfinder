@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import GuestHome from "@/components/GuestHome";
 import { createSupabaseServerClient } from "@/lib/supabase-server-client";
 import { supabaseServerAdmin } from "@/lib/supabase-server";
-import { fetchCities, fetchCityFeed } from "@/lib/api/client";
+import { fetchCitiesOrThrow, fetchCityFeedOrThrow, type City, type FeedPost } from "@/lib/api/client";
 
 /**
  * The feed, cached for five minutes across every visitor.
@@ -17,17 +17,28 @@ import { fetchCities, fetchCityFeed } from "@/lib/api/client";
  * endpoint is public and identical for everybody, which is what makes it safe
  * to share one cache entry across all visitors.
  */
+/**
+ * These throw on failure on purpose, and the caller catches.
+ *
+ * A rejected promise is not cached; a resolved empty array is. When these
+ * degraded internally, an unreachable API wrote an empty list into the cache
+ * and the homepage kept serving it for the full hour after the API came back
+ * — one bad moment turned into a long, silent outage of the feed.
+ *
+ * The keys carry a version so a deploy that changes this behaviour does not
+ * inherit an entry written by the old one.
+ */
 const getCityFeed = unstable_cache(
-  async (cityId: string) => fetchCityFeed(cityId, 12),
-  ["public-city-feed"],
+  async (cityId: string) => fetchCityFeedOrThrow(cityId, 12),
+  ["public-city-feed", "v2"],
   // Content is already six hours stale by design (space_public_delay), so
   // five minutes of cache costs the reader nothing they would notice.
   { revalidate: 300, tags: ["city-feed"] },
 );
 
 const getLiveCities = unstable_cache(
-  async () => fetchCities(),
-  ["live-cities"],
+  async () => fetchCitiesOrThrow(),
+  ["live-cities", "v2"],
   // Changes only when an admin opens an area or approves a coach.
   { revalidate: 3600, tags: ["city-feed"] },
 );
@@ -69,14 +80,16 @@ export default async function LandingPage({ searchParams }: Props) {
 
   const { city: requestedCity } = await searchParams;
 
-  const cities = await getLiveCities();
+  // Caught here rather than inside the cached function, so a failure is not
+  // what gets remembered for the next hour.
+  const cities = await getLiveCities().catch(() => [] as City[]);
 
   // live_cities() orders by coach count, so the head of the list is the best
   // page we can show someone who has not chosen. An unknown ?city= falls back
   // to it rather than rendering an empty feed for a city that isn't open.
   const selected = cities.find((c) => c.id === requestedCity) ?? cities[0] ?? null;
 
-  const posts = selected ? await getCityFeed(selected.id) : [];
+  const posts = selected ? await getCityFeed(selected.id).catch(() => [] as FeedPost[]) : [];
 
   return <GuestHome cities={cities} selectedCity={selected} posts={posts} />;
 }

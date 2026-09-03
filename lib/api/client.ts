@@ -37,11 +37,33 @@ export const api = createClient<paths>({ baseUrl });
  * and gets ECONNREFUSED — and it took down the whole page rather than one
  * section of it.
  */
+/**
+ * The strict variants throw instead of degrading.
+ *
+ * Failing soft and caching the result are each reasonable and together they
+ * are a trap: unstable_cache stored the empty list a failed fetch returned
+ * and served it for the next hour, so one unreachable moment kept the
+ * homepage feed missing long after the API came back. A thrown error is not
+ * cached, which is the whole reason these exist — the caller catches and
+ * degrades, and only success is remembered.
+ */
+export async function fetchCitiesOrThrow(): Promise<City[]> {
+  const { data, error } = await api.GET("/api/v1/feeds/cities", {});
+  if (error || !data) throw new Error("cities unavailable");
+  return data;
+}
+
+export async function fetchCityFeedOrThrow(cityId: string, limit = 12): Promise<FeedPost[]> {
+  const { data, error } = await api.GET("/api/v1/feeds/cities/{cityId}", {
+    params: { path: { cityId }, query: { limit } },
+  });
+  if (error || !data) throw new Error("feed unavailable");
+  return data;
+}
+
 export async function fetchCities(): Promise<City[]> {
   try {
-    const { data, error } = await api.GET("/api/v1/feeds/cities", {});
-    if (error || !data) return [];
-    return data;
+    return await fetchCitiesOrThrow();
   } catch {
     return [];
   }
@@ -49,11 +71,7 @@ export async function fetchCities(): Promise<City[]> {
 
 export async function fetchCityFeed(cityId: string, limit = 12): Promise<FeedPost[]> {
   try {
-    const { data, error } = await api.GET("/api/v1/feeds/cities/{cityId}", {
-      params: { path: { cityId }, query: { limit } },
-    });
-    if (error || !data) return [];
-    return data;
+    return await fetchCityFeedOrThrow(cityId, limit);
   } catch {
     return [];
   }
