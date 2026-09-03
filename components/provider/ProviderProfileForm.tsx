@@ -31,7 +31,6 @@ import {
 const providerTypeOptions = [
   { value: "individual", title: "Individual", description: "A coach, teacher, or tutor working on your own." },
   { value: "institution", title: "Institution", description: "An academy, coaching centre, or sports centre with one or more branches." },
-  { value: "event_planner", title: "Event Planner", description: "You run events and take bookings — you won't appear in coach/tutor search." },
 ];
 
 const errorText = "mt-2 text-sm text-danger";
@@ -114,12 +113,13 @@ export default function ProviderProfileForm({ redirectTo = "/dashboard", variant
   const nextPath = useSearchParams().get("next");
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
+  const [referenceFailed, setReferenceFailed] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [providerId, setProviderId] = useState<string | null>(null);
   const [hasExistingProfile, setHasExistingProfile] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
 
-  const [providerType, setProviderType] = useState<"individual" | "institution" | "event_planner" | "">("");
+  const [providerType, setProviderType] = useState<"individual" | "institution" | "">("");
   const [providerCategoryId, setProviderCategoryId] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
@@ -182,6 +182,7 @@ export default function ProviderProfileForm({ redirectTo = "/dashboard", variant
       setTeachingPlaceOptions(taxonomy.teachingPlaces);
       setCities(locations.cities);
       setAreas(locations.areas);
+      setReferenceFailed(!locations.ok);
 
       // Functional update: don't clobber a value the user already started typing.
       setPhone((current) => current || profileRow?.phone || "");
@@ -250,7 +251,6 @@ export default function ProviderProfileForm({ redirectTo = "/dashboard", variant
     return () => URL.revokeObjectURL(url);
   }, [photoFile]);
 
-  const isEventPlanner = providerType === "event_planner";
   const isInstitution = providerType === "institution";
 
   const availableCategories = useMemo(
@@ -412,7 +412,7 @@ export default function ProviderProfileForm({ redirectTo = "/dashboard", variant
         {
           user_id: userId,
           provider_type: providerType,
-          provider_category_id: isEventPlanner ? null : providerCategoryId,
+          provider_category_id: providerCategoryId,
           display_name: displayName,
           bio,
           help_statement: helpStatement || null,
@@ -565,7 +565,7 @@ export default function ProviderProfileForm({ redirectTo = "/dashboard", variant
           </div>
           {fieldErrors.providerType?.[0] && <p className={errorText}>{fieldErrors.providerType[0]}</p>}
 
-          {providerType && !isEventPlanner && (
+          {providerType && (
             <div className="mt-6">
               <p className="cf-eyebrow">Category</p>
               <div
@@ -657,7 +657,7 @@ export default function ProviderProfileForm({ redirectTo = "/dashboard", variant
             {fieldErrors.bio?.[0] && <p className={errorText}>{fieldErrors.bio[0]}</p>}
           </div>
 
-          {!isEventPlanner && (
+          {(
             <div className="mt-4">
               <label className="mb-2 block text-sm text-muted">
                 How can you help your students?
@@ -719,7 +719,7 @@ export default function ProviderProfileForm({ redirectTo = "/dashboard", variant
           )}
         </Section>
 
-        {!isEventPlanner && (
+        {(
           <Section
             title="How do you run your classes?"
             hint="Details of specific batches are best posted in your Space, where parents can see them."
@@ -877,6 +877,7 @@ export default function ProviderProfileForm({ redirectTo = "/dashboard", variant
               <ServiceAreaPicker
                 cities={cities}
                 areas={areas}
+                loadFailed={referenceFailed}
                 selectedIds={serviceAreaIds}
                 onChange={setServiceAreaIds}
                 invalid={invalid("serviceAreaIds")}

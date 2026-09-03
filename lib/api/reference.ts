@@ -21,6 +21,21 @@ export type ProviderCategory = components["schemas"]["ProviderCategoryRefDto"];
 export type TeachingPlace = components["schemas"]["TeachingPlaceRefDto"];
 export type Reference = components["schemas"]["ReferenceDto"];
 
+/**
+ * Whether the fetch actually succeeded.
+ *
+ * Failing soft is right for a feed — a missing section is better than a
+ * broken page. It is wrong for reference data a form depends on, because an
+ * empty taxonomy is indistinguishable from a real one, and the profile form
+ * told providers "No cities have been set up yet. Ask an admin" when the truth
+ * was that the API was unreachable. A form that lies about why it is empty
+ * sends people to support for a problem support cannot see.
+ *
+ * So the data still degrades to empty, and callers that need to tell the
+ * difference now can.
+ */
+export type ReferenceResult = Reference & { ok: boolean };
+
 const EMPTY: Reference = {
   cities: [],
   areas: [],
@@ -37,9 +52,9 @@ const EMPTY: Reference = {
  * screen tries again rather than inheriting a blank taxonomy for the life of
  * the page.
  */
-let inFlight: Promise<Reference> | null = null;
+let inFlight: Promise<ReferenceResult> | null = null;
 
-export function fetchReference(): Promise<Reference> {
+export function fetchReference(): Promise<ReferenceResult> {
   if (inFlight) return inFlight;
 
   inFlight = api
@@ -47,13 +62,15 @@ export function fetchReference(): Promise<Reference> {
     .then(({ data, error }) => {
       if (error || !data) {
         inFlight = null;
-        return EMPTY;
+        return { ...EMPTY, ok: false };
       }
-      return data;
+      return { ...data, ok: true };
     })
     .catch(() => {
+      // A rejected fetch, not an HTTP error — an unreachable API. Same
+      // outcome, and the same need to say so rather than show an empty form.
       inFlight = null;
-      return EMPTY;
+      return { ...EMPTY, ok: false };
     });
 
   return inFlight;
@@ -68,25 +85,34 @@ export function fetchReference(): Promise<Reference> {
  * sides filter differently: this for seekers, the raw list for provider
  * signup.
  */
-export async function fetchSeekerLocations(): Promise<{ cities: City[]; areas: Area[] }> {
+export async function fetchSeekerLocations(): Promise<{
+  cities: City[];
+  areas: Area[];
+  ok: boolean;
+}> {
   const ref = await fetchReference();
   const areas = ref.areas.filter((a) => a.isLive);
   // A city with no live area is a city a seeker cannot pick anything in.
   const liveCityIds = new Set(areas.map((a) => a.cityId));
-  return { cities: ref.cities.filter((c) => liveCityIds.has(c.id)), areas };
+  return { cities: ref.cities.filter((c) => liveCityIds.has(c.id)), areas, ok: ref.ok };
 }
 
 /** Every defined area, for provider signup. See fetchSeekerLocations. */
-export async function fetchAllLocations(): Promise<{ cities: City[]; areas: Area[] }> {
+export async function fetchAllLocations(): Promise<{
+  cities: City[];
+  areas: Area[];
+  ok: boolean;
+}> {
   const ref = await fetchReference();
-  return { cities: ref.cities, areas: ref.areas };
+  return { cities: ref.cities, areas: ref.areas, ok: ref.ok };
 }
 
 export async function fetchTaxonomy(): Promise<{
   serviceCategories: ServiceCategory[];
   providerCategories: ProviderCategory[];
   teachingPlaces: TeachingPlace[];
+  ok: boolean;
 }> {
-  const { serviceCategories, providerCategories, teachingPlaces } = await fetchReference();
-  return { serviceCategories, providerCategories, teachingPlaces };
+  const { serviceCategories, providerCategories, teachingPlaces, ok } = await fetchReference();
+  return { serviceCategories, providerCategories, teachingPlaces, ok };
 }

@@ -11,6 +11,8 @@ export type AreaRow = Area;
 type MultiProps = {
   cities: CityRow[];
   areas: AreaRow[];
+  /** True when the list is empty because the fetch failed, not because it is. */
+  loadFailed?: boolean;
   selectedIds: string[];
   onChange: (ids: string[]) => void;
   invalid?: boolean;
@@ -21,7 +23,14 @@ type MultiProps = {
  * yet live — providers can register anywhere, and `is_live` only gates what
  * seekers can search, so supply can build up before an area opens.
  */
-export function ServiceAreaPicker({ cities, areas, selectedIds, onChange, invalid }: MultiProps) {
+export function ServiceAreaPicker({
+  cities,
+  areas,
+  selectedIds,
+  onChange,
+  invalid,
+  loadFailed,
+}: MultiProps) {
   // Cities arrive after first render, so an initial useState value would
   // capture "" and never update. Derive the effective city instead, letting
   // an explicit choice override the default.
@@ -51,9 +60,14 @@ export function ServiceAreaPicker({ cities, areas, selectedIds, onChange, invali
     onChange(selectedIds.includes(id) ? selectedIds.filter((x) => x !== id) : [...selectedIds, id]);
 
   if (cities.length === 0) {
+    // Two very different empties. "None exist" sends someone to an admin;
+    // "we could not load them" should send them to the refresh button, and
+    // saying the first when the second is true wastes everybody's time.
     return (
       <p className="text-sm text-muted">
-        No cities have been set up yet. Ask an admin to add your city and areas.
+        {loadFailed
+          ? "Couldn't load cities and areas just now. Refresh the page and try again."
+          : "No cities have been set up yet. Ask an admin to add your city and areas."}
       </p>
     );
   }
