@@ -19,7 +19,8 @@ kept, what was removed, and what to copy back when later phases need it.
 | Role | Who | Notes |
 |---|---|---|
 | **seeker** | Parent or student | Browses without logging in. Must log in and complete a profile to book, join a space, or message. |
-| **provider** | Coach, tutor, academy, centre, event planner | Approved by admin before appearing in search. |
+| **provider** | Coach, tutor, academy, centre | Approved by admin before appearing in search. |
+| **organiser** | Event company running a venue | Approved by admin. Separate table since 3E — see below. |
 | **admin** | Operator | Approvals, taxonomy, cities/areas, moderation, banners. |
 
 ### Provider structure
@@ -30,8 +31,20 @@ Two layers, so the taxonomy can grow without schema changes.
 
 - `individual` — works alone; selects the **areas they serve**
 - `institution` — has **branches**, each in one area
-- `event_planner` — runs a space for events and bookings, and is **excluded
-  from coach/tutor search entirely**
+
+**`event_planner` was a third value until 3E and is not one any more.** It
+shared the providers table with coaches, so every read of that table carried
+`provider_type <> 'event_planner'` — 18 clauses across 12 migrations, each one
+a chance to forget and put an events business in front of a parent searching
+for a coach. The columns never fitted either: providers has fees, teaching
+places, availability and service areas, none of which a venue business has,
+and no contact address or venue, both of which it needs.
+
+Event companies are `public.organisers` now, with their own table, their own
+RLS and their own role. Done while there were still zero of them, so it cost
+no migration. The 18 exclusion clauses are inert rather than removed — the
+constraint makes them always true, and rewriting 18 working functions to
+delete a redundant condition is a large diff for no change in behaviour.
 
 **`provider_category`** — the self-description picked at signup, admin-editable:
 
@@ -558,8 +571,17 @@ signed-in users something before everybody else.
 
 ### Phase 4 — Events & bookings
 
-`event_planner` providers, events, bookings, and an events tab on the provider
-dashboard. Payment status tracked manually; no gateway yet.
+| | Status |
+|---|---|
+| Organisers as their own table and role (3E) | done |
+| Events, bookings, organiser dashboard | not started |
+
+Organisers, events, bookings, and a dashboard of their own. Payment status
+tracked manually; no gateway yet.
+
+The table landed early, in 3E, because it had to: building events on top of a
+providers row would have deepened the mistake it was already causing, and
+every month of delay adds rows that would need moving.
 
 **Bookings here means event bookings**, which are genuinely date-and-slot
 shaped. Enrolling with a coach is not: it is a monthly relationship that merely
@@ -622,7 +644,8 @@ is what makes it straightforward rather than a rewrite.
 | A Space is auto-created and never claimable | "Per provider" and "claimable" contradict; the claimable reading means public pages a business cannot moderate |
 | Space video is a YouTube link, not an upload | Removes the phase's only cost risk: Google pays for transcoding, bandwidth and abuse detection |
 | Three reports auto-hide a post | One admin cannot be the only thing between a bad post and a parent |
-| Event planners hidden from search | They run spaces, they aren't "found" like coaches |
+| Event companies are their own table, not a provider_type | 18 exclusion clauses across 12 migrations, and none of providers' columns fit a venue business |
+| The inert exclusion clauses stay | Rewriting 18 working functions to delete an always-true condition is a large diff and no behaviour change |
 | No self-serve advertiser accounts | Admin-managed banners plus a lead form is enough |
 | Payments deferred to Phase 6 | Model the booking data now, wire the gateway later |
 | An API tier in front, RLS still underneath | 6,174 lines of SQL had nowhere to put a test and no contract a second client could build against; RLS stays because it cannot be forgotten |
