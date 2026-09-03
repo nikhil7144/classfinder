@@ -84,9 +84,14 @@ suggestion cache — go through definer functions added in phase3d.
 **On Vercel**, as its own project with Root Directory `api`. `vercel.json`
 deliberately does *not* run `nest build`: @vercel/node compiles `api/index.ts`
 and everything it imports on its own, so the Nest build would produce a dist/
-nothing reads, and Vercel would then fail looking for static output that a
-server has no reason to emit. The build command makes an empty `public/`
-instead, and the rewrite sends every path to the function.
+nothing reads — and Vercel then fails the deploy looking for static output
+that a server has no reason to emit.
+
+It insists on a non-empty output directory either way, so `public/` holds one
+page saying this host is the API and pointing at the docs. Vercel checks the
+filesystem before rewrites, so `/` serves that page and every other path falls
+through to the function — which is better than a JSON 404 for anyone who
+opens the bare hostname.
 
 Environment: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `GOOGLE_API_KEY`,
 `CORS_ORIGINS`. Not `PORT` — nothing listens in the serverless path.
