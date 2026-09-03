@@ -19,6 +19,6 @@
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true
   },
-  "include": ["src/**/*", "test/**/*"],
+  "include": ["src/**/*", "test/**/*", "api/**/*"],
   "exclude": ["node_modules", "dist"]
 }

@@ -81,7 +81,17 @@ suggestion cache — go through definer functions added in phase3d.
 
 ## Deploying
 
-`Dockerfile` builds a two-stage image that runs `node dist/main` as a non-root
+**On Vercel**, as its own project with Root Directory `api`. `vercel.json`
+deliberately does *not* run `nest build`: @vercel/node compiles `api/index.ts`
+and everything it imports on its own, so the Nest build would produce a dist/
+nothing reads, and Vercel would then fail looking for static output that a
+server has no reason to emit. The build command makes an empty `public/`
+instead, and the rewrite sends every path to the function.
+
+Environment: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `GOOGLE_API_KEY`,
+`CORS_ORIGINS`. Not `PORT` — nothing listens in the serverless path.
+
+**Anywhere else**, `Dockerfile` builds a two-stage image that runs `node dist/main` as a non-root
 user, so any container host will take it. Set `SUPABASE_URL`,
 `SUPABASE_ANON_KEY`, `GOOGLE_API_KEY` and `CORS_ORIGINS`; most platforms
 inject `PORT` themselves.
