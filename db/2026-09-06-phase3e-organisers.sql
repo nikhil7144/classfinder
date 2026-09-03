@@ -236,39 +236,26 @@ $fn$;
 grant execute on function public.switch_role to authenticated, service_role;
 
 -- ---------------------------------------------------------------------
--- 6. one read, for the organiser's own dashboard
+-- 6. there is deliberately no read function here
 --
--- Definer so an unapproved organiser can still see their own listing —
--- "public read approved organisers" would hide it from them, and a business
--- waiting on approval needs to see what it submitted.
+-- An earlier draft had my_organiser(), a definer wrapper returning the
+-- caller's own row. It was habit, not reasoning: "owner read own organiser
+-- row" above is unconditional on approval, so the caller can already read
+-- exactly that row, and a definer function around a query RLS permits adds a
+-- privilege nobody needs.
+--
+-- The rule this project settled on is that Postgres decides who may see what
+-- and the API decides what shape it arrives in. Reading an organiser is the
+-- second kind, so it belongs in api/ next to /api/v1/me, and arrives with
+-- Phase 4 when organisers get screens to read it on.
+--
+-- The two functions here are the other kind. switch_role deletes the
+-- abandoned row for the role being left, and there is no delete policy on
+-- seekers, providers or organisers by design — a caller-scoped query cannot
+-- do it at all. set_organiser_approval writes `approved`, which the column
+-- grant above deliberately withholds from every caller. Neither is
+-- expressible as the caller, which is the whole test for belonging here.
 -- ---------------------------------------------------------------------
-
-create or replace function public.my_organiser()
-returns jsonb
-language sql
-stable
-security definer
-set search_path = public
-as $fn$
-  select jsonb_build_object(
-    'id', o.id,
-    'name', o.name,
-    'about', o.about,
-    'logo_url', o.logo_url,
-    'contact_email', o.contact_email,
-    'contact_phone', o.contact_phone,
-    'website_url', o.website_url,
-    'area_id', o.area_id,
-    'venue_name', o.venue_name,
-    'venue_address', o.venue_address,
-    'approved', o.approved,
-    'is_suspended', o.is_suspended
-  )
-  from public.organisers o
-  where o.user_id = auth.uid();
-$fn$;
-
-grant execute on function public.my_organiser to authenticated, service_role;
 
 -- ---------------------------------------------------------------------
 -- 7. admin approval, mirroring providers
