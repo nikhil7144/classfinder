@@ -15,6 +15,24 @@ import {
 const dayMonth = (iso: string) =>
   new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 
+/**
+ * Metadata in the message stream, not furniture above it.
+ *
+ * Everything the pane wanted to say about a conversation — who it is with,
+ * what started it — was a bordered block stacked over the scroller, and four
+ * of them left about as many lines for the conversation itself. A chat app
+ * writes this as a centred hairline and gets on with it.
+ */
+function SystemLine({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 py-1">
+      <span className="h-px flex-1 bg-line" />
+      <span className="shrink-0 text-center text-[0.7rem] leading-tight text-faint">{children}</span>
+      <span className="h-px flex-1 bg-line" />
+    </div>
+  );
+}
+
 import TrialCard from "./TrialCard";
 import MessageComposer from "./MessageComposer";
 
@@ -279,6 +297,16 @@ export default function ThreadPane({ thread, me, onChanged, onBack }: Props) {
           )}
           <p className="truncate text-[0.7rem] leading-tight text-muted">{threadStatusLabel(thread)}</p>
         </div>
+        {/* The number, beside the name it belongs to. It used to sit on a
+            strip of its own that repeated that name back. */}
+        {contact?.shared && contact.phone && (
+          <a
+            href={`tel:${contact.phone}`}
+            className="shrink-0 font-mono text-xs text-gold transition hover:text-accent-ink"
+          >
+            {contact.phone}
+          </a>
+        )}
         {thread.group_id && (
           <Link
             href={`/groups/${thread.group_id}`}
@@ -302,37 +330,7 @@ export default function ThreadPane({ thread, me, onChanged, onBack }: Props) {
         </span>
       </header>
 
-      {/* One row, like every other strip. This was a four-line block, and on a
-          phone it and the trial panel together left no conversation visible. */}
-      {contact && (
-        <div className="flex shrink-0 items-center gap-3 border-b border-line bg-surface-2 px-5 py-1.5">
-          <span className="cf-eyebrow shrink-0">Talking to</span>
-          <span className="min-w-0 flex-1 truncate text-xs text-ink">
-            {contact.name || "A parent"}
-            {contact.society_name && <span className="text-muted"> · {contact.society_name}</span>}
-          </span>
-          {contact.shared && contact.phone && (
-            <a
-              href={`tel:${contact.phone}`}
-              className="cf-btn-ghost shrink-0 px-3 py-1 font-mono text-xs"
-            >
-              {contact.phone}
-            </a>
-          )}
-        </div>
-      )}
 
-      {sharing !== null && (
-        <div className="flex shrink-0 items-center gap-3 border-b border-line bg-surface-2 px-5 py-1.5">
-          <span className="cf-eyebrow shrink-0">Your number</span>
-          <span className="min-w-0 flex-1 truncate text-xs text-muted">
-            {sharing ? "Shared with this coach" : "Not shared"}
-          </span>
-          <button onClick={toggleSharing} className="cf-btn-ghost shrink-0 px-3 py-1 text-xs">
-            {sharing ? "Stop sharing" : "Let them call me"}
-          </button>
-        </div>
-      )}
 
       <TrialCard
         kind={thread.kind}
@@ -347,22 +345,32 @@ export default function ThreadPane({ thread, me, onChanged, onBack }: Props) {
       >
         {/* Whatever opened the thread stays visible: it is what the other side
             was judged on, and it is the question a coach is answering. */}
-        <div className="rounded-2xl border border-line bg-surface-2 px-4 py-3">
-          <p className="cf-eyebrow">
-            {thread.kind === "group" ? "First message" : "The enquiry"}
-          </p>
-          <p className="mt-1.5 text-sm leading-relaxed text-muted">{thread.opening}</p>
+        {sharing !== null && (
+          <SystemLine>
+            {sharing ? "They can see your number" : "Your number is not shared"}
+            {" · "}
+            <button
+              onClick={toggleSharing}
+              className="text-gold underline underline-offset-2 transition hover:text-accent-ink"
+            >
+              {sharing ? "stop sharing" : "let them call me"}
+            </button>
+          </SystemLine>
+        )}
 
-          {/* Inside the opening block rather than above it. As its own card
-              this was a second large box in a pane that already had four, and
-              between them there was no room left for the conversation. */}
-          {fromQuery && (
-            <p className="mt-3 border-t border-line pt-3 text-xs text-gold">
-              {thread.i_am_seeker ? "You asked" : "They asked"} for a call
-              {fromQuery.service ? ` about ${fromQuery.service}` : ""} on {dayMonth(fromQuery.at)}
-            </p>
-          )}
-        </div>
+        {fromQuery && (
+          <SystemLine>
+            {thread.i_am_seeker ? "You asked" : "They asked"} for a call
+            {fromQuery.service ? ` about ${fromQuery.service}` : ""} on {dayMonth(fromQuery.at)}
+          </SystemLine>
+        )}
+
+        <SystemLine>{thread.kind === "group" ? "First message" : "The enquiry"}</SystemLine>
+
+        {/* The words, unboxed. What opened the thread is what the other side
+            was judged on, so it stays visible — but it is context, and giving
+            it a card's weight cost the conversation the room to be read. */}
+        <p className="px-1 pb-1 text-sm leading-relaxed text-muted">{thread.opening}</p>
 
         {messages.map((m) => {
           const mine = m.sender_id === me;
