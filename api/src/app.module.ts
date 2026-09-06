@@ -2,6 +2,8 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { APP_GUARD } from "@nestjs/core";
 import { AuthGuard } from "./auth/auth.guard";
+import { EntriesModule } from "./entries/entries.module";
+import { EventsModule } from "./events/events.module";
 import { FeedsModule } from "./feeds/feeds.module";
 import { HealthController } from "./health/health.controller";
 import { MeModule } from "./me/me.module";
@@ -15,6 +17,8 @@ import { SupabaseModule } from "./supabase/supabase.module";
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: [".env.local", ".env"] }),
     SupabaseModule,
+    EntriesModule,
+    EventsModule,
     FeedsModule,
     MeModule,
     OrganisersModule,

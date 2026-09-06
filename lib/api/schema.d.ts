@@ -21,6 +21,230 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/entries/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What this family has entered
+         * @description Newest first, cancelled ones included — a withdrawal is part of the record.
+         */
+        get: operations["EntriesController_mine_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enter an event
+         * @description Against a category, which names its own event. Refusals arrive as sentences: the category is full, entries have closed, the age band does not fit.
+         */
+        post: operations["EntriesController_create_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entries/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraw, or cancel somebody's entry
+         * @description A family may until the event's cancellation deadline; the organiser may until the event is marked finished. Never a delete — the receipt survives.
+         */
+        post: operations["EntriesController_cancel_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entries/{id}/payment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Record what was paid
+         * @description The organiser's alone. A parent who could set this could mark themselves paid — the same reason a coach does not certify their own trial attendance.
+         */
+        patch: operations["EntriesController_setPayment_v1"];
+        trace?: never;
+    };
+    "/api/v1/events/{id}/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Who has entered one event
+         * @description The owner's register. Anybody else gets an empty list rather than a refusal, because a refusal would confirm the event has entries in it.
+         */
+        get: operations["EventEntriesController_forEvent_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The caller's own events
+         * @description Drafts included, soonest first. Declared before the :id route so that /events/mine is not parsed as an event whose id is the word mine.
+         */
+        get: operations["EventsController_mine_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events/city/{cityId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What is on in a city
+         * @description Published events whose owner is approved and unsuspended. No account needed — a parent deciding whether to sign up should be able to look first.
+         */
+        get: operations["EventsController_byCity_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One event, with its categories
+         * @description Public once published; the owner sees their own drafts too. A draft is a 404 to anybody else, because saying 'forbidden' would confirm it exists.
+         */
+        get: operations["EventsController_one_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Edit one
+         * @description Only fields present in the body are touched. Ownership columns are not editable.
+         */
+        patch: operations["EventsController_update_v1"];
+        trace?: never;
+    };
+    "/api/v1/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create an event
+         * @description Always a draft. The owner is taken from the caller's own coach or company row, never from the body — whose event it is is not the client's to nominate.
+         */
+        post: operations["EventsController_create_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Publish, withdraw, cancel or close
+         * @description A separate act from editing because publishing has its own condition: the row policy only lets an approved, unsuspended owner move an event to published.
+         */
+        patch: operations["EventsController_setStatus_v1"];
+        trace?: never;
+    };
+    "/api/v1/events/{id}/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Replace the category set
+         * @description Send the list the form now shows and it becomes the set. Order of the array is the order they display in, so a client never numbers its own rows.
+         */
+        put: operations["EventsController_replaceCategories_v1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/feeds/cities": {
         parameters: {
             query?: never;
@@ -270,6 +494,241 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        EntryMemberDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: date */
+            dob: string | null;
+            sortOrder: number;
+        };
+        EntryDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            eventId: string;
+            eventTitle: string | null;
+            /** Format: date-time */
+            eventStartsAt: string | null;
+            /** @description The event's own status. */
+            eventStatus: string | null;
+            /** Format: uuid */
+            categoryId: string;
+            categoryName: string | null;
+            /**
+             * Format: uuid
+             * @description The account that entered.
+             */
+            seekerId: string;
+            participantName: string;
+            /** Format: date */
+            participantDob: string | null;
+            /** @enum {string} */
+            status: "confirmed" | "cancelled";
+            /**
+             * @description Money is a separate axis from attendance, so a late withdrawal can be cancelled without becoming a refund.
+             * @enum {string}
+             */
+            paymentStatus: "unpaid" | "paid" | "refund_due" | "refunded" | "waived";
+            /** @enum {string|null} */
+            paymentMode: "cash" | "upi" | "bank_transfer" | "card" | "other" | null;
+            paymentReference: string | null;
+            /** Format: date-time */
+            paidAt: string | null;
+            /** @description Copied from the category when the entry was made, never read back through it. */
+            amountDue: number | null;
+            receiptNo: string;
+            /** Format: date-time */
+            enteredAt: string;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            cancelledReason: string | null;
+            /** @description Whether the caller cancelled it themselves, rather than the other side. */
+            cancelledByMe: boolean;
+            members: components["schemas"]["EntryMemberDto"][];
+        };
+        EntryMemberInputDto: {
+            name: string;
+            /** Format: date */
+            dob?: string;
+        };
+        CreateEntryDto: {
+            /** Format: uuid */
+            categoryId: string;
+            /** @example Aarav Sharma */
+            participantName: string;
+            /**
+             * Format: date
+             * @description Checked against the category's age range as it will be on the day of the event, which is what an under-10 tournament means.
+             */
+            participantDob?: string;
+            /** @description The rest of a team: the entrant plus these must come to the category's team size. Empty for an individual category. */
+            members?: components["schemas"]["EntryMemberInputDto"][];
+        };
+        CancelEntryDto: {
+            /** @example Withdrawn — injured. */
+            reason?: string;
+            /**
+             * @description The organiser's call and ignored for anybody else: false cancels the entry without marking a refund due, which is what a non-refundable late withdrawal is.
+             * @default true
+             */
+            refund: boolean;
+        };
+        SetEntryPaymentDto: {
+            /** @enum {string} */
+            status: "unpaid" | "paid" | "refund_due" | "refunded" | "waived";
+            /** @enum {string} */
+            mode?: "cash" | "upi" | "bank_transfer" | "card" | "other";
+            /**
+             * @description A UPI reference, a cheque number.
+             * @example UPI 4471…
+             */
+            reference?: string;
+        };
+        EventCategoryDto: {
+            /** Format: uuid */
+            id: string;
+            /** @example Under-10 Singles */
+            name: string;
+            /** @enum {string} */
+            entryType: "individual" | "team";
+            /** @description Set for a team, null otherwise. */
+            teamSize: number | null;
+            /** @description Null means uncapped. */
+            capacity: number | null;
+            /** @description Confirmed entries. A column on the row rather than a count, because RLS hides other families' entries and anything counting as the caller would count only their own. */
+            entriesCount: number;
+            /** @description Per entry, in rupees. */
+            feeAmount: number | null;
+            minAge: number | null;
+            maxAge: number | null;
+            sortOrder: number;
+        };
+        EventDto: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            ownerKind: "provider" | "organiser";
+            /** Format: uuid */
+            ownerId: string;
+            /** @description The company or coach running it. Null when the owner's row is not visible to this caller, which RLS decides — a public page names who is behind an event, and a page that cannot say is better than one that guesses. */
+            ownerName: string | null;
+            title: string;
+            about: string | null;
+            /** Format: uuid */
+            serviceCategoryId: string | null;
+            bannerUrl: string | null;
+            /** Format: uuid */
+            cityId: string;
+            venueName: string | null;
+            venueAddress: string | null;
+            /**
+             * @description Stated, never inferred from whether externalBookingUrl is set: platform takes entries here, external sends them to the organiser's own site, none is an announcement.
+             * @enum {string}
+             */
+            bookingMode: "platform" | "external" | "none";
+            externalBookingUrl: string | null;
+            /** Format: date-time */
+            bookingOpensAt: string | null;
+            /** Format: date-time */
+            bookingClosesAt: string | null;
+            /**
+             * Format: date-time
+             * @description After this a family can no longer withdraw itself. Falls back to bookingClosesAt and then to startsAt; its own column because 'no withdrawals in the last week' cannot be expressed by closing entries a week early.
+             */
+            cancellationDeadline: string | null;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string | null;
+            /** @enum {string} */
+            status: "draft" | "published" | "cancelled" | "completed";
+            /** Format: date-time */
+            createdAt: string;
+            categories: components["schemas"]["EventCategoryDto"][];
+        };
+        CreateEventDto: {
+            title?: string;
+            about?: string;
+            /** Format: uuid */
+            serviceCategoryId?: string;
+            /** Format: uri */
+            bannerUrl?: string;
+            /** Format: uuid */
+            cityId?: string;
+            venueName?: string;
+            venueAddress?: string;
+            /** @enum {string} */
+            bookingMode?: "platform" | "external" | "none";
+            /** Format: uri */
+            externalBookingUrl?: string;
+            /** Format: date-time */
+            bookingOpensAt?: string;
+            /** Format: date-time */
+            bookingClosesAt?: string;
+            /**
+             * Format: date-time
+             * @description Leave unset and a family may withdraw until entries close.
+             */
+            cancellationDeadline?: string;
+            /** Format: date-time */
+            startsAt?: string;
+            /** Format: date-time */
+            endsAt?: string;
+        };
+        UpdateEventDto: {
+            title?: string;
+            about?: string;
+            /** Format: uuid */
+            serviceCategoryId?: string;
+            /** Format: uri */
+            bannerUrl?: string;
+            /** Format: uuid */
+            cityId?: string;
+            venueName?: string;
+            venueAddress?: string;
+            /** @enum {string} */
+            bookingMode?: "platform" | "external" | "none";
+            /** Format: uri */
+            externalBookingUrl?: string;
+            /** Format: date-time */
+            bookingOpensAt?: string;
+            /** Format: date-time */
+            bookingClosesAt?: string;
+            /**
+             * Format: date-time
+             * @description Leave unset and a family may withdraw until entries close.
+             */
+            cancellationDeadline?: string;
+            /** Format: date-time */
+            startsAt?: string;
+            /** Format: date-time */
+            endsAt?: string;
+        };
+        SetEventStatusDto: {
+            /** @enum {string} */
+            status: "draft" | "published" | "cancelled" | "completed";
+        };
+        EventCategoryInputDto: {
+            /**
+             * Format: uuid
+             * @description The row this replaces. Present means edit that category, absent means add one — which is what lets a category keep its id, and therefore its entries, across a save.
+             */
+            id?: string;
+            name: string;
+            /** @enum {string} */
+            entryType: "individual" | "team";
+            /** @description Required when entryType is team. */
+            teamSize?: number;
+            /** @description Omit for uncapped. */
+            capacity?: number;
+            feeAmount?: number;
+            minAge?: number;
+            maxAge?: number;
+        };
+        ReplaceEventCategoriesDto: {
+            categories: components["schemas"]["EventCategoryInputDto"][];
+        };
         CityDto: {
             /** Format: uuid */
             id: string;
@@ -371,10 +830,8 @@ export interface components {
             contactEmail: string | null;
             contactPhone: string | null;
             websiteUrl: string | null;
-            /** Format: uuid */
-            areaId: string | null;
-            venueName: string | null;
-            venueAddress: string | null;
+            /** @description Where the company is, not where its events are. A venue is asked for per event, since an organiser runs each one somewhere different. */
+            officeAddress: string | null;
             /** @description Visible publicly. False means waiting on an admin. */
             approved: boolean;
             /** @description Taken down. Different from never approved, and says so. */
@@ -391,10 +848,7 @@ export interface components {
             contactPhone?: string;
             /** Format: uri */
             websiteUrl?: string;
-            /** Format: uuid */
-            areaId?: string;
-            venueName?: string;
-            venueAddress?: string;
+            officeAddress?: string;
         };
         QueryDto: {
             /** Format: uuid */
@@ -599,6 +1053,278 @@ export interface operations {
                         /** @example 1234 */
                         uptimeSeconds?: number;
                     };
+                };
+            };
+        };
+    };
+    EntriesController_mine_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryDto"][];
+                };
+            };
+        };
+    };
+    EntriesController_create_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateEntryDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryDto"];
+                };
+            };
+        };
+    };
+    EntriesController_cancel_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelEntryDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryDto"];
+                };
+            };
+        };
+    };
+    EntriesController_setPayment_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetEntryPaymentDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryDto"];
+                };
+            };
+        };
+    };
+    EventEntriesController_forEvent_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryDto"][];
+                };
+            };
+        };
+    };
+    EventsController_mine_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventDto"][];
+                };
+            };
+        };
+    };
+    EventsController_byCity_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cityId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventDto"][];
+                };
+            };
+        };
+    };
+    EventsController_one_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventDto"];
+                };
+            };
+        };
+    };
+    EventsController_update_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateEventDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventDto"];
+                };
+            };
+        };
+    };
+    EventsController_create_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateEventDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventDto"];
+                };
+            };
+        };
+    };
+    EventsController_setStatus_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetEventStatusDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventDto"];
+                };
+            };
+        };
+    };
+    EventsController_replaceCategories_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceEventCategoriesDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventDto"];
                 };
             };
         };

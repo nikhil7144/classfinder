@@ -33,6 +33,484 @@
         ]
       }
     },
+    "/api/v1/entries/mine": {
+      "get": {
+        "description": "Newest first, cancelled ones included — a withdrawal is part of the record.",
+        "operationId": "EntriesController_mine_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntryDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "What this family has entered",
+        "tags": [
+          "entries"
+        ]
+      }
+    },
+    "/api/v1/entries": {
+      "post": {
+        "description": "Against a category, which names its own event. Refusals arrive as sentences: the category is full, entries have closed, the age band does not fit.",
+        "operationId": "EntriesController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEntryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Enter an event",
+        "tags": [
+          "entries"
+        ]
+      }
+    },
+    "/api/v1/entries/{id}/cancel": {
+      "post": {
+        "description": "A family may until the event's cancellation deadline; the organiser may until the event is marked finished. Never a delete — the receipt survives.",
+        "operationId": "EntriesController_cancel_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelEntryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw, or cancel somebody's entry",
+        "tags": [
+          "entries"
+        ]
+      }
+    },
+    "/api/v1/entries/{id}/payment": {
+      "patch": {
+        "description": "The organiser's alone. A parent who could set this could mark themselves paid — the same reason a coach does not certify their own trial attendance.",
+        "operationId": "EntriesController_setPayment_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetEntryPaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record what was paid",
+        "tags": [
+          "entries"
+        ]
+      }
+    },
+    "/api/v1/events/{id}/entries": {
+      "get": {
+        "description": "The owner's register. Anybody else gets an empty list rather than a refusal, because a refusal would confirm the event has entries in it.",
+        "operationId": "EventEntriesController_forEvent_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntryDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Who has entered one event",
+        "tags": [
+          "entries"
+        ]
+      }
+    },
+    "/api/v1/events/mine": {
+      "get": {
+        "description": "Drafts included, soonest first. Declared before the :id route so that /events/mine is not parsed as an event whose id is the word mine.",
+        "operationId": "EventsController_mine_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EventDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The caller's own events",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/v1/events/city/{cityId}": {
+      "get": {
+        "description": "Published events whose owner is approved and unsuspended. No account needed — a parent deciding whether to sign up should be able to look first.",
+        "operationId": "EventsController_byCity_v1",
+        "parameters": [
+          {
+            "name": "cityId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EventDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "What is on in a city",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/v1/events/{id}": {
+      "get": {
+        "description": "Public once published; the owner sees their own drafts too. A draft is a 404 to anybody else, because saying 'forbidden' would confirm it exists.",
+        "operationId": "EventsController_one_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "One event, with its categories",
+        "tags": [
+          "events"
+        ]
+      },
+      "patch": {
+        "description": "Only fields present in the body are touched. Ownership columns are not editable.",
+        "operationId": "EventsController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEventDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Edit one",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/v1/events": {
+      "post": {
+        "description": "Always a draft. The owner is taken from the caller's own coach or company row, never from the body — whose event it is is not the client's to nominate.",
+        "operationId": "EventsController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEventDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create an event",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/v1/events/{id}/status": {
+      "patch": {
+        "description": "A separate act from editing because publishing has its own condition: the row policy only lets an approved, unsuspended owner move an event to published.",
+        "operationId": "EventsController_setStatus_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetEventStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Publish, withdraw, cancel or close",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/v1/events/{id}/categories": {
+      "put": {
+        "description": "Send the list the form now shows and it becomes the set. Order of the array is the order they display in, so a client never numbers its own rows.",
+        "operationId": "EventsController_replaceCategories_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceEventCategoriesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Replace the category set",
+        "tags": [
+          "events"
+        ]
+      }
+    },
     "/api/v1/feeds/cities": {
       "get": {
         "description": "Only cities with a live area and at least one approved coach in it, busiest first. The head of this list is the sensible default for a visitor who has not chosen.",
@@ -579,6 +1057,675 @@
       }
     },
     "schemas": {
+      "EntryMemberDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "dob": {
+            "type": "string",
+            "nullable": true,
+            "format": "date"
+          },
+          "sortOrder": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "dob",
+          "sortOrder"
+        ]
+      },
+      "EntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "eventTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "eventStartsAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "eventStatus": {
+            "type": "string",
+            "nullable": true,
+            "description": "The event's own status."
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "categoryName": {
+            "type": "string",
+            "nullable": true
+          },
+          "seekerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The account that entered."
+          },
+          "participantName": {
+            "type": "string"
+          },
+          "participantDob": {
+            "type": "string",
+            "nullable": true,
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "cancelled"
+            ]
+          },
+          "paymentStatus": {
+            "type": "string",
+            "enum": [
+              "unpaid",
+              "paid",
+              "refund_due",
+              "refunded",
+              "waived"
+            ],
+            "description": "Money is a separate axis from attendance, so a late withdrawal can be cancelled without becoming a refund."
+          },
+          "paymentMode": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "cash",
+              "upi",
+              "bank_transfer",
+              "card",
+              "other"
+            ]
+          },
+          "paymentReference": {
+            "type": "string",
+            "nullable": true
+          },
+          "paidAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "amountDue": {
+            "type": "number",
+            "nullable": true,
+            "description": "Copied from the category when the entry was made, never read back through it."
+          },
+          "receiptNo": {
+            "type": "string"
+          },
+          "enteredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cancelledAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "cancelledReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "cancelledByMe": {
+            "type": "boolean",
+            "description": "Whether the caller cancelled it themselves, rather than the other side."
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntryMemberDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "eventId",
+          "eventTitle",
+          "eventStartsAt",
+          "eventStatus",
+          "categoryId",
+          "categoryName",
+          "seekerId",
+          "participantName",
+          "participantDob",
+          "status",
+          "paymentStatus",
+          "paymentMode",
+          "paymentReference",
+          "paidAt",
+          "amountDue",
+          "receiptNo",
+          "enteredAt",
+          "cancelledAt",
+          "cancelledReason",
+          "cancelledByMe",
+          "members"
+        ]
+      },
+      "EntryMemberInputDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "dob": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "CreateEntryDto": {
+        "type": "object",
+        "properties": {
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "participantName": {
+            "type": "string",
+            "example": "Aarav Sharma"
+          },
+          "participantDob": {
+            "type": "string",
+            "format": "date",
+            "description": "Checked against the category's age range as it will be on the day of the event, which is what an under-10 tournament means."
+          },
+          "members": {
+            "description": "The rest of a team: the entrant plus these must come to the category's team size. Empty for an individual category.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntryMemberInputDto"
+            }
+          }
+        },
+        "required": [
+          "categoryId",
+          "participantName"
+        ]
+      },
+      "CancelEntryDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "example": "Withdrawn — injured."
+          },
+          "refund": {
+            "type": "boolean",
+            "description": "The organiser's call and ignored for anybody else: false cancels the entry without marking a refund due, which is what a non-refundable late withdrawal is.",
+            "default": true
+          }
+        }
+      },
+      "SetEntryPaymentDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "unpaid",
+              "paid",
+              "refund_due",
+              "refunded",
+              "waived"
+            ]
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "cash",
+              "upi",
+              "bank_transfer",
+              "card",
+              "other"
+            ]
+          },
+          "reference": {
+            "type": "string",
+            "example": "UPI 4471…",
+            "description": "A UPI reference, a cheque number."
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "EventCategoryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Under-10 Singles"
+          },
+          "entryType": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "team"
+            ]
+          },
+          "teamSize": {
+            "type": "number",
+            "nullable": true,
+            "description": "Set for a team, null otherwise."
+          },
+          "capacity": {
+            "type": "number",
+            "nullable": true,
+            "description": "Null means uncapped."
+          },
+          "entriesCount": {
+            "type": "number",
+            "description": "Confirmed entries. A column on the row rather than a count, because RLS hides other families' entries and anything counting as the caller would count only their own."
+          },
+          "feeAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Per entry, in rupees."
+          },
+          "minAge": {
+            "type": "number",
+            "nullable": true
+          },
+          "maxAge": {
+            "type": "number",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "entryType",
+          "teamSize",
+          "capacity",
+          "entriesCount",
+          "feeAmount",
+          "minAge",
+          "maxAge",
+          "sortOrder"
+        ]
+      },
+      "EventDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ownerKind": {
+            "type": "string",
+            "enum": [
+              "provider",
+              "organiser"
+            ]
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ownerName": {
+            "type": "string",
+            "nullable": true,
+            "description": "The company or coach running it. Null when the owner's row is not visible to this caller, which RLS decides — a public page names who is behind an event, and a page that cannot say is better than one that guesses."
+          },
+          "title": {
+            "type": "string"
+          },
+          "about": {
+            "type": "string",
+            "nullable": true
+          },
+          "serviceCategoryId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "bannerUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "cityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "venueName": {
+            "type": "string",
+            "nullable": true
+          },
+          "venueAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "bookingMode": {
+            "type": "string",
+            "enum": [
+              "platform",
+              "external",
+              "none"
+            ],
+            "description": "Stated, never inferred from whether externalBookingUrl is set: platform takes entries here, external sends them to the organiser's own site, none is an announcement."
+          },
+          "externalBookingUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "bookingOpensAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "bookingClosesAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "cancellationDeadline": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "description": "After this a family can no longer withdraw itself. Falls back to bookingClosesAt and then to startsAt; its own column because 'no withdrawals in the last week' cannot be expressed by closing entries a week early."
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "cancelled",
+              "completed"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventCategoryDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "ownerKind",
+          "ownerId",
+          "ownerName",
+          "title",
+          "about",
+          "serviceCategoryId",
+          "bannerUrl",
+          "cityId",
+          "venueName",
+          "venueAddress",
+          "bookingMode",
+          "externalBookingUrl",
+          "bookingOpensAt",
+          "bookingClosesAt",
+          "cancellationDeadline",
+          "startsAt",
+          "endsAt",
+          "status",
+          "createdAt",
+          "categories"
+        ]
+      },
+      "CreateEventDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 160
+          },
+          "about": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "serviceCategoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bannerUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "cityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "venueName": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "venueAddress": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "bookingMode": {
+            "type": "string",
+            "enum": [
+              "platform",
+              "external",
+              "none"
+            ]
+          },
+          "externalBookingUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "bookingOpensAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "bookingClosesAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cancellationDeadline": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Leave unset and a family may withdraw until entries close."
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UpdateEventDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 160
+          },
+          "about": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "serviceCategoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bannerUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "cityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "venueName": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "venueAddress": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "bookingMode": {
+            "type": "string",
+            "enum": [
+              "platform",
+              "external",
+              "none"
+            ]
+          },
+          "externalBookingUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "bookingOpensAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "bookingClosesAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cancellationDeadline": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Leave unset and a family may withdraw until entries close."
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SetEventStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "cancelled",
+              "completed"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "EventCategoryInputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The row this replaces. Present means edit that category, absent means add one — which is what lets a category keep its id, and therefore its entries, across a save."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "entryType": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "team"
+            ]
+          },
+          "teamSize": {
+            "type": "number",
+            "minimum": 2,
+            "description": "Required when entryType is team."
+          },
+          "capacity": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Omit for uncapped."
+          },
+          "feeAmount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "minAge": {
+            "type": "number",
+            "minimum": 2,
+            "maximum": 100
+          },
+          "maxAge": {
+            "type": "number",
+            "minimum": 2,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "name",
+          "entryType"
+        ]
+      },
+      "ReplaceEventCategoriesDto": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventCategoryInputDto"
+            }
+          }
+        },
+        "required": [
+          "categories"
+        ]
+      },
       "CityDto": {
         "type": "object",
         "properties": {
@@ -869,18 +2016,10 @@
             "type": "string",
             "nullable": true
           },
-          "areaId": {
+          "officeAddress": {
             "type": "string",
             "nullable": true,
-            "format": "uuid"
-          },
-          "venueName": {
-            "type": "string",
-            "nullable": true
-          },
-          "venueAddress": {
-            "type": "string",
-            "nullable": true
+            "description": "Where the company is, not where its events are. A venue is asked for per event, since an organiser runs each one somewhere different."
           },
           "approved": {
             "type": "boolean",
@@ -899,9 +2038,7 @@
           "contactEmail",
           "contactPhone",
           "websiteUrl",
-          "areaId",
-          "venueName",
-          "venueAddress",
+          "officeAddress",
           "approved",
           "isSuspended"
         ]
@@ -934,15 +2071,7 @@
             "type": "string",
             "format": "uri"
           },
-          "areaId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "venueName": {
-            "type": "string",
-            "maxLength": 120
-          },
-          "venueAddress": {
+          "officeAddress": {
             "type": "string",
             "maxLength": 500
           }
