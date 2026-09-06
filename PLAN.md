@@ -20,7 +20,7 @@ kept, what was removed, and what to copy back when later phases need it.
 |---|---|---|
 | **seeker** | Parent or student | Browses without logging in. Must log in and complete a profile to book, join a space, or message. |
 | **provider** | Coach, tutor, academy, centre | Approved by admin before appearing in search. |
-| **organiser** | Event company running a venue | Approved by admin. Separate table since 3E — see below. |
+| **organiser** | Event company running events | Approved by admin. Separate table since 3E — see below. |
 | **admin** | Operator | Approvals, taxonomy, cities/areas, moderation, banners. |
 
 ### Provider structure
@@ -37,8 +37,8 @@ shared the providers table with coaches, so every read of that table carried
 `provider_type <> 'event_planner'` — 18 clauses across 12 migrations, each one
 a chance to forget and put an events business in front of a parent searching
 for a coach. The columns never fitted either: providers has fees, teaching
-places, availability and service areas, none of which a venue business has,
-and no contact address or venue, both of which it needs.
+places, availability and service areas, none of which an events business has,
+and no contact address, which it needs.
 
 Event companies are `public.organisers` now, with their own table, their own
 RLS and their own role. Done while there were still zero of them, so it cost
@@ -576,7 +576,11 @@ signed-in users something before everybody else.
 |---|---|
 | Organisers as their own table and role (3E) | done |
 | Organiser signup, listing, approval gate, dashboard shell | done |
-| Events, entries, bookings | not started |
+| Organiser office address replaces area/venue (3I) | done |
+| Events and categories: table, RLS, `/api/v1/events` (3J) | done |
+| Event creation and management screens (4A, 4B) | done |
+| Entries, cancellation and receipts (4C) | 3K run, `/api/v1/entries` done; entry screens next |
+| Subscriptions and listing fees (4D — 3L) | not started |
 
 Organisers, events, bookings, and a dashboard of their own. Payment status
 tracked manually; no gateway yet.
@@ -586,6 +590,14 @@ endpoint written for a feature rather than migrated onto one. `/signup/organiser
 mirrors the other two entry points, and the listing is deliberately not a
 cut-down provider form: a coach is asked what they teach and what they charge,
 and none of that describes a business that runs a tournament at a ground.
+
+**The listing does not ask where the events are (3I).** 3E gave organisers an
+area, a venue name and a venue address; signup asked for all three. An event
+company runs a tournament at a ground in one city and a showcase in another,
+so there is no single answer, and whatever it picked was wrong by its second
+event. The venue is a property of the event and is asked for there, where the
+events table needs its own venue columns regardless. What the listing keeps is
+an office address — who an admin is approving, and where they are.
 
 Three decisions taken before any of it, worth not relitigating:
 
@@ -614,6 +626,275 @@ shaped. Enrolling with a coach is not: it is a monthly relationship that merely
 *starts* with one session, and that session is the trial class in Phase 2. A
 calendar for coaching would be a calendar nobody fills in while the coach keeps
 using WhatsApp.
+
+**The build order.** Four chunks, each shippable alone. A and B add no SQL at
+all — 3J's endpoints exist and are tested, and until somebody can create an
+event there is no real data to build anything else against.
+
+| | What | New SQL |
+|---|---|---|
+| **4A** | Organiser event screens — create, edit, categories, publish | none |
+| **4B** | Public listing and event page | none |
+| **4C** | Entries: `phase3k`, its API, both sides of the UI | 3K |
+| **4D** | Subscriptions and listing fees | 3L |
+
+4D is last because it gates publishing, and gating a flow that does not yet
+work is untestable.
+
+### Entries (3K)
+
+`event_entries` — one row per registration: the event, the category, the
+seeker who entered, the participant's name and date of birth, a status, a
+payment status, `amount_due`, `receipt_no`. `event_entry_members` carries the
+rest of a team.
+
+**The participant is described on the entry, not looked up.** There is no
+child record in this product — 2T gave seekers `relation_to_learner` and
+nothing more — and an entry should be a record of what was true on the day
+anyway, like `requirement_events`. A family that enters two children enters
+twice.
+
+**A team entry names the participant and the rest.** `enter_event` takes the
+entrant plus `team_size - 1` members, not a list of `team_size` strangers, so
+whoever the family entered under stays the person the entry belongs to. This
+is also how one tournament carries both halves of a badminton draw: singles
+and doubles are two categories on the same event — one `individual`, one
+`team` of two — with their own fees, their own places and their own age
+bands, and a child may enter both. The duplicate guard is per category, so
+the same name in singles and in doubles is two entries and two receipts,
+which is what the organiser is owed for.
+
+**`entries_count` is a column on `event_categories`, maintained by a trigger,
+not a view and not a definer read.** A parent has to see "34 of 40 taken"
+before entering, and RLS hides other families' entries, so an API counting as
+the caller would count only that family's own. A counter column is publicly
+readable as an ordinary column, is O(1), and — the real payoff — is the row
+that gets locked to enforce capacity.
+
+**Capacity is enforced in `enter_event()`, a definer function.** A `with
+check` cannot do it: it loses the race between two parents on the last place,
+and it cannot count rows it is not allowed to see. The function locks the
+category row, compares the counter with `capacity`, inserts, and returns. It
+is also the only thing that may write `receipt_no` and `amount_due`, which is
+what 3J's header meant by a receipt number unwritable by the person it bills.
+
+Behind it sits a check constraint on the category row itself:
+
+    check (capacity is null or capacity >= entries_count)
+
+Two columns of one row, so one constraint closes both directions — an
+organiser cannot shrink capacity below what is already sold, and a trigger
+increment cannot overfill even if the lock were somehow lost.
+
+**No holds, no waitlist, no expiry.** An entry is confirmed when it is
+submitted; payment is a separate axis the organiser marks by hand, which is
+what "payment status tracked manually" has always meant here. A
+pending-payment state that reserves a place needs hold expiry, a sweeper, and
+an answer for what happens when it fires mid-payment — all of which is Phase 6
+work once a gateway makes it real. Building it now is a state machine nobody
+exercises.
+
+Entries exist only for `booking_mode = 'platform'`. `external` renders a link
+out and `none` renders nothing; the mode is stated on the event precisely so
+that no screen has to infer it.
+
+### What an organiser may change once entries exist
+
+| Field | After the first entry | Held by |
+|---|---|---|
+| `capacity` | raise freely; lower only to `>= entries_count` | the check constraint above |
+| `fee_amount` | editable, future entries only | `amount_due` is copied onto the entry at entry time |
+| `min_age` / `max_age` | editable; existing entrants grandfathered | age is checked at entry and not re-checked |
+| `entry_type`, `team_size` | frozen | trigger refuses while `entries_count > 0` |
+| `name`, `sort_order` | always editable | — |
+| deleting the category | refused | `on delete restrict` from the entry |
+
+Flipping an individual category to a team one makes every existing entry
+meaningless and has no sane migration, which is why those two freeze rather
+than warn.
+
+**This is what forces `PUT /events/:id/categories` to become a real diff.** It
+is delete-then-insert today, so every save mints new category ids; the moment
+an entry references one, an organiser fixing a typo either orphans the entries
+or fails on an ordinary save. The client will have to send ids for the rows it
+is editing — the reason given for not doing so, that the form has no stable
+ids, stops being acceptable here.
+
+### Cancelling
+
+Two different acts, and they do not share a button.
+
+**One entry.** Wrong age, duplicate, never paid, withdrawn over the phone.
+Either side may do it, and it is a status change and never a delete: the row
+keeps its receipt number, because destroying the record of a fee that was
+collected in cash is worse than any tidiness it buys. `cancelled_at`,
+`cancelled_by` and `cancelled_reason` are recorded — six weeks later, who
+pulled this out is the first question. The trigger decrements the counter, so
+the place is genuinely resellable.
+
+**Cancellation closes before the event does.** A family may withdraw itself
+until `cancellation_deadline` — a nullable column on the event that falls back
+to `booking_closes_at`, and to `starts_at` when neither is set. It exists as
+its own column because "no withdrawals in the last week" is a real rule an
+organiser needs and cannot express by closing entries a week early; after that
+moment the parent's own cancel is refused and the screen tells them to contact
+the organiser. The organiser keeps the power until the event is `completed`,
+because entries taken in cash on the day still have to be corrected. Nobody
+cancels a completed event's entries: at that point the register is a record,
+not a working list.
+
+The rule lives in `cancel_entry()` rather than in RLS or the client, because
+it depends on who is asking — the same function already distinguishes them for
+the audit columns, and a deadline enforced in the UI is not a deadline.
+
+**There is no un-cancelling.** Re-entering makes a new entry with a new
+receipt, and only while entries are still open. Partly because the record
+should read as what happened, mostly because the freed place may already be
+gone, and restoring an entry could push the counter past capacity at the exact
+moment the screen has implied success.
+
+**The whole event.** Rain, venue lost, too few entries. `status = 'cancelled'`
+already exists; a trigger cancels every entry with that reason, queues a
+notification to each entrant, and moves paid entries to `refund_due`. This is
+the only bulk cancel, and there is deliberately no "cancel all entries"
+button, because the reason for one is always the event. The deadline does not
+apply to it — it binds families withdrawing, not an organiser calling the
+whole thing off.
+
+**A cancelled event stays visible, and says so.** It keeps its page, shows a
+cancelled banner, and each entrant sees their own entry marked cancelled with
+its refund state in plain words. It drops out of the upcoming-in-a-city
+listing — a parent browsing should not be offered a tournament that is not
+happening — but stays reachable by link and in the family's own entries.
+
+**Refund is a payment state, not a promise from this platform.** The axis is
+`unpaid | paid | refund_due | refunded | waived`, written only by the
+organiser through `set_entry_payment()`; a parent can no more mark their own
+refund than mark themselves paid. No money moves here and none is held, so
+every word on the screen says the organiser will refund, never that we will.
+`refund_due` is a filter on the organiser's register, because it is their
+to-do list.
+
+**How they paid is recorded, from the first version.** `payment_mode` —
+`cash | upi | bank_transfer | card | other` — with a free-text
+`payment_reference` and `paid_at`, written by that same setter and by nobody
+else. Worth three columns now rather than in Phase 6, because a gateway does
+not replace them: Razorpay becomes another mode whose reference is the payment
+id, and a register that already has the columns keeps one history instead of
+splitting into before and after. Most of these will say cash on the day, and
+an organiser reconciling a hundred entries needs to know which hundred.
+
+A withdrawal after the deadline is exactly why the two axes are separate: the
+organiser can cancel the entry without moving it to `refund_due`, which is
+what a non-refundable late withdrawal is.
+
+### What 3J has to be corrected for, in the same migration
+
+* **Only a draft is private.** The public read is `status = 'published'`
+  today, so cancelling or completing an event hides it from the very families
+  who entered it, and their own history quietly empties. Read becomes
+  `status <> 'draft'`, still gated on the owner being live.
+* **An event with entries cannot go back to `draft`.** Nothing stops
+  `PATCH /:id/status` doing it, and under the rule above it is the one move
+  that hides a live event from its entrants. Withdrawing is `cancelled`, which
+  tells people; `draft`, which does not, is refused by trigger.
+* **`cancellation_deadline`** joins the date columns and the ordering
+  constraint that already refuses a booking window closing after the event.
+* The category grant, the categories diff, and the freezes above.
+
+### The screens
+
+**Organiser and coach**, inside the dashboard shell that currently says events
+are the next thing being built:
+
+* `/dashboard` — drafts, published, past.
+* `/events/new` then `/events/[id]/edit` — saved as a draft on first submit so
+  nothing is lost, a categories editor, and a Publish action visibly separate
+  from Save. A refused publish shows the API's own sentence about approval.
+* `/events/[id]/entries` — the register: name, age, category, paid or not,
+  cancel, refunds due, CSV. This is the screen an organiser opens daily and
+  the one worth the most polish.
+
+**Parent:**
+
+* `/events` — city-scoped, soonest first, filterable by taxonomy group.
+* `/events/[id]` — public to guests; the Enter button is what asks for a
+  login, as booking has always required a completed profile. The cancellation
+  deadline is stated next to the fee, before anybody pays anything.
+* `/events/[id]/enter/[categoryId]` — participant details, team members if the
+  category needs them, age checked against the category before submitting,
+  then a receipt.
+* `/account/entries` — what this family has entered, with cancel while the
+  deadline allows it and a plain sentence when it does not.
+
+**The poster is uploaded, not linked.** Bytes go straight to Storage against
+the `event-banners` bucket — public read, writes keyed on the first folder
+segment being the uploader's id, the shape phase 1 set for the photo buckets
+— and only the resulting URL reaches `events.banner_url`. Asking an organiser
+to host the image somewhere else first and paste a link is asking most of
+them not to have one, and forwarding 5 MB through the API to hand it to
+Supabase is the waste the file-bytes rule already forbids.
+
+**Notifications** extend the `kind` check as 3H did — `entry_received` for the
+organiser, `entry_cancelled` and `event_cancelled` for the family. Triggers in
+the database, drained by the existing worker. A day-before reminder needs a
+scheduled queuer rather than a trigger and is not in 3K.
+
+### Subscriptions and listing fees (3L)
+
+The provider or the organiser pays; there is no consumer subscription anywhere
+in this product.
+
+**Two scopes, not two price lists.** A plan carries a `scope`:
+
+* `listing` — being findable at all: a coach or academy listing themselves, an
+  event company listing its business. Priced for what it is, and the coach's
+  is the cheap one.
+* `events` — running an event here. One catalogue, with no role dimension in
+  it: the price of running a tournament is the price of running a tournament,
+  whether a cricket coach or a company is running it.
+
+A coach who never runs an event pays only the first. A coach who runs one pays
+both, and pays for the second exactly what an organiser pays. That is the
+whole mechanism — **plans name a scope, entitlements name a party, and nothing
+anywhere names a role.** The cheap listing plan and the events plan never meet,
+so one cannot discount the other.
+
+**Same price, different shape, which is what keeps it fair.** The events
+catalogue holds two billing shapes: a period plan (a fee for a window, with a
+cap on how many events may be published at once) and a one-off (a fee for one
+event). A company running twenty a year takes the period plan; a coach running
+one takes the one-off and pays nothing for the eleven months either side.
+Nobody is charged a different price for the same thing — they are charged for
+different amounts of it, which is the only fairness that survives contact with
+a coach who runs one tournament a year.
+
+One table carries both. `party_subscriptions` names its party the way events
+do — nullable `provider_id` and `organiser_id` with a check that exactly one
+is set, so 3J's reasoning about referential integrity and
+`event_party_is_mine` holds unchanged — plus the plan, the dates, and a
+nullable `event_id`. A row naming an event entitles that one event and never
+expires; a row without one entitles anything inside its window, up to the
+plan's cap.
+
+**The check joins `event_party_is_live()` rather than sitting beside it.**
+That function is already the single place both publishing and public
+visibility ask their question, and a second rule in the API is a copy that
+drifts. An expired plan stops new publishing and does not retract events
+families have already entered.
+
+**Payment is recorded, not taken.** The same three columns as an entry — mode,
+reference, paid at — on the subscription row, entered by the admin who saw the
+money arrive. Phase 6 replaces the entering, not the columns.
+
+Admin recording stays in `/admin/*` Next route handlers, with the rest of the
+web-only console.
+
+### Deliberately not in Phase 4
+
+Seat maps, holds, waitlists, partial refunds, a payment gateway, and event
+reminders. The first four are Phase 6's once money moves through the platform;
+the last needs a scheduler and is not worth one yet.
 
 ### Phase 5 — Advertising
 
@@ -674,6 +955,16 @@ is what makes it straightforward rather than a rewrite.
 | The inert exclusion clauses stay | Rewriting 18 working functions to delete an always-true condition is a large diff and no behaviour change |
 | No self-serve advertiser accounts | Admin-managed banners plus a lead form is enough |
 | Payments deferred to Phase 6 | Model the booking data now, wire the gateway later |
+| Capacity, never a seat map | A ground has a number, not a layout; the nearer model is a registration platform than a cinema |
+| `entries_count` is a counter column, not a view or a definer read | RLS hides other families' entries, so nothing counting as the caller can produce "34 of 40 taken" |
+| Capacity may rise freely, and fall only to what is already sold | One check constraint over two columns of the same row closes both the shrink and the overfill |
+| Entries are cancelled, never deleted | The receipt records money that changed hands offline; deleting the row destroys the only trail there is |
+| Cancellation has a deadline of its own | "No withdrawals in the last week" is a real rule, and closing entries a week early is not the same thing |
+| Only a draft is private; cancelled and completed events stay readable | An event that vanishes empties the history of the families who entered it, exactly when they need to read it |
+| Refund state is the organiser's word, not the platform's | No money moves through here until Phase 6, so no screen may promise what only the organiser can do |
+| Running an event costs the same whoever runs it | Plans name a scope and entitlements name a party, so a coach's cheap listing plan cannot discount the events one |
+| One-off and period billing in one catalogue | A coach running one tournament a year and a company running twenty pay for different amounts of the same thing, not different prices for it |
+| Payment mode and reference recorded before there is a gateway | Razorpay becomes another mode value, so the register keeps one history rather than splitting into before and after |
 | An API tier in front, RLS still underneath | 6,174 lines of SQL had nowhere to put a test and no contract a second client could build against; RLS stays because it cannot be forgotten |
 | The API never holds the service role key | Querying as the caller means a missed check in a controller returns too little rather than leaking |
 | Definer writes stay in the database | They exist because RLS cannot restrict which columns an UPDATE touches; moving them hands the client those columns |
