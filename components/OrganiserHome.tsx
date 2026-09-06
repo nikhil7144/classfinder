@@ -1,10 +1,10 @@
 import Link from "next/link";
+import MyEvents from "@/components/events/MyEvents";
 
 type Props = {
   listing: {
     name: string | null;
-    venueName: string | null;
-    areaName: string | null;
+    officeAddress: string | null;
     contactEmail: string | null;
     contactPhone: string | null;
     approved: boolean;
@@ -13,12 +13,13 @@ type Props = {
 };
 
 /**
- * An event company's dashboard, before there are events to put on it.
+ * An event company's dashboard.
  *
- * Deliberately says what is missing rather than filling the space. An
- * organiser who signs up today can be reviewed and approved, and then has to
- * wait — telling them that plainly is better than a dashboard that looks
- * finished and does nothing.
+ * Deliberately says what is missing rather than filling the space: an
+ * unapproved company is told it is waiting, not shown a finished-looking
+ * page that does nothing. Events appear as soon as there is a listing to
+ * hang them on, because a draft can be written while approval is pending —
+ * publishing is the only thing approval gates.
  */
 export default function OrganiserHome({ listing }: Props) {
   return (
@@ -48,8 +49,7 @@ export default function OrganiserHome({ listing }: Props) {
           <>
             <span className="cf-badge cf-badge-ok mt-3 inline-block">Approved</span>
             <p className="mt-3 text-sm leading-relaxed text-muted">
-              You&apos;re approved. Events are the next thing being built — you&apos;ll be able to
-              create one from here.
+              You&apos;re approved, so anything you publish goes live straight away.
             </p>
           </>
         ) : (
@@ -73,12 +73,8 @@ export default function OrganiserHome({ listing }: Props) {
 
           <dl className="mt-5 grid gap-5 sm:grid-cols-2">
             <div>
-              <dt className="cf-eyebrow">Venue</dt>
-              <dd className="mt-1 text-sm text-ink">{listing.venueName || "Not set"}</dd>
-            </div>
-            <div>
-              <dt className="cf-eyebrow">Area</dt>
-              <dd className="mt-1 text-sm text-ink">{listing.areaName || "Not set"}</dd>
+              <dt className="cf-eyebrow">Office</dt>
+              <dd className="mt-1 text-sm text-ink">{listing.officeAddress || "Not set"}</dd>
             </div>
             <div>
               <dt className="cf-eyebrow">Email</dt>
@@ -92,6 +88,12 @@ export default function OrganiserHome({ listing }: Props) {
         </section>
       )}
 
+      {/* Only once there is a listing: an event is created against the
+          company row, and offering the button first would end in the API
+          telling them to go and finish a profile they have not been asked
+          for yet. */}
+      {listing && <MyEvents />}
+
       <section className="cf-card p-7">
         <h2 className="cf-display text-lg text-ink">Coming next</h2>
         <p className="mt-2 text-sm text-muted">
@@ -99,15 +101,9 @@ export default function OrganiserHome({ listing }: Props) {
         </p>
         <ul className="mt-4 space-y-3 text-sm">
           <li className="flex gap-3">
-            <span className="cf-badge cf-badge-neutral shrink-0">Events</span>
-            <span className="text-muted">
-              Create a tournament, competition or showcase, with dates, a venue and an entry fee.
-            </span>
-          </li>
-          <li className="flex gap-3">
             <span className="cf-badge cf-badge-neutral shrink-0">Entries</span>
             <span className="text-muted">
-              Individuals or teams register, and you see who is coming.
+              Individuals or teams register through the site, and you see who is coming.
             </span>
           </li>
         </ul>

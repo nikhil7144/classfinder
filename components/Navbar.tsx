@@ -116,6 +116,12 @@ export default function Navbar() {
             {findLabel}
           </button>
 
+          {/* Public, and above the fold for everyone: a tournament is the one
+              thing here a family can decide on without an account. */}
+          <button onClick={() => navigate("/events")} className={navPillClass("/events")}>
+            Events
+          </button>
+
           {user ? (
             <>
               <button onClick={() => navigate("/dashboard")} className={navPillClass("/dashboard")}>
@@ -160,6 +166,10 @@ export default function Navbar() {
         <div className="mt-4 flex flex-col gap-3 md:hidden">
           <button onClick={() => navigate(findPath)} className={navPillClass(findPath)}>
             {findLabel}
+          </button>
+
+          <button onClick={() => navigate("/events")} className={navPillClass("/events")}>
+            Events
           </button>
 
           {user ? (
