@@ -1,5 +1,6 @@
+import Link from "next/link";
 import type { EventCategory } from "@/lib/api/events";
-import { formatAges, formatCapacity, formatFee } from "@/lib/events";
+import { formatAges, formatCapacity, formatFee, isFull } from "@/lib/events";
 
 /**
  * What a family actually enters, priced.
@@ -9,7 +10,16 @@ import { formatAges, formatCapacity, formatFee } from "@/lib/events";
  * and the fee — the number the decision turns on — is the column that ends up
  * off-screen.
  */
-export default function CategoryTable({ categories }: { categories: EventCategory[] }) {
+export default function CategoryTable({
+  categories,
+  eventId,
+  canEnter = false,
+}: {
+  categories: EventCategory[];
+  eventId: string;
+  /** Whether entries are open — decided once, by `entryState`, on the page. */
+  canEnter?: boolean;
+}) {
   if (categories.length === 0) {
     return (
       <p className="text-sm text-muted">
@@ -22,6 +32,7 @@ export default function CategoryTable({ categories }: { categories: EventCategor
     <ul className="space-y-3">
       {categories.map((c) => {
         const ages = formatAges(c.minAge, c.maxAge);
+        const full = isFull(c.capacity, c.entriesCount);
 
         return (
           <li
@@ -46,7 +57,9 @@ export default function CategoryTable({ categories }: { categories: EventCategor
                 <span className="text-faint" aria-hidden>
                   •
                 </span>
-                <span>{formatCapacity(c.capacity)}</span>
+                <span className={full ? "text-warn" : undefined}>
+                  {formatCapacity(c.capacity, c.entriesCount)}
+                </span>
               </div>
             </div>
 
@@ -55,6 +68,18 @@ export default function CategoryTable({ categories }: { categories: EventCategor
               {c.entryType === "team" && c.feeAmount !== null && c.feeAmount > 0 && (
                 <p className="text-[0.7rem] text-faint">per team</p>
               )}
+
+              {canEnter &&
+                (full ? (
+                  <span className="mt-2 block text-xs text-faint">No places left</span>
+                ) : (
+                  <Link
+                    href={`/events/${eventId}/enter/${c.id}`}
+                    className="cf-btn-primary mt-2 px-4 py-1.5 text-xs"
+                  >
+                    Enter
+                  </Link>
+                ))}
             </div>
           </li>
         );

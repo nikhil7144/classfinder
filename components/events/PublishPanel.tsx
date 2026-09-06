@@ -54,6 +54,15 @@ export default function PublishPanel({
 
       <p className="text-sm text-muted">{formatWhen(event.startsAt, event.endsAt)}</p>
 
+      {/* The register, wherever the event has got to: entries outlive
+          publishing, and after an event is finished it is the only thing on
+          this screen anybody still wants. */}
+      {event.status !== "draft" && event.bookingMode === "platform" && (
+        <Link href={`/events/${event.id}/entries`} className="cf-btn-ghost w-full justify-center">
+          Who has entered
+        </Link>
+      )}
+
       {event.status === "draft" && (
         <>
           {noCategories && (
@@ -97,10 +106,9 @@ export default function PublishPanel({
           >
             Mark as finished
           </button>
-          {/* Withdrawing to draft is not offered. Once 3K exists it will be
-              refused outright for an event with entries — an event that
-              disappears takes its entrants' own record with it — and offering
-              it now would teach a habit that stops working. */}
+          {/* Withdrawing to draft is not offered, and 3K refuses it outright
+              once anybody has entered: an event that disappears takes its
+              entrants' own record of it with them. */}
           <p className="text-xs leading-relaxed text-faint">
             Cancelling keeps the page up and marks it cancelled, so anyone who was coming finds out.
           </p>

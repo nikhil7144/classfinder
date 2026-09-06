@@ -1,18 +1,21 @@
+import Link from "next/link";
 import type { Event } from "@/lib/api/events";
-import { entryState, feeFrom, formatDateTime } from "@/lib/events";
+import { cancelDeadline, entryState, feeFrom, formatDateTime, isFull } from "@/lib/events";
 
 /**
  * The stub down the side of the poster: what it costs, whether entries are
  * open, and the one action there is.
  *
  * This is the only component that decides what a family may do next, which is
- * deliberate — when 3K lands, the platform branch below stops being a
- * disabled button and becomes a link to the entry form, and nothing else on
- * the page has to be found and changed.
+ * why the entry link, the withdrawal deadline and every "not yet / closed /
+ * cancelled" sentence live here rather than being repeated down the page.
  */
 export default function EntryPanel({ event }: { event: Event }) {
   const state = entryState(event);
   const from = feeFrom(event.categories);
+  // The button goes to the first category with room in it. A page with one
+  // category — most of them — then needs no second decision from the reader.
+  const open = event.categories.find((c) => !isFull(c.capacity, c.entriesCount));
 
   return (
     <aside className="cf-card space-y-4 p-6">
@@ -44,17 +47,22 @@ export default function EntryPanel({ event }: { event: Event }) {
         </>
       ) : state.kind === "open" ? (
         <>
-          {/* 3K replaces this with a link to /events/[id]/enter/[categoryId].
-              Until then it says so plainly: an "Enter" button that does
-              nothing teaches a parent that this product does not work, which
-              is more expensive than an honest sentence. */}
-          <button type="button" className="cf-btn-primary w-full justify-center" disabled>
-            Entering online — coming shortly
-          </button>
-          <p className="text-xs text-muted">
-            Online entry is being built. Contact the organiser to register in the meantime.
-          </p>
+          {open ? (
+            <Link
+              href={`/events/${event.id}/enter/${open.id}`}
+              className="cf-btn-primary w-full justify-center"
+            >
+              Enter this event
+            </Link>
+          ) : (
+            <p className="text-sm text-warn">
+              Every category is full. The organiser may free a place if somebody withdraws.
+            </p>
+          )}
           {state.note && <p className="text-xs text-faint">{state.note}</p>}
+          <p className="text-xs text-faint">
+            You can withdraw until {formatDateTime(cancelDeadline(event))}.
+          </p>
         </>
       ) : state.kind === "none" ? (
         <p className="text-sm text-muted">

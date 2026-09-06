@@ -579,7 +579,7 @@ signed-in users something before everybody else.
 | Organiser office address replaces area/venue (3I) | done |
 | Events and categories: table, RLS, `/api/v1/events` (3J) | done |
 | Event creation and management screens (4A, 4B) | done |
-| Entries, cancellation and receipts (4C) | 3K run, `/api/v1/entries` done; entry screens next |
+| Entries, cancellation and receipts (4C) | done |
 | Subscriptions and listing fees (4D — 3L) | not started |
 
 Organisers, events, bookings, and a dashboard of their own. Payment status

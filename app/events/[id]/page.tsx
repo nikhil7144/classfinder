@@ -119,7 +119,11 @@ export default async function EventPage({ params }: Props) {
             <section>
               <h2 className="cf-eyebrow">Categories</h2>
               <div className="mt-3">
-                <CategoryTable categories={event.categories} />
+                <CategoryTable
+                  categories={event.categories}
+                  eventId={event.id}
+                  canEnter={state.kind === "open"}
+                />
               </div>
             </section>
           </div>

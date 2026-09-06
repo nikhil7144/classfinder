@@ -133,11 +133,49 @@ export function formatAges(minAge: number | null, maxAge: number | null): string
   return null;
 }
 
-export function formatCapacity(capacity: number | null): string {
-  // Until 3K there is no entries count to put beside it, so this says what
-  // the organiser set and nothing it cannot yet know.
-  return capacity === null ? "Open entry" : `${capacity} places`;
+/** "12 of 40 taken", "Full", or nothing to say when it is uncapped. */
+export function formatCapacity(capacity: number | null, entriesCount = 0): string {
+  if (capacity === null) return entriesCount > 0 ? `${entriesCount} entered` : "Open entry";
+  if (entriesCount >= capacity) return "Full";
+  return `${entriesCount} of ${capacity} taken`;
 }
+
+export function isFull(capacity: number | null, entriesCount = 0): boolean {
+  return capacity !== null && entriesCount >= capacity;
+}
+
+/**
+ * When a family can no longer withdraw itself.
+ *
+ * The same fallback chain as `event_cancel_deadline` in 3K, and deliberately
+ * only for display — the database refuses a late cancellation whatever this
+ * says. A screen that cannot name the date would have to say "some deadline
+ * applies", which is worse than a mirror that is checked on every save.
+ */
+export function cancelDeadline(event: {
+  cancellationDeadline: string | null;
+  bookingClosesAt: string | null;
+  startsAt: string;
+}): string {
+  return event.cancellationDeadline ?? event.bookingClosesAt ?? event.startsAt;
+}
+
+/** How a payment reads on both registers. */
+export const PAYMENT_BADGE: Record<string, { label: string; className: string }> = {
+  unpaid: { label: "Unpaid", className: "cf-badge-neutral" },
+  paid: { label: "Paid", className: "cf-badge-ok" },
+  refund_due: { label: "Refund due", className: "cf-badge-warn" },
+  refunded: { label: "Refunded", className: "cf-badge-neutral" },
+  waived: { label: "Waived", className: "cf-badge-neutral" },
+};
+
+export const PAYMENT_MODE_LABEL: Record<string, string> = {
+  cash: "Cash",
+  upi: "UPI",
+  bank_transfer: "Bank transfer",
+  card: "Card",
+  other: "Other",
+};
 
 export type EventLike = {
   status: string;

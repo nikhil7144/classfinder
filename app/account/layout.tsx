@@ -49,6 +49,9 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
           // Asking for a call is not a conversation, so it is not in the
           // inbox — but a parent still needs to see what they asked for.
           { href: "/account/queries", label: "Requests" },
+          // Entering a tournament is not talking to anybody either, and the
+          // receipt for it has to be findable months later.
+          { href: "/account/entries", label: "Entries" },
         ]
       : []),
     { href: "/account/settings", label: "Settings" },
