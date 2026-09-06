@@ -3,7 +3,6 @@ import {
   IsEmail,
   IsOptional,
   IsString,
-  IsUUID,
   IsUrl,
   Length,
   Matches,
@@ -39,14 +38,14 @@ export class OrganiserDto {
   @ApiProperty({ type: String, nullable: true })
   websiteUrl!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, format: "uuid" })
-  areaId!: string | null;
-
-  @ApiProperty({ type: String, nullable: true })
-  venueName!: string | null;
-
-  @ApiProperty({ type: String, nullable: true })
-  venueAddress!: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      "Where the company is, not where its events are. A venue is asked for per event, " +
+      "since an organiser runs each one somewhere different.",
+  })
+  officeAddress!: string | null;
 
   @ApiProperty({ description: "Visible publicly. False means waiting on an admin." })
   approved!: boolean;
@@ -99,20 +98,9 @@ export class UpdateOrganiserDto {
   @IsUrl({ protocols: ["http", "https"], require_protocol: true })
   websiteUrl?: string;
 
-  @ApiPropertyOptional({ format: "uuid" })
-  @IsOptional()
-  @IsUUID()
-  areaId?: string;
-
-  @ApiPropertyOptional({ maxLength: 120 })
-  @IsOptional()
-  @IsString()
-  @Length(0, 120)
-  venueName?: string;
-
   @ApiPropertyOptional({ maxLength: 500 })
   @IsOptional()
   @IsString()
   @Length(0, 500)
-  venueAddress?: string;
+  officeAddress?: string;
 }

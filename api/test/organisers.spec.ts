@@ -16,9 +16,7 @@ const ROW = {
   contact_email: "hello@example.test",
   contact_phone: "9876543210",
   website_url: null,
-  area_id: null,
-  venue_name: "Nehru Stadium",
-  venue_address: null,
+  office_address: "12 Ring Road, Indore",
   approved: false,
   is_suspended: false,
 };
@@ -95,7 +93,7 @@ describe("/api/v1/organisers/me", () => {
 
     const res = await auth(request(app.getHttpServer()).get("/api/v1/organisers/me")).expect(200);
 
-    expect(res.body.venueName).toBe("Nehru Stadium");
+    expect(res.body.officeAddress).toBe("12 Ring Road, Indore");
     expect(res.body.contactEmail).toBe("hello@example.test");
     // Both reported: waiting on approval and being taken down are different
     // things and the dashboard says so differently.
@@ -119,15 +117,27 @@ describe("/api/v1/organisers/me", () => {
 
   it("updates when one already exists", async () => {
     maybeSingle.mockResolvedValue({ data: ROW, error: null });
-    single.mockResolvedValue({ data: { ...ROW, venue_name: "New Ground" }, error: null });
+    single.mockResolvedValue({ data: { ...ROW, office_address: "9 Palasia" }, error: null });
 
     const res = await auth(
-      request(app.getHttpServer()).put("/api/v1/organisers/me").send({ venueName: "New Ground" }),
+      request(app.getHttpServer()).put("/api/v1/organisers/me").send({ officeAddress: "9 Palasia" }),
     ).expect(200);
 
-    expect(update).toHaveBeenCalledWith({ venue_name: "New Ground" });
+    expect(update).toHaveBeenCalledWith({ office_address: "9 Palasia" });
     expect(insert).not.toHaveBeenCalled();
-    expect(res.body.venueName).toBe("New Ground");
+    expect(res.body.officeAddress).toBe("9 Palasia");
+  });
+
+  it("no longer accepts venue fields, which belong to an event", async () => {
+    // 3I moved the venue to the event that has one. whitelist + forbidNonWhitelisted
+    // means a client still sending the old shape is told, rather than having the
+    // field quietly dropped and appearing to have saved.
+    await auth(
+      request(app.getHttpServer()).put("/api/v1/organisers/me").send({ venueName: "Nehru Stadium" }),
+    ).expect(400);
+
+    expect(insert).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
   });
 
   it("refuses an attempt to approve yourself", async () => {

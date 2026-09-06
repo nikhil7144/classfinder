@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { fetchAllLocations, type Area, type City } from "@/lib/api/reference";
 import { fetchMyOrganiser, saveMyOrganiser, type Organiser } from "@/lib/api/organisers";
 
 type Props = {
@@ -25,9 +24,15 @@ const errorText = "mt-1 text-xs text-danger";
  * business that runs a tournament at a ground. What this asks for is who to
  * contact and where the events happen.
  *
+ * It deliberately does not ask where the events are. An event company runs a
+ * tournament at a ground in one city and a showcase in another; there is no
+ * single area or venue to name here, and 3I moved that question to the event,
+ * which has one answer. What is left is an office address — who an admin is
+ * approving and where they are.
+ *
  * Every field is optional except a name, and that is on purpose: an organiser
  * applying at 11pm should be able to say who they are and come back to the
- * venue details. Approval is a human reading it either way.
+ * rest. Approval is a human reading it either way.
  */
 export default function OrganiserProfileForm({ redirectTo = "/dashboard", variant = "edit" }: Props) {
   const router = useRouter();
@@ -38,19 +43,13 @@ export default function OrganiserProfileForm({ redirectTo = "/dashboard", varian
   const [formError, setFormError] = useState("");
 
   const [existing, setExisting] = useState<Organiser | null>(null);
-  const [cities, setCities] = useState<City[]>([]);
-  const [areas, setAreas] = useState<Area[]>([]);
-  const [referenceFailed, setReferenceFailed] = useState(false);
 
   const [name, setName] = useState("");
   const [about, setAbout] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
-  const [cityId, setCityId] = useState("");
-  const [areaId, setAreaId] = useState("");
-  const [venueName, setVenueName] = useState("");
-  const [venueAddress, setVenueAddress] = useState("");
+  const [officeAddress, setOfficeAddress] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -62,12 +61,8 @@ export default function OrganiserProfileForm({ redirectTo = "/dashboard", varian
         return;
       }
 
-      const [locations, mine] = await Promise.all([fetchAllLocations(), fetchMyOrganiser()]);
+      const mine = await fetchMyOrganiser();
       if (!alive) return;
-
-      setCities(locations.cities);
-      setAreas(locations.areas);
-      setReferenceFailed(!locations.ok);
 
       if (mine.error) {
         setLoadError(mine.error);
@@ -83,13 +78,7 @@ export default function OrganiserProfileForm({ redirectTo = "/dashboard", varian
         setContactEmail(o.contactEmail ?? "");
         setContactPhone(o.contactPhone ?? "");
         setWebsiteUrl(o.websiteUrl ?? "");
-        setVenueName(o.venueName ?? "");
-        setVenueAddress(o.venueAddress ?? "");
-        setAreaId(o.areaId ?? "");
-        // The city is not stored — it is implied by the area, and deriving it
-        // here keeps one place responsible for which area belongs to which.
-        const home = locations.areas.find((a) => a.id === o.areaId);
-        if (home) setCityId(home.cityId);
+        setOfficeAddress(o.officeAddress ?? "");
       }
 
       setLoading(false);
@@ -100,8 +89,6 @@ export default function OrganiserProfileForm({ redirectTo = "/dashboard", varian
       alive = false;
     };
   }, [router]);
-
-  const areasInCity = areas.filter((a) => a.cityId === cityId);
 
   const save = async () => {
     if (saving) return;
@@ -123,9 +110,7 @@ export default function OrganiserProfileForm({ redirectTo = "/dashboard", varian
       ...(contactEmail.trim() ? { contactEmail: contactEmail.trim() } : {}),
       ...(contactPhone.trim() ? { contactPhone: contactPhone.trim() } : {}),
       ...(websiteUrl.trim() ? { websiteUrl: websiteUrl.trim() } : {}),
-      ...(areaId ? { areaId } : {}),
-      ...(venueName.trim() ? { venueName: venueName.trim() } : {}),
-      ...(venueAddress.trim() ? { venueAddress: venueAddress.trim() } : {}),
+      ...(officeAddress.trim() ? { officeAddress: officeAddress.trim() } : {}),
     };
 
     const { organiser, error } = await saveMyOrganiser(patch);
@@ -160,7 +145,8 @@ export default function OrganiserProfileForm({ redirectTo = "/dashboard", varian
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-muted">
           You run events and take bookings. Parents find your events, not a teaching listing — so
-          this asks who to contact and where things happen, and nothing about fees or subjects.
+          this asks who you are and how to reach you, and nothing about fees or subjects. Each
+          event names its own city and venue when you list it.
         </p>
 
         {existing && (
@@ -262,86 +248,23 @@ export default function OrganiserProfileForm({ redirectTo = "/dashboard", varian
 
       <section className="cf-card space-y-5 p-7">
         <div>
-          <h2 className="cf-display text-lg text-ink">Where your events happen</h2>
+          <h2 className="cf-display text-lg text-ink">Where your office is</h2>
           <p className="mt-1 text-sm text-muted">
-            Your usual venue. Individual events can name their own later.
+            So an admin knows who they are approving. Not where your events are — you name a city
+            and venue on each event when you list it.
           </p>
         </div>
 
-        {cities.length === 0 ? (
-          <p className="text-sm text-muted">
-            {referenceFailed
-              ? "Couldn't load cities and areas just now. Refresh the page and try again."
-              : "No cities have been set up yet. Ask an admin to add your city and areas."}
-          </p>
-        ) : (
-          <div className="grid gap-5 sm:grid-cols-2">
-            <div>
-              <label className={label} htmlFor="org-city">
-                City
-              </label>
-              <select
-                id="org-city"
-                className={`${field} mt-2`}
-                value={cityId}
-                onChange={(e) => {
-                  setCityId(e.target.value);
-                  setAreaId("");
-                }}
-              >
-                <option value="">Select a city</option>
-                {cities.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className={label} htmlFor="org-area">
-                Area
-              </label>
-              <select
-                id="org-area"
-                className={`${field} mt-2`}
-                value={areaId}
-                onChange={(e) => setAreaId(e.target.value)}
-                disabled={!cityId}
-              >
-                <option value="">{cityId ? "Select an area" : "Pick a city first"}</option>
-                {areasInCity.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
-
         <div>
-          <label className={label} htmlFor="org-venue">
-            Venue name
-          </label>
-          <input
-            id="org-venue"
-            className={`${field} mt-2`}
-            value={venueName}
-            onChange={(e) => setVenueName(e.target.value)}
-            placeholder="e.g. Nehru Stadium"
-          />
-        </div>
-
-        <div>
-          <label className={label} htmlFor="org-address">
-            Venue address
+          <label className={label} htmlFor="org-office">
+            Office address
           </label>
           <textarea
-            id="org-address"
+            id="org-office"
             className={`${field} mt-2 min-h-20`}
-            value={venueAddress}
-            onChange={(e) => setVenueAddress(e.target.value)}
+            value={officeAddress}
+            onChange={(e) => setOfficeAddress(e.target.value)}
+            placeholder="Street, area, city"
           />
         </div>
       </section>

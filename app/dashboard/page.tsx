@@ -227,13 +227,9 @@ export default async function DashboardPage() {
     // still use admin rights; they move when they are next touched.
     const { data: listing } = await supabase
       .from("organisers")
-      .select("name, venue_name, area_id, contact_email, contact_phone, approved, is_suspended")
+      .select("name, office_address, contact_email, contact_phone, approved, is_suspended")
       .eq("user_id", userId)
       .maybeSingle();
-
-    const areaName = listing?.area_id
-      ? ((await fetchReference()).areas.find((a) => a.id === listing.area_id)?.name ?? null)
-      : null;
 
     return (
       <OrganiserHome
@@ -241,8 +237,7 @@ export default async function DashboardPage() {
           listing
             ? {
                 name: listing.name,
-                venueName: listing.venue_name,
-                areaName,
+                officeAddress: listing.office_address,
                 contactEmail: listing.contact_email,
                 contactPhone: listing.contact_phone,
                 approved: listing.approved,

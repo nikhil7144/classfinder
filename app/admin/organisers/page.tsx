@@ -10,15 +10,14 @@ type Organiser = {
   contact_email: string | null;
   contact_phone: string | null;
   website_url: string | null;
-  venue_name: string | null;
-  venue_address: string | null;
+  office_address: string | null;
   approved: boolean;
   is_suspended: boolean;
   created_at: string;
 };
 
 const COLUMNS =
-  "id, name, about, contact_email, contact_phone, website_url, venue_name, venue_address, approved, is_suspended, created_at";
+  "id, name, about, contact_email, contact_phone, website_url, office_address, approved, is_suspended, created_at";
 
 /** Unapproved first: this page is the queue, not the archive. */
 async function readOrganisers() {
@@ -151,11 +150,8 @@ export default function AdminOrganisersPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="cf-eyebrow">Venue</dt>
-                  <dd className="mt-1 text-ink">
-                    {o.venue_name || "—"}
-                    {o.venue_address ? ` · ${o.venue_address}` : ""}
-                  </dd>
+                  <dt className="cf-eyebrow">Office</dt>
+                  <dd className="mt-1 text-ink">{o.office_address || "—"}</dd>
                 </div>
                 {o.website_url && (
                   <div className="sm:col-span-2">

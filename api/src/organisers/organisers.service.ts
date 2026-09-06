@@ -11,9 +11,7 @@ type Row = {
   contact_email: string | null;
   contact_phone: string | null;
   website_url: string | null;
-  area_id: string | null;
-  venue_name: string | null;
-  venue_address: string | null;
+  office_address: string | null;
   approved: boolean;
   is_suspended: boolean;
 };
@@ -26,15 +24,13 @@ const toDto = (r: Row): OrganiserDto => ({
   contactEmail: r.contact_email,
   contactPhone: r.contact_phone,
   websiteUrl: r.website_url,
-  areaId: r.area_id,
-  venueName: r.venue_name,
-  venueAddress: r.venue_address,
+  officeAddress: r.office_address,
   approved: r.approved,
   isSuspended: r.is_suspended,
 });
 
 const COLUMNS =
-  "id, name, about, logo_url, contact_email, contact_phone, website_url, area_id, venue_name, venue_address, approved, is_suspended";
+  "id, name, about, logo_url, contact_email, contact_phone, website_url, office_address, approved, is_suspended";
 
 @Injectable()
 export class OrganisersService {
@@ -78,9 +74,7 @@ export class OrganisersService {
     if (body.contactEmail !== undefined) patch.contact_email = body.contactEmail;
     if (body.contactPhone !== undefined) patch.contact_phone = body.contactPhone;
     if (body.websiteUrl !== undefined) patch.website_url = body.websiteUrl;
-    if (body.areaId !== undefined) patch.area_id = body.areaId;
-    if (body.venueName !== undefined) patch.venue_name = body.venueName;
-    if (body.venueAddress !== undefined) patch.venue_address = body.venueAddress;
+    if (body.officeAddress !== undefined) patch.office_address = body.officeAddress;
 
     const db = this.supabase.asUser(caller.accessToken);
     const existing = await this.mine(caller);
