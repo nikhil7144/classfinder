@@ -580,7 +580,7 @@ signed-in users something before everybody else.
 | Events and categories: table, RLS, `/api/v1/events` (3J) | done |
 | Event creation and management screens (4A, 4B) | done |
 | Entries, cancellation and receipts (4C) | done |
-| Subscriptions and listing fees (4D — 3L) | not started |
+| Subscriptions and listing fees (4D) | 3L written, not yet run; API and admin screens next |
 
 Organisers, events, bookings, and a dashboard of their own. Payment status
 tracked manually; no gateway yet.
@@ -877,11 +877,19 @@ nullable `event_id`. A row naming an event entitles that one event and never
 expires; a row without one entitles anything inside its window, up to the
 plan's cap.
 
-**The check joins `event_party_is_live()` rather than sitting beside it.**
-That function is already the single place both publishing and public
-visibility ask their question, and a second rule in the API is a copy that
-drifts. An expired plan stops new publishing and does not retract events
-families have already entered.
+**The check sits beside `event_party_is_live()`, not inside it.** The first
+draft of this section said the opposite — fold it into that function, since it
+is already the one place the question gets asked. That is wrong, and wrong in
+a way worth recording: `event_party_is_live` is called by the *public read*
+policy as well as by the publish check, so a plan lapsing would have hidden
+every event the company had already published, including the ones families had
+entered. The entitlement test therefore goes in the update policy's `with
+check`, which only a row landing on `published` passes through. An expired plan
+stops new publishing and retracts nothing.
+
+It still lives in one place — `may_publish_event()` — rather than in the API,
+for the reason that has held all phase: a rule the client enforces is a rule
+the mobile client will not.
 
 **Payment is recorded, not taken.** The same three columns as an entry — mode,
 reference, paid at — on the subscription row, entered by the admin who saw the
