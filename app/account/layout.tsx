@@ -49,11 +49,12 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
           // Asking for a call is not a conversation, so it is not in the
           // inbox — but a parent still needs to see what they asked for.
           { href: "/account/queries", label: "Requests" },
-          // Entering a tournament is not talking to anybody either, and the
-          // receipt for it has to be findable months later.
-          { href: "/account/entries", label: "Entries" },
         ]
       : []),
+    // Entries are not a seeker's alone: enter_event asks only for a complete
+    // profile, so a coach or an organiser who enters an event has one too,
+    // and a receipt nobody can navigate to is a receipt they have lost.
+    { href: "/account/entries", label: "Entries" },
     { href: "/account/settings", label: "Settings" },
   ];
 
