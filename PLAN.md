@@ -580,7 +580,7 @@ signed-in users something before everybody else.
 | Events and categories: table, RLS, `/api/v1/events` (3J) | done |
 | Event creation and management screens (4A, 4B) | done |
 | Entries, cancellation and receipts (4C) | done |
-| Subscriptions and listing fees (4D) | 3L written, not yet run; API and admin screens next |
+| Subscriptions: organiser tiers, coach per-event (4D) | 3L written, not yet run; API and admin screens next |
 
 Organisers, events, bookings, and a dashboard of their own. Payment status
 tracked manually; no gateway yet.
@@ -840,63 +840,72 @@ organiser, `entry_cancelled` and `event_cancelled` for the family. Triggers in
 the database, drained by the existing worker. A day-before reminder needs a
 scheduled queuer rather than a trigger and is not in 3K.
 
-### Subscriptions and listing fees (3L)
+### Subscriptions (3L)
 
-The provider or the organiser pays; there is no consumer subscription anywhere
-in this product.
+The businesses on this platform pay; there is no consumer subscription
+anywhere in this product.
 
-**Two scopes, not two price lists.** A plan carries a `scope`:
+**Three audiences, three catalogues.** A plan carries an `audience`, and no
+plan belongs to two of them:
 
-* `listing` — being findable at all: a coach or academy listing themselves, an
-  event company listing its business. Priced for what it is, and the coach's
-  is the cheap one.
-* `events` — running an event here. One catalogue, with no role dimension in
-  it: the price of running a tournament is the price of running a tournament,
-  whether a cricket coach or a company is running it.
+* `organiser` — a subscription in tiers, where the tier says how many events
+  may be live at once. An events company is buying capacity.
+* `provider` — a listing subscription: being findable, and nothing more. A
+  coach who wants to run an event buys that event, as a `per_event` plan whose
+  purchase names it and never expires.
+* `advertiser` — Phase 5's, allowed by the check constraint so it does not
+  need a table of its own later, and deliberately unseeded: a free tier nobody
+  chose is a price nobody chose.
 
-A coach who never runs an event pays only the first. A coach who runs one pays
-both, and pays for the second exactly what an organiser pays. That is the
-whole mechanism — **plans name a scope, entitlements name a party, and nothing
-anywhere names a role.** The cheap listing plan and the events plan never meet,
-so one cannot discount the other.
+**This reverses the first draft, which is recorded rather than overwritten.**
+That version had one events catalogue shared by coaches and organisers at one
+price, reasoning that the cost of running a tournament should not depend on
+who runs it. The reasoning that replaced it: these are different businesses
+buying different things. An events company buys the capacity to run many, and
+a coach buys one tournament on top of a listing they are already paying for.
+The first version's fairness argument was about a price; this one is about
+what is actually being sold.
 
-**Same price, different shape, which is what keeps it fair.** The events
-catalogue holds two billing shapes: a period plan (a fee for a window, with a
-cap on how many events may be published at once) and a one-off (a fee for one
-event). A company running twenty a year takes the period plan; a coach running
-one takes the one-off and pays nothing for the eleven months either side.
-Nobody is charged a different price for the same thing — they are charged for
-different amounts of it, which is the only fairness that survives contact with
-a coach who runs one tournament a year.
+**`max_active_events` is the whole mechanism.** Blank is uncapped, a number is
+a tier, and **0 is a listing that carries no event rights** — which is how a
+coach's plan says "findable, but buy the event separately". It counts events
+that are published and still to come, so a finished tournament does not hold a
+slot against next season's.
 
-One table carries both. `party_subscriptions` names its party the way events
-do — nullable `provider_id` and `organiser_id` with a check that exactly one
-is set, so 3J's reasoning about referential integrity and
-`event_party_is_mine` holds unchanged — plus the plan, the dates, and a
-nullable `event_id`. A row naming an event entitles that one event and never
-expires; a row without one entitles anything inside its window, up to the
-plan's cap.
+`party_subscriptions` names its party the way an event names its owner —
+nullable `provider_id` and `organiser_id` with a check that exactly one is set
+— plus the plan, the dates, what was paid, and a nullable `event_id`. A row
+naming an event is a per-event purchase; a row without one is a subscription
+inside its window. One purchase per event, enforced by a unique index: a
+second row for the same event is a double-recorded payment, which is a refund
+conversation rather than two entitlements.
 
-**The check sits beside `event_party_is_live()`, not inside it.** The first
-draft of this section said the opposite — fold it into that function, since it
-is already the one place the question gets asked. That is wrong, and wrong in
-a way worth recording: `event_party_is_live` is called by the *public read*
-policy as well as by the publish check, so a plan lapsing would have hidden
-every event the company had already published, including the ones families had
-entered. The entitlement test therefore goes in the update policy's `with
-check`, which only a row landing on `published` passes through. An expired plan
-stops new publishing and retracts nothing.
+**The API owns this; the database keeps one boolean.** Every plan, quota,
+number and sentence a person reads is the API's. What stays in `db/` is
+`may_publish_event()`, called by the publish policy, so a write that never went
+through the API cannot skip the quota. Two places, and the second is one line
+that does not change when the pricing does.
 
-It still lives in one place — `may_publish_event()` — rather than in the API,
-for the reason that has held all phase: a rule the client enforces is a rule
-the mobile client will not.
+**It sits beside `event_party_is_live()`, not inside it.** The first draft said
+inside, which was wrong in a way worth recording: that function is what the
+*public read* policy calls too, so a lapsed plan would have hidden every event
+the company had already published, including ones families had entered and
+were turning up to. The test goes in the update policy's `with check`, which
+only a row landing on `published` passes through. An expired plan stops new
+publishing and retracts nothing.
+
+**Everything is free on the day this ships, and stays free until an admin says
+otherwise.** Both seeded defaults are uncapped. Coach events in particular are
+free until Phase 6 brings a gateway, because enforcing a per-event fee with no
+way to take payment means an admin manually granting every coach's tournament
+— a worse product than a free one. Switching it on is one edit: set the default
+provider plan's `max_active_events` to 0. `may_publish_event` also fails open
+when no plan applies at all, because a paywall that fails open loses a fee and
+one that fails closed loses the product.
 
 **Payment is recorded, not taken.** The same three columns as an entry — mode,
-reference, paid at — on the subscription row, entered by the admin who saw the
-money arrive. Phase 6 replaces the entering, not the columns.
-
-Admin recording stays in `/admin/*` Next route handlers, with the rest of the
-web-only console.
+reference, paid on — plus which admin recorded it. Phase 6 replaces the
+recording, not the columns.
 
 ### Deliberately not in Phase 4
 
@@ -970,8 +979,9 @@ is what makes it straightforward rather than a rewrite.
 | Cancellation has a deadline of its own | "No withdrawals in the last week" is a real rule, and closing entries a week early is not the same thing |
 | Only a draft is private; cancelled and completed events stay readable | An event that vanishes empties the history of the families who entered it, exactly when they need to read it |
 | Refund state is the organiser's word, not the platform's | No money moves through here until Phase 6, so no screen may promise what only the organiser can do |
-| Running an event costs the same whoever runs it | Plans name a scope and entitlements name a party, so a coach's cheap listing plan cannot discount the events one |
-| One-off and period billing in one catalogue | A coach running one tournament a year and a company running twenty pay for different amounts of the same thing, not different prices for it |
+| Three audiences, three catalogues — organiser, coach, advertiser | They are different businesses buying different things: capacity to run many events, a listing with events bought one at a time, and reach. A shared price list makes one of them subsidise another |
+| `max_active_events` = 0 is what makes a listing a listing | One field expresses "findable, buy the event separately", and flipping it is what ends the free period without a migration |
+| The API owns pricing; the database keeps one boolean | Quotas, tiers and every number a person reads belong where they can be tested and changed; the publish check stays in `db/` so a write outside the API cannot skip it |
 | Payment mode and reference recorded before there is a gateway | Razorpay becomes another mode value, so the register keeps one history rather than splitting into before and after |
 | An API tier in front, RLS still underneath | 6,174 lines of SQL had nowhere to put a test and no contract a second client could build against; RLS stays because it cannot be forgotten |
 | The API never holds the service role key | Querying as the caller means a missed check in a controller returns too little rather than leaking |
