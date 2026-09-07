@@ -1,4 +1,4 @@
-# ClassFinder API
+# Aspire91 API
 
 The contract the web app and the Flutter app both speak.
 

@@ -42,6 +42,7 @@ export default function Footer() {
           <Link href="/" className="inline-flex transition">
             <span className="cf-display text-2xl text-ink">{BRAND.name}</span>
           </Link>
+          <p className="cf-eyebrow mt-2">{BRAND.slogan}</p>
           <p className="mt-4 max-w-xl text-sm leading-7 text-muted">{BRAND.legalName}</p>
           <p className="mt-2 max-w-xl text-sm leading-7 text-faint">{BRAND.tagline}</p>
         </div>

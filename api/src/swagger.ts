@@ -11,7 +11,7 @@ import { DocumentBuilder, OpenAPIObject, SwaggerModule } from "@nestjs/swagger";
  */
 export const buildOpenApiDocument = (app: INestApplication): OpenAPIObject => {
   const config = new DocumentBuilder()
-    .setTitle("ClassFinder API")
+    .setTitle("Aspire91 API")
     .setDescription(
       "The contract the web app and the Flutter app both speak.\n\n" +
         "Every request runs against Postgres as the caller, so the row-level security " +

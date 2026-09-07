@@ -1283,7 +1283,7 @@
     }
   },
   "info": {
-    "title": "ClassFinder API",
+    "title": "Aspire91 API",
     "description": "The contract the web app and the Flutter app both speak.\n\nEvery request runs against Postgres as the caller, so the row-level security policies in `db/` remain the last word on who may see what. This API adds the contract, the validation and the tests; it does not replace those rules.",
     "version": "1.0",
     "contact": {}

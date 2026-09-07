@@ -1,4 +1,4 @@
-# ClassFinder — Product & Build Plan
+# Aspire91 — Product & Build Plan
 
 A multi-vertical finder for coaches, tutors, academies and coaching centres,
 for parents and students. Sports, dance, music, mind and indoor games, school
@@ -9,8 +9,11 @@ database, different visual identity. See
 [docs/porting-from-mentbridge.md](docs/porting-from-mentbridge.md) for what was
 kept, what was removed, and what to copy back when later phases need it.
 
-> Working name only. All user-facing naming reads from `lib/brand.ts`, so the
-> real brand is a one-line change.
+> **Aspire91** — *Discover. Participate. Achieve.* — on aspire91.com. The name
+> arrived late, and it cost one line in `lib/brand.ts` plus the handful of
+> screens that had hardcoded the working title anyway. Migrations keep the old
+> name where they already say it: they are a record of what was run, not a
+> description of the product.
 
 ---
 
@@ -260,7 +263,7 @@ rather than hard-coded hexes.
 
 ## Groups — how demand reaches supply
 
-ClassFinder is asymmetric in a way MentBridge was not. There, startups posted
+Aspire91 is asymmetric in a way MentBridge was not. There, startups posted
 requirements and experts applied, and both sides had reason to search. Here
 parents search and coaches wait: an approved coach has nothing to do until
 someone finds them, so supply goes dormant before demand arrives.

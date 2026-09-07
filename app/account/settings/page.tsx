@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-// There is deliberately no password here. ClassFinder signs people in with an
+// There is deliberately no password here. Aspire91 signs people in with an
 // emailed code or Google — a password set on this screen could never be used
 // to log in, so offering one would be a trap. The email address IS the login,
 // which is why changing it is the one credential action that belongs here.

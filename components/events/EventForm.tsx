@@ -13,6 +13,7 @@ import {
 import type { Event } from "@/lib/api/events";
 import { fromLocalInput, toLocalInput } from "@/lib/events";
 import { groupServices } from "@/lib/requirements";
+import { BRAND } from "@/lib/brand";
 
 type Props = {
   /** Absent in create mode. */
@@ -32,7 +33,7 @@ const BOOKING_MODES: { value: "platform" | "external" | "none"; title: string; b
   {
     value: "platform",
     title: "Here",
-    blurb: "Families enter through ClassFinder, against the categories you list.",
+    blurb: `Families enter through ${BRAND.name}, against the categories you list.`,
   },
   {
     value: "external",

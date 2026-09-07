@@ -2,7 +2,7 @@
   "name": "classfinder-api",
   "version": "0.1.0",
   "private": true,
-  "description": "ClassFinder API — the contract web and mobile both speak.",
+  "description": "Aspire91 API — the contract web and mobile both speak.",
   "scripts": {
     "build": "nest build",
     "start": "nest start",

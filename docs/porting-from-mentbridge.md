@@ -1,6 +1,6 @@
 # Porting from MentBridge
 
-ClassFinder started as a copy of the MentBridge codebase (`../bridgeup`,
+Aspire91 started as a copy of the MentBridge codebase (`../bridgeup`,
 github.com/nikhil7144/MentBridge). The MentBridge-specific product surface was
 removed once it became clear it was serving live pages for a different product
 against tables that don't exist in this database.
@@ -16,7 +16,7 @@ Every removed file queried a table that returns 404 here — `veterans`,
 `industry_master`, `function_master`, `stage_master`, `startup_followers`.
 
 Keeping them would not have saved any work. Reusing that logic requires
-creating the tables under ClassFinder names and updating every query either
+creating the tables under Aspire91 names and updating every query either
 way; that effort is the same whether the file sat here for months or gets
 copied from `bridgeup` on the day the phase starts. Meanwhile the copies were
 serving `/why-mentbridge` and "MENTBRIDGE BLOG" to real visitors.
@@ -54,7 +54,7 @@ verbatim.
 | `app/account/associations/page.tsx` | same |
 | `app/account/requested-associations/page.tsx` | same |
 
-Note MentBridge ran these with RLS off. ClassFinder has RLS on everywhere, so
+Note MentBridge ran these with RLS off. Aspire91 has RLS on everywhere, so
 each new table needs policies — a participant may read only their own threads.
 
 ### Phase 5 — Advertising / admin-authored content
@@ -65,7 +65,7 @@ reference pattern for admin-authored records not tied to a user account
 
 ### If a blog is ever wanted
 
-`app/blog/*`, `lib/blogs.ts`, `app/admin/blogs/*`. A ClassFinder blog would be
+`app/blog/*`, `lib/blogs.ts`, `app/admin/blogs/*`. A Aspire91 blog would be
 a different content model (parent-facing coaching advice, not founder content),
 so treat these as a structural reference, not content to import.
 

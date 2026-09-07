@@ -107,7 +107,7 @@ export default function GuestHome({ cities, selectedCity, posts }: Props) {
         <section className="mx-auto max-w-2xl px-6 pb-28">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <div>
-              <p className="cf-eyebrow">Lately on ClassFinder</p>
+              <p className="cf-eyebrow">Lately on {BRAND.name}</p>
               <h2 className="cf-display mt-2 text-2xl text-ink">
                 From coaches in {selectedCity.name}
               </h2>

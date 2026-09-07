@@ -26,7 +26,9 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: BRAND.name,
+  // Name and slogan in the tab; the description below is what a search
+  // result shows underneath it, and three verbs would tell a parent nothing.
+  title: `${BRAND.name} — ${BRAND.slogan}`,
   description: BRAND.tagline,
   icons: {
     icon: "/favicon.svg",

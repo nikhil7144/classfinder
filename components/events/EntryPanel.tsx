@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Event } from "@/lib/api/events";
 import { cancelDeadline, entryState, feeFrom, formatDateTime, isFull } from "@/lib/events";
+import { BRAND } from "@/lib/brand";
 
 /**
  * The stub down the side of the poster: what it costs, whether entries are
@@ -42,7 +43,7 @@ export default function EntryPanel({ event }: { event: Event }) {
             Enter on the organiser&apos;s site
           </a>
           <p className="text-xs text-faint">
-            This takes you off ClassFinder. We don&apos;t see or handle anything you pay there.
+            This takes you off {BRAND.name}. We don&apos;t see or handle anything you pay there.
           </p>
         </>
       ) : state.kind === "open" ? (

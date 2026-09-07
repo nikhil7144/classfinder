@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import PageSkeleton from "@/components/ui/PageSkeleton";
+import { BRAND } from "@/lib/brand";
 
 const navItems = [
   { href: "/admin", label: "Dashboard" },
@@ -60,7 +61,7 @@ export default function AdminLayout({
       <div className="mx-auto flex min-h-screen max-w-7xl gap-6 px-6 py-6">
         <aside className="w-72 rounded-3xl bg-gray-900 p-6 text-white shadow-[0_10px_40px_rgba(0,0,0,0.16)]">
           <div className="mb-8">
-            <p className="text-xs uppercase tracking-[0.24em] text-gray-400">ClassFinder</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-gray-400">{BRAND.name}</p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight">Admin Panel</h2>
             <p className="mt-2 text-sm text-gray-400">
               Manage providers, taxonomy, and platform approvals.

@@ -21,6 +21,7 @@ import {
 } from "@/lib/search";
 import { ServiceOption, groupServices } from "@/lib/requirements";
 import SuggestedCoaches from "@/components/seeker/SuggestedCoaches";
+import { BRAND } from "@/lib/brand";
 
 
 // ServiceOption is structurally the generated ServiceCategory, so the two
@@ -211,7 +212,7 @@ function SearchPage() {
         {noAreasYet ? (
           <div className="cf-card mt-8 p-8 text-center">
             <p className="text-muted">
-              We haven&apos;t opened any areas yet. ClassFinder launches area by area — check back
+              We haven&apos;t opened any areas yet. {BRAND.name} launches area by area — check back
               shortly.
             </p>
           </div>
