@@ -11,12 +11,14 @@ import { OrganisersModule } from "./organisers/organisers.module";
 import { QueriesModule } from "./queries/queries.module";
 import { ReferenceModule } from "./reference/reference.module";
 import { SuggestionsModule } from "./suggestions/suggestions.module";
+import { SubscriptionsModule } from "./subscriptions/subscriptions.module";
 import { SupabaseModule } from "./supabase/supabase.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: [".env.local", ".env"] }),
     SupabaseModule,
+    SubscriptionsModule,
     EntriesModule,
     EventsModule,
     FeedsModule,

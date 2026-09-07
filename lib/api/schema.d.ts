@@ -21,6 +21,111 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/subscriptions/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The price list
+         * @description Three catalogues keyed by audience — an events company, a coach, an advertiser — and no plan belongs to two of them.
+         */
+        get: operations["SubscriptionsController_plans_v1"];
+        put?: never;
+        /**
+         * Add a plan
+         * @description Admins only. A tier is a name, a price, a period and how many events may be live.
+         */
+        post: operations["SubscriptionsController_createPlan_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/subscriptions/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What my business is on
+         * @description The plan comes from the same function the publish check consults, so this screen and that refusal cannot disagree about which plan somebody is on.
+         */
+        get: operations["SubscriptionsController_mine_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/subscriptions/mine/purchases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What my business has paid for */
+        get: operations["SubscriptionsController_minePurchases_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/subscriptions/plans/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Edit one
+         * @description Admins only. Setting maxActiveEvents to 0 on the coach default is what ends the free period for coach events — one edit, no migration.
+         */
+        patch: operations["SubscriptionsController_updatePlan_v1"];
+        trace?: never;
+    };
+    "/api/v1/subscriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Every recorded purchase
+         * @description Admins only. Newest first.
+         */
+        get: operations["SubscriptionsController_list_v1"];
+        put?: never;
+        /**
+         * Record that somebody paid
+         * @description Admins only, because only an admin saw the money arrive. Naming an event makes it a per-event purchase, which is a coach paying for one tournament.
+         */
+        post: operations["SubscriptionsController_record_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/entries/mine": {
         parameters: {
             query?: never;
@@ -494,6 +599,124 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        PlanDto: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            audience: "organiser" | "provider" | "advertiser";
+            /** @enum {string} */
+            kind: "subscription" | "per_event";
+            name: string;
+            blurb: string | null;
+            /** @description In rupees. */
+            priceAmount: number;
+            /** @description Null for a per-event purchase. */
+            periodMonths: number | null;
+            /** @description Null is uncapped, 0 grants no event rights. */
+            maxActiveEvents: number | null;
+            /** @description What a party of this audience is on before they buy anything. */
+            isDefault: boolean;
+            isActive: boolean;
+            sortOrder: number;
+        };
+        MyPlanDto: {
+            /** @enum {string} */
+            partyKind: "provider" | "organiser";
+            /** Format: uuid */
+            partyId: string;
+            /** @description Null when nothing is seeded. */
+            plan: components["schemas"]["PlanDto"] | null;
+            /** @description Published and still to come. */
+            liveEvents: number;
+            /** @description How many more may be published. Null means no limit. */
+            remaining: number | null;
+            /** @description Whether another event could be published right now. False on a listing plan with no per-event purchase, which is a coach who has not bought this event yet. */
+            canPublishAnother: boolean;
+            /** Format: date */
+            startsOn: string | null;
+            /**
+             * Format: date
+             * @description Null is open-ended — a default plan, or one nobody has put an end date on.
+             */
+            endsOn: string | null;
+        };
+        SubscriptionDto: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            partyKind: "provider" | "organiser";
+            /** Format: uuid */
+            partyId: string;
+            partyName: string | null;
+            /** Format: uuid */
+            planId: string;
+            planName: string | null;
+            /**
+             * Format: uuid
+             * @description Set for a per-event purchase, which entitles that event and never expires.
+             */
+            eventId: string | null;
+            /** Format: date */
+            startsOn: string;
+            /** Format: date */
+            endsOn: string | null;
+            amountPaid: number | null;
+            /** @enum {string|null} */
+            paymentMode: "cash" | "upi" | "bank_transfer" | "card" | "other" | null;
+            paymentReference: string | null;
+            /** Format: date */
+            paidOn: string | null;
+            note: string | null;
+        };
+        CreatePlanDto: {
+            name?: string;
+            blurb?: string;
+            priceAmount?: number;
+            /** @description Omit for a per-event purchase. */
+            periodMonths?: number;
+            /** @description Omit for uncapped. Zero grants no event rights. */
+            maxActiveEvents?: number;
+            isDefault?: boolean;
+            isActive?: boolean;
+            sortOrder?: number;
+            /** @enum {string} */
+            audience: "organiser" | "provider" | "advertiser";
+            /** @enum {string} */
+            kind: "subscription" | "per_event";
+        };
+        PlanBodyDto: {
+            name?: string;
+            blurb?: string;
+            priceAmount?: number;
+            /** @description Omit for a per-event purchase. */
+            periodMonths?: number;
+            /** @description Omit for uncapped. Zero grants no event rights. */
+            maxActiveEvents?: number;
+            isDefault?: boolean;
+            isActive?: boolean;
+            sortOrder?: number;
+        };
+        RecordSubscriptionDto: {
+            /** Format: uuid */
+            providerId?: string;
+            /** Format: uuid */
+            organiserId?: string;
+            /** Format: uuid */
+            planId: string;
+            /** Format: uuid */
+            eventId?: string;
+            /** Format: date */
+            startsOn?: string;
+            /** Format: date */
+            endsOn?: string;
+            amountPaid?: number;
+            /** @enum {string} */
+            paymentMode?: "cash" | "upi" | "bank_transfer" | "card" | "other";
+            paymentReference?: string;
+            /** Format: date */
+            paidOn?: string;
+            note?: string;
+        };
         EntryMemberDto: {
             /** Format: uuid */
             id: string;
@@ -1053,6 +1276,155 @@ export interface operations {
                         /** @example 1234 */
                         uptimeSeconds?: number;
                     };
+                };
+            };
+        };
+    };
+    SubscriptionsController_plans_v1: {
+        parameters: {
+            query?: {
+                audience?: "organiser" | "provider" | "advertiser";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanDto"][];
+                };
+            };
+        };
+    };
+    SubscriptionsController_createPlan_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePlanDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanDto"];
+                };
+            };
+        };
+    };
+    SubscriptionsController_mine_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyPlanDto"];
+                };
+            };
+        };
+    };
+    SubscriptionsController_minePurchases_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionDto"][];
+                };
+            };
+        };
+    };
+    SubscriptionsController_updatePlan_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanBodyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanDto"];
+                };
+            };
+        };
+    };
+    SubscriptionsController_list_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionDto"][];
+                };
+            };
+        };
+    };
+    SubscriptionsController_record_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordSubscriptionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionDto"];
                 };
             };
         };

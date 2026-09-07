@@ -4,6 +4,7 @@ import Link from "next/link";
 import { formatFees } from "@/lib/search";
 import ProviderTabs from "@/components/provider/ProviderTabs";
 import MyEvents from "@/components/events/MyEvents";
+import PlanPanel from "@/components/events/PlanPanel";
 import { useAlerts } from "@/components/AlertsBadge";
 
 export type ProviderSummary = {
@@ -171,6 +172,8 @@ export default function ProviderHome({ profileComplete, provider }: Props) {
         {/* A coach running an inter-academy tournament is the case 3J's two
             nullable owner columns exist for, so the same screen the companies
             get belongs here rather than on a separate one for organisers. */}
+        <PlanPanel />
+
         <MyEvents />
 
         <section className="cf-card p-7">

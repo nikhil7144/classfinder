@@ -33,6 +33,254 @@
         ]
       }
     },
+    "/api/v1/subscriptions/plans": {
+      "get": {
+        "description": "Three catalogues keyed by audience — an events company, a coach, an advertiser — and no plan belongs to two of them.",
+        "operationId": "SubscriptionsController_plans_v1",
+        "parameters": [
+          {
+            "name": "audience",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "organiser",
+                "provider",
+                "advertiser"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlanDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "The price list",
+        "tags": [
+          "subscriptions"
+        ]
+      },
+      "post": {
+        "description": "Admins only. A tier is a name, a price, a period and how many events may be live.",
+        "operationId": "SubscriptionsController_createPlan_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a plan",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/v1/subscriptions/mine": {
+      "get": {
+        "description": "The plan comes from the same function the publish check consults, so this screen and that refusal cannot disagree about which plan somebody is on.",
+        "operationId": "SubscriptionsController_mine_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyPlanDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "What my business is on",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/v1/subscriptions/mine/purchases": {
+      "get": {
+        "operationId": "SubscriptionsController_minePurchases_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SubscriptionDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "What my business has paid for",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/v1/subscriptions/plans/{id}": {
+      "patch": {
+        "description": "Admins only. Setting maxActiveEvents to 0 on the coach default is what ends the free period for coach events — one edit, no migration.",
+        "operationId": "SubscriptionsController_updatePlan_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Edit one",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
+    "/api/v1/subscriptions": {
+      "get": {
+        "description": "Admins only. Newest first.",
+        "operationId": "SubscriptionsController_list_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SubscriptionDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Every recorded purchase",
+        "tags": [
+          "subscriptions"
+        ]
+      },
+      "post": {
+        "description": "Admins only, because only an admin saw the money arrive. Naming an event makes it a per-event purchase, which is a coach paying for one tournament.",
+        "operationId": "SubscriptionsController_record_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordSubscriptionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record that somebody paid",
+        "tags": [
+          "subscriptions"
+        ]
+      }
+    },
     "/api/v1/entries/mine": {
       "get": {
         "description": "Newest first, cancelled ones included — a withdrawal is part of the record.",
@@ -1057,6 +1305,380 @@
       }
     },
     "schemas": {
+      "PlanDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "audience": {
+            "type": "string",
+            "enum": [
+              "organiser",
+              "provider",
+              "advertiser"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "subscription",
+              "per_event"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "blurb": {
+            "type": "string",
+            "nullable": true
+          },
+          "priceAmount": {
+            "type": "number",
+            "description": "In rupees."
+          },
+          "periodMonths": {
+            "type": "number",
+            "nullable": true,
+            "description": "Null for a per-event purchase."
+          },
+          "maxActiveEvents": {
+            "type": "number",
+            "nullable": true,
+            "description": "Null is uncapped, 0 grants no event rights."
+          },
+          "isDefault": {
+            "type": "boolean",
+            "description": "What a party of this audience is on before they buy anything."
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "audience",
+          "kind",
+          "name",
+          "blurb",
+          "priceAmount",
+          "periodMonths",
+          "maxActiveEvents",
+          "isDefault",
+          "isActive",
+          "sortOrder"
+        ]
+      },
+      "MyPlanDto": {
+        "type": "object",
+        "properties": {
+          "partyKind": {
+            "type": "string",
+            "enum": [
+              "provider",
+              "organiser"
+            ]
+          },
+          "partyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "plan": {
+            "nullable": true,
+            "description": "Null when nothing is seeded.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlanDto"
+              }
+            ]
+          },
+          "liveEvents": {
+            "type": "number",
+            "description": "Published and still to come."
+          },
+          "remaining": {
+            "type": "number",
+            "nullable": true,
+            "description": "How many more may be published. Null means no limit."
+          },
+          "canPublishAnother": {
+            "type": "boolean",
+            "description": "Whether another event could be published right now. False on a listing plan with no per-event purchase, which is a coach who has not bought this event yet."
+          },
+          "startsOn": {
+            "type": "string",
+            "nullable": true,
+            "format": "date"
+          },
+          "endsOn": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "description": "Null is open-ended — a default plan, or one nobody has put an end date on."
+          }
+        },
+        "required": [
+          "partyKind",
+          "partyId",
+          "plan",
+          "liveEvents",
+          "remaining",
+          "canPublishAnother",
+          "startsOn",
+          "endsOn"
+        ]
+      },
+      "SubscriptionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partyKind": {
+            "type": "string",
+            "enum": [
+              "provider",
+              "organiser"
+            ]
+          },
+          "partyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "planId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "planName": {
+            "type": "string",
+            "nullable": true
+          },
+          "eventId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid",
+            "description": "Set for a per-event purchase, which entitles that event and never expires."
+          },
+          "startsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "endsOn": {
+            "type": "string",
+            "nullable": true,
+            "format": "date"
+          },
+          "amountPaid": {
+            "type": "number",
+            "nullable": true
+          },
+          "paymentMode": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "cash",
+              "upi",
+              "bank_transfer",
+              "card",
+              "other"
+            ]
+          },
+          "paymentReference": {
+            "type": "string",
+            "nullable": true
+          },
+          "paidOn": {
+            "type": "string",
+            "nullable": true,
+            "format": "date"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "partyKind",
+          "partyId",
+          "partyName",
+          "planId",
+          "planName",
+          "eventId",
+          "startsOn",
+          "endsOn",
+          "amountPaid",
+          "paymentMode",
+          "paymentReference",
+          "paidOn",
+          "note"
+        ]
+      },
+      "CreatePlanDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "blurb": {
+            "type": "string",
+            "maxLength": 400
+          },
+          "priceAmount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "periodMonths": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 60,
+            "description": "Omit for a per-event purchase."
+          },
+          "maxActiveEvents": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Omit for uncapped. Zero grants no event rights."
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "number",
+            "minimum": 0
+          },
+          "audience": {
+            "type": "string",
+            "enum": [
+              "organiser",
+              "provider",
+              "advertiser"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "subscription",
+              "per_event"
+            ]
+          }
+        },
+        "required": [
+          "audience",
+          "kind"
+        ]
+      },
+      "PlanBodyDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "blurb": {
+            "type": "string",
+            "maxLength": 400
+          },
+          "priceAmount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "periodMonths": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 60,
+            "description": "Omit for a per-event purchase."
+          },
+          "maxActiveEvents": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Omit for uncapped. Zero grants no event rights."
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "RecordSubscriptionDto": {
+        "type": "object",
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "organiserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "planId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "endsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "amountPaid": {
+            "type": "number",
+            "minimum": 0
+          },
+          "paymentMode": {
+            "type": "string",
+            "enum": [
+              "cash",
+              "upi",
+              "bank_transfer",
+              "card",
+              "other"
+            ]
+          },
+          "paymentReference": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "paidOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "planId"
+        ]
+      },
       "EntryMemberDto": {
         "type": "object",
         "properties": {

@@ -580,7 +580,7 @@ signed-in users something before everybody else.
 | Events and categories: table, RLS, `/api/v1/events` (3J) | done |
 | Event creation and management screens (4A, 4B) | done |
 | Entries, cancellation and receipts (4C) | done |
-| Subscriptions: organiser tiers, coach per-event (4D) | 3L written, not yet run; API and admin screens next |
+| Subscriptions: organiser tiers, coach per-event (4D) | done |
 
 Organisers, events, bookings, and a dashboard of their own. Payment status
 tracked manually; no gateway yet.

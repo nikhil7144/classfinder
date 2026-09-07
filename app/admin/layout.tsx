@@ -13,6 +13,8 @@ const navItems = [
   { href: "/admin/locations", label: "Cities & Areas" },
   { href: "/admin/provider-categories", label: "Provider Categories" },
   { href: "/admin/service-categories", label: "Service Categories" },
+  { href: "/admin/plans", label: "Plans" },
+  { href: "/admin/subscriptions", label: "Subscriptions" },
   { href: "/admin/moderation", label: "Moderation" },
   { href: "/admin/audience", label: "Audience" },
   { href: "/admin/api-usage", label: "API Usage" },

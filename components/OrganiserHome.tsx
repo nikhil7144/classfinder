@@ -1,5 +1,6 @@
 import Link from "next/link";
 import MyEvents from "@/components/events/MyEvents";
+import PlanPanel from "@/components/events/PlanPanel";
 
 type Props = {
   listing: {
@@ -92,6 +93,8 @@ export default function OrganiserHome({ listing }: Props) {
           company row, and offering the button first would end in the API
           telling them to go and finish a profile they have not been asked
           for yet. */}
+      <PlanPanel />
+
       {listing && <MyEvents />}
 
       <section className="cf-card p-7">
