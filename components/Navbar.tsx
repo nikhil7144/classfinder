@@ -21,14 +21,14 @@ export default function Navbar() {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   // A coach and a parent are on opposite sides of this marketplace, and the
-  // navbar was offering both of them the parent's screen. Null here means "no
-  // role", not "not read yet" — the two are told apart by audienceKnown below,
-  // which is what actually keeps the wrong label off the screen.
-  const [role, setRole] = useState<string | null>(null);
-  // `role` alone cannot tell "not a provider" from "not read yet", and both
-  // reads below are async. These two say which it is.
+  // navbar was offering both of them the parent's screen.
+  //
+  // Stored tagged with the user it was read for, rather than as a bare role. A
+  // bare role cannot say whether it has been read yet — which is the whole bug
+  // this guards — and a tag answers that for free, while also stopping one
+  // user's role being briefly readable as the next one's after a switch.
+  const [roleRead, setRoleRead] = useState<{ userId: string; role: string | null } | null>(null);
   const [sessionChecked, setSessionChecked] = useState(false);
-  const [roleChecked, setRoleChecked] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const alerts = useAlerts();
   const waiting = waitingCount(alerts);
@@ -53,14 +53,11 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    if (!user) {
-      setRole(null);
-      setRoleChecked(true);
-      return;
-    }
+    // A signed-out visitor has no row to read, and nothing to clear: the guest
+    // case falls out of audienceKnown below.
+    if (!user) return;
 
     let active = true;
-    setRoleChecked(false);
 
     const loadRole = async () => {
       const { data } = await supabase
@@ -69,9 +66,7 @@ export default function Navbar() {
         .eq("id", user.id)
         .maybeSingle();
 
-      if (!active) return;
-      setRole(data?.role ?? null);
-      setRoleChecked(true);
+      if (active) setRoleRead({ userId: user.id, role: data?.role ?? null });
     };
 
     loadRole();
@@ -106,17 +101,23 @@ export default function Navbar() {
       isActivePath(path) ? activeNavPillClass : inactiveNavPillClass
     }`;
 
+  // Whether it is yet known which side of the marketplace is asking. Reading
+  // the role before this is true is what put "Find classes" in a coach's
+  // navbar: an unread role is falsy, so the parent's screen won by default and
+  // held until two network reads landed. Worst for a provider whose profile is
+  // unfinished — the one person already unsure what this product wants of them.
+  const audienceKnown = sessionChecked && (!user || roleRead?.userId === user.id);
+
+  // Both halves of the tag are checked here, not just audienceKnown: that is
+  // also true for a signed-out visitor, and roleRead still holds whoever was
+  // signed in a moment ago. Reading it then would leave a coach's "Find
+  // students" in the navbar of the guest they just became by logging out.
+  const role = user && roleRead?.userId === user.id ? roleRead.role : null;
+
   // Coaches have no use for the parent's search — they are what it returns.
   const isProvider = role === "provider";
   const findPath = isProvider ? "/students" : "/search";
   const findLabel = isProvider ? "Find students" : "Find classes";
-
-  // Which side of the marketplace is asking. Rendering the pill before this is
-  // true is what put "Find classes" in a coach's navbar: an unread role is
-  // falsy, so the parent's screen won by default and held until two network
-  // reads landed. Worst for a provider whose profile is unfinished — the one
-  // person already unsure what this product wants from them.
-  const audienceKnown = sessionChecked && (!user || roleChecked);
 
   const findPill = audienceKnown ? (
     <button onClick={() => navigate(findPath)} className={navPillClass(findPath)}>
