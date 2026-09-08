@@ -139,7 +139,7 @@ export default function Navbar() {
           onClick={() => router.push("/")}
           className="cursor-pointer transition"
         >
-          <span className="cf-display text-2xl text-ink">{BRAND.name}</span>
+          <img src={BRAND.logo} alt={BRAND.name} className="h-12 w-auto" />
         </button>
 
         <div className="hidden items-center gap-3 md:flex">

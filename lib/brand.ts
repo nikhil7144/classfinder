@@ -7,6 +7,14 @@ export const BRAND = {
   /** Legal entity shown in the footer. */
   legalName: "Trustcabbage Private Limited",
   /**
+   * The wordmark, served straight out of public/.
+   *
+   * Here rather than typed into the navbar and the footer separately, for the
+   * same reason the name is: swapping the artwork — or its format — should be
+   * one edit in this file and nothing else.
+   */
+  logo: "/aspire91-logo.jpg",
+  /**
    * The slogan. Short, and says nothing about what the product does, so it
    * belongs beside the name rather than in a page description.
    */
