@@ -33,7 +33,10 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
-    apple: "/favicon.svg",
+    // A PNG rather than the SVG: iOS ignores an SVG apple-touch-icon, and
+    // what it falls back to when someone adds the site to their home screen
+    // is a screenshot of the page.
+    apple: "/apple-touch-icon.png",
   },
 };
 
