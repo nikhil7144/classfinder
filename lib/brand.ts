@@ -12,8 +12,16 @@ export const BRAND = {
    * Here rather than typed into the navbar and the footer separately, for the
    * same reason the name is: swapping the artwork — or its format — should be
    * one edit in this file and nothing else.
+   *
+   * Deliberately the wordmark and not the full lockup, which is also in
+   * public/ as aspire91-logo.png. The lockup carries "Discover. Participate.
+   * Achieve." inside the artwork, and at the 48px the navbar gives it that
+   * line renders four pixels tall — while in the footer it would print the
+   * slogan twice, once as pixels and once as the text below it. The slogan
+   * belongs to `slogan` above, as type: legible at any size, selectable, and
+   * changed here rather than in an image editor.
    */
-  logo: "/aspire91-logo.jpg",
+  logo: "/aspire91-wordmark.png",
   /**
    * The slogan. Short, and says nothing about what the product does, so it
    * belongs beside the name rather than in a page description.
