@@ -5,12 +5,20 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { resolveProfileAndRedirect } from "@/lib/auth-redirect";
 
-// Google redirects here after the OAuth consent screen. `lib/supabase.ts`
-// has detectSessionInUrl: true, so the browser client parses the returned
-// tokens and establishes a session automatically — this page just waits
-// for that, then runs the same first-time-vs-returning resolution the
-// email-OTP flow uses. `intendedRole` survives the round trip to Google
-// and back as a query param on the redirectTo URL (AuthForm.tsx sets it).
+// Where both sign-in paths land: the Google round trip (Google returns to
+// Supabase at /auth/v1/callback, and Supabase redirects here) and the magic
+// link, whose emailRedirectTo points here too.
+//
+// Nothing below exchanges anything by hand. detectSessionInUrl is on by
+// default in supabase-js — `lib/supabase.ts` does not set it — and it covers
+// both shapes the URL can arrive in: the PKCE `?code=` this client actually
+// gets, which it trades for a session using the verifier stored back when
+// signInWithOAuth was called, and the hash tokens an implicit-flow link
+// carries. This page waits for whichever happened, then runs the same
+// first-time-vs-returning resolution the email-OTP flow uses.
+//
+// `intendedRole` survives the round trip to Google and back as a query param
+// on the redirectTo URL (AuthForm.tsx sets it).
 function AuthCallback() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -22,9 +30,10 @@ function AuthCallback() {
     let active = true;
 
     const finish = async () => {
-      // The tokens arrive in the URL hash and the client parses them
-      // asynchronously, so the session isn't always there on the first read.
-      // Poll briefly rather than declaring failure too early.
+      // getSession() waits for the client to finish initializing, so one read
+      // is usually enough. The retries are for the PKCE exchange, which is a
+      // network call to Supabase: a slow one would otherwise read null and
+      // tell someone their link had expired when the sign-in was fine.
       let session = null;
       for (let attempt = 0; attempt < 10 && active; attempt++) {
         const { data } = await supabase.auth.getSession();
