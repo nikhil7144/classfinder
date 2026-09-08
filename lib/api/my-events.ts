@@ -50,7 +50,14 @@ export async function fetchMyEvents(): Promise<{ events: Event[]; error: string 
     const { data, error } = await api.GET("/api/v1/events/mine", {
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (error || !data) return { events: [], error: "Couldn't load your events." };
+    // apiMessage, like every other call here. A provider who has not finished
+    // their listing has no providers row yet, so the service answers this with
+    // "Finish your coach or company profile before creating an event." Swapping
+    // that for "Couldn't load your events" turned an instruction the reader can
+    // act on into a fault report about the site.
+    if (error || !data) {
+      return { events: [], error: apiMessage(error, "Couldn't load your events.") };
+    }
     return { events: data, error: null };
   } catch {
     return { events: [], error: "Couldn't reach the server. Try again." };
