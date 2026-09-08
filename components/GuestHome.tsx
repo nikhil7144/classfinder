@@ -3,6 +3,7 @@
 import Link from "next/link";
 import FeedItem from "@/components/spaces/FeedItem";
 import HomeAudiences from "@/components/HomeAudiences";
+import MatchedSpacesRail from "@/components/spaces/MatchedSpacesRail";
 import { BRAND } from "@/lib/brand";
 import type { City, FeedPost } from "@/lib/api/client";
 
@@ -73,6 +74,8 @@ export default function GuestHome({ cities, selectedCity, posts }: Props) {
           </Link>
         </p>
       </section>
+
+      <MatchedSpacesRail />
 
       <section className="mx-auto max-w-5xl px-6 pb-12">
         <p className="cf-eyebrow text-center">What you can find here</p>
