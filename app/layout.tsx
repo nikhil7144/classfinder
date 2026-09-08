@@ -31,11 +31,16 @@ export const metadata: Metadata = {
   title: `${BRAND.name} — ${BRAND.slogan}`,
   description: BRAND.tagline,
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
-    // A PNG rather than the SVG: iOS ignores an SVG apple-touch-icon, and
-    // what it falls back to when someone adds the site to their home screen
-    // is a screenshot of the page.
+    // PNGs, because the mark is raster artwork — wrapping a bitmap in an
+    // SVG would buy nothing. app/favicon.ico is served by Next whether or not
+    // it is named here, and carries 16/32/48 for anything that asks for one.
+    icon: [
+      { url: "/icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    // The one icon in the set on a white ground. iOS ignores alpha here and
+    // composites onto black, which would bury a navy "A" completely.
     apple: "/apple-touch-icon.png",
   },
 };
