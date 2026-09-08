@@ -21,9 +21,14 @@ export default function Navbar() {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   // A coach and a parent are on opposite sides of this marketplace, and the
-  // navbar was offering both of them the parent's screen. Held as null until
-  // it is known, so nothing flickers between the two labels on first paint.
+  // navbar was offering both of them the parent's screen. Null here means "no
+  // role", not "not read yet" — the two are told apart by audienceKnown below,
+  // which is what actually keeps the wrong label off the screen.
   const [role, setRole] = useState<string | null>(null);
+  // `role` alone cannot tell "not a provider" from "not read yet", and both
+  // reads below are async. These two say which it is.
+  const [sessionChecked, setSessionChecked] = useState(false);
+  const [roleChecked, setRoleChecked] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const alerts = useAlerts();
   const waiting = waitingCount(alerts);
@@ -32,12 +37,14 @@ export default function Navbar() {
     const getSession = async () => {
       const { data } = await supabase.auth.getSession();
       setUser(data.session?.user ?? null);
+      setSessionChecked(true);
     };
 
     getSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      setSessionChecked(true);
     });
 
     return () => {
@@ -48,10 +55,12 @@ export default function Navbar() {
   useEffect(() => {
     if (!user) {
       setRole(null);
+      setRoleChecked(true);
       return;
     }
 
     let active = true;
+    setRoleChecked(false);
 
     const loadRole = async () => {
       const { data } = await supabase
@@ -60,7 +69,9 @@ export default function Navbar() {
         .eq("id", user.id)
         .maybeSingle();
 
-      if (active) setRole(data?.role ?? null);
+      if (!active) return;
+      setRole(data?.role ?? null);
+      setRoleChecked(true);
     };
 
     loadRole();
@@ -100,6 +111,25 @@ export default function Navbar() {
   const findPath = isProvider ? "/students" : "/search";
   const findLabel = isProvider ? "Find students" : "Find classes";
 
+  // Which side of the marketplace is asking. Rendering the pill before this is
+  // true is what put "Find classes" in a coach's navbar: an unread role is
+  // falsy, so the parent's screen won by default and held until two network
+  // reads landed. Worst for a provider whose profile is unfinished — the one
+  // person already unsure what this product wants from them.
+  const audienceKnown = sessionChecked && (!user || roleChecked);
+
+  const findPill = audienceKnown ? (
+    <button onClick={() => navigate(findPath)} className={navPillClass(findPath)}>
+      {findLabel}
+    </button>
+  ) : (
+    // Holds the space instead of collapsing it, and carries the longer of the
+    // two labels so the row does not jump sideways when the real pill lands.
+    <span aria-hidden className={`${baseNavPillClass} ${inactiveNavPillClass} invisible`}>
+      Find students
+    </span>
+  );
+
   return (
     <nav className="sticky top-0 z-50 border-b border-line bg-bg/85 px-6 py-4 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
@@ -112,9 +142,7 @@ export default function Navbar() {
         </button>
 
         <div className="hidden items-center gap-3 md:flex">
-          <button onClick={() => navigate(findPath)} className={navPillClass(findPath)}>
-            {findLabel}
-          </button>
+          {findPill}
 
           {/* Public, and above the fold for everyone: a tournament is the one
               thing here a family can decide on without an account. */}
@@ -164,9 +192,7 @@ export default function Navbar() {
 
       {menuOpen && (
         <div className="mt-4 flex flex-col gap-3 md:hidden">
-          <button onClick={() => navigate(findPath)} className={navPillClass(findPath)}>
-            {findLabel}
-          </button>
+          {findPill}
 
           <button onClick={() => navigate("/events")} className={navPillClass("/events")}>
             Events
