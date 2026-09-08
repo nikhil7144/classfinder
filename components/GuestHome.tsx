@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import FeedItem from "@/components/spaces/FeedItem";
+import HomeAudiences from "@/components/HomeAudiences";
 import { BRAND } from "@/lib/brand";
 import type { City, FeedPost } from "@/lib/api/client";
 
@@ -73,7 +74,7 @@ export default function GuestHome({ cities, selectedCity, posts }: Props) {
         </p>
       </section>
 
-      <section className="mx-auto max-w-5xl px-6 pb-28">
+      <section className="mx-auto max-w-5xl px-6 pb-12">
         <p className="cf-eyebrow text-center">What you can find here</p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -96,6 +97,8 @@ export default function GuestHome({ cities, selectedCity, posts }: Props) {
           We open area by area — search yours to see who&apos;s teaching there now.
         </p>
       </section>
+
+      <HomeAudiences />
 
       {/* What coaches here are actually doing.
           
