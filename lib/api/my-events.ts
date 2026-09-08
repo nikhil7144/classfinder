@@ -64,6 +64,48 @@ export async function fetchMyEvents(): Promise<{ events: Event[]; error: string 
   }
 }
 
+export type EventOwnership =
+  | { state: "ready" }
+  | { state: "blocked"; reason: string }
+  | { state: "unknown" };
+
+/**
+ * Whether the caller has a coach or company row for an event to belong to.
+ *
+ * Asked of the service rather than worked out here. ownParty() resolves this
+ * for every write already, and a second copy of that rule in the client is a
+ * copy that can drift from it; /events/mine is the cheapest question that runs
+ * it. The list it answers with is thrown away — only the verdict is wanted.
+ *
+ * Fails open, and that is the deliberate part. A 403 is the service saying no,
+ * and it says why in a sentence worth showing. Anything else — a cold start, a
+ * blip, no network — is not an answer, and shutting the form to someone who is
+ * perfectly entitled to it is a worse outcome than the alternative: createEvent
+ * asks the same question again on save, so an open failure costs a late error,
+ * never a wrong one.
+ */
+export async function eventOwnership(): Promise<EventOwnership> {
+  const token = await accessToken();
+  if (!token) return { state: "unknown" };
+
+  try {
+    const { error, response } = await api.GET("/api/v1/events/mine", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (response.status === 403) {
+      return {
+        state: "blocked",
+        reason: apiMessage(error, "Finish your coach or company profile first."),
+      };
+    }
+
+    return response.ok ? { state: "ready" } : { state: "unknown" };
+  } catch {
+    return { state: "unknown" };
+  }
+}
+
 /**
  * One event, as its owner — the edit screen's load.
  *
