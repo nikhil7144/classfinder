@@ -119,6 +119,16 @@ export default function Navbar() {
   const findPath = isProvider ? "/students" : "/search";
   const findLabel = isProvider ? "Find students" : "Find classes";
 
+  const coachesPill =
+    audienceKnown && !user ? (
+      <button
+        onClick={() => navigate("/for-coaches")}
+        className={navPillClass("/for-coaches")}
+      >
+        For coaches
+      </button>
+    ) : null;
+
   const findPill = audienceKnown ? (
     <button onClick={() => navigate(findPath)} className={navPillClass(findPath)}>
       {findLabel}
@@ -150,6 +160,8 @@ export default function Navbar() {
           <button onClick={() => navigate("/events")} className={navPillClass("/events")}>
             Events
           </button>
+
+          {coachesPill}
 
           {user ? (
             <>
@@ -198,6 +210,8 @@ export default function Navbar() {
           <button onClick={() => navigate("/events")} className={navPillClass("/events")}>
             Events
           </button>
+
+          {coachesPill}
 
           {user ? (
             <>

@@ -59,6 +59,9 @@ export default function Footer() {
               <Link href="/signup/seeker" className={footerLinkClass}>
                 Find a coach or tutor
               </Link>
+              <Link href="/for-coaches" className={footerLinkClass}>
+                For coaches
+              </Link>
               <Link href="/signup/provider" className={footerLinkClass}>
                 List your classes
               </Link>
