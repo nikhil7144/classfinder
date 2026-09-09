@@ -74,10 +74,10 @@ export default function MatchedSpacesRail() {
 
   return (
     <section className="mx-auto max-w-5xl px-6 pb-20">
-      <p className="cf-eyebrow">Because of what you&apos;re looking for</p>
-      <h2 className="cf-display mt-3 text-2xl text-ink">Coaches you haven&apos;t met yet</h2>
+      <p className="cf-eyebrow">Suggested for you</p>
+      <h2 className="cf-display mt-3 text-2xl text-ink">Coaches teaching what you want</h2>
       <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">
-        Teaching what you said you want, in your city. You aren&apos;t following any of them.
+        In your city, matched to your profile. You don&apos;t follow these yet.
       </p>
 
       {/* Bleeds to the viewport edges so a card is visibly cut off, which is
