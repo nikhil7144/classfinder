@@ -10,10 +10,17 @@ import { BRAND } from "@/lib/brand";
  * would not expect — seeker photo buckets are public-read, and the ranking
  * sends a learner's age and the parent's notes to Google — it says so.
  *
- * NOT legal advice and not reviewed by a lawyer. India's DPDP Act treats
- * anyone under 18 as a child and requires verifiable parental consent, and it
- * prohibits profiling of children; whether the AI ranking counts is a question
- * for counsel, not for this file. See the note in `app/terms/page.tsx` too.
+ * NOT legal advice and not reviewed by a lawyer.
+ *
+ * DPDP treats anyone under 18 as a child and requires verifiable parental
+ * consent under s.9(1). Rule 10 lets a platform meet that using identity and
+ * age information it already holds about a registered parent — which this
+ * product does not hold: profiles carries a role, a phone and nothing else,
+ * and sign-in is an email OTP. A tick-box saying "I am the parent" is not it.
+ *
+ * s.9(3) is a closed list — tracking, behavioural monitoring, and targeted
+ * advertising directed at children. It is not a general ban on profiling, and
+ * ranking coaches against a requirement is none of the three.
  */
 
 /** Must be a mailbox somebody reads. noreply@ is not a grievance address. */
@@ -35,11 +42,13 @@ const SECTIONS: LegalSection[] = [
     body: [
       "This is the part most parents want first, so it goes first.",
       "A child does not have an account here. The account belongs to you, the adult, and everything on it is entered by you.",
-      "We hold two things about the child you are looking for classes for: their age, and their level — beginner, improver and so on. That is the whole of it.",
+      "For finding classes, we hold two things about the child: their age, and their level — beginner, improver and so on. There is no field for a child's name anywhere in that flow, so there is no way for one to be stored.",
+      "Entering an event is the exception, and it has to be: an organiser needs to know who is competing. When you enter a child for a tournament or workshop we store the participant's name and date of birth, and the same for each member of a team. Those go to the organiser of that event, and to nobody else.",
+      "We also record your relationship to the learner — mother, father, guardian, relative, or that you are the learner yourself.",
     ],
     bullets: [
-      "We do not ask for, and cannot store, a child's name. There is no field for it.",
-      "We do not hold a child's photograph, school, class section, or any contact detail for them.",
+      "Outside an event entry, we do not ask for or store a child's name.",
+      "We never hold a child's photograph, school, class section, or any contact detail for them.",
       "A coach never receives a way to contact a child. They can reach you, and only in the ways described below.",
       "Nothing about a child is shown on a public page.",
     ],
@@ -68,6 +77,8 @@ const SECTIONS: LegalSection[] = [
       "What you are looking for: subjects, the learner's age and level, preferred days and times, whether you want classes at home or at a centre, and a budget range.",
       "Anything you type into a notes field or a message.",
       "Your phone number, if you enter one. See the section above for who can see it.",
+      "Your relationship to the learner, and whether you want to hear from us about the product — off unless you turn it on.",
+      "For an event entry: the participant's name and date of birth, and the same for each member of a team.",
     ],
   },
   {
@@ -113,7 +124,8 @@ const SECTIONS: LegalSection[] = [
     id: "keeping",
     heading: "How long we keep things, and deleting your account",
     body: [
-      "We keep your account and its contents while the account exists. Deleting your account removes your profile, your requirement and your groups.",
+      "We keep your account and its contents while the account exists. Deleting your account removes your profile, your requirement, your groups and your requirement history.",
+      "When you change or clear what you are looking for, we keep the previous version as a dated record rather than overwriting it. Nothing else edits or removes those rows — only deleting your account does.",
       "Ask us at the address at the bottom and we will delete your account. We may keep a minimal record where we are required to.",
     ],
   },
