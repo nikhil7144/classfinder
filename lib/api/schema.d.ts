@@ -785,6 +785,11 @@ export interface components {
              * @description Checked against the category's age range as it will be on the day of the event, which is what an under-10 tournament means.
              */
             participantDob?: string;
+            /**
+             * @description Must be true. The entrant confirms they are the participant, or the participant's parent or guardian consenting to their name and date of birth being held for this event. An entry is the one place this product takes a child's name, so the service records which wording was agreed and when, and refuses the entry without it.
+             * @example true
+             */
+            consentGiven: boolean;
             /** @description The rest of a team: the entrant plus these must come to the category's team size. Empty for an individual category. */
             members?: components["schemas"]["EntryMemberInputDto"][];
         };

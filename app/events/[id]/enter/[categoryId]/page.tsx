@@ -47,6 +47,9 @@ export default function EnterEventPage({ params }: Props) {
   const [participantName, setParticipantName] = useState("");
   const [participantDob, setParticipantDob] = useState("");
   const [members, setMembers] = useState<{ name: string; dob: string }[]>([]);
+  // Unticked to start, always. An entry is the one place this product takes a
+  // child's name and date of birth, and a box already ticked is not consent.
+  const [consent, setConsent] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -106,10 +109,15 @@ export default function EnterEventPage({ params }: Props) {
       setError("Every player in the team needs a name.");
       return;
     }
+    if (!consent) {
+      setError("Please confirm the line above before entering.");
+      return;
+    }
 
     setSaving(true);
     const result = await enterEvent({
       categoryId,
+      consentGiven: true,
       participantName: participantName.trim(),
       ...(participantDob ? { participantDob } : {}),
       ...(members.length > 0
@@ -313,14 +321,31 @@ export default function EnterEventPage({ params }: Props) {
           {error && <p className="text-sm text-danger">{error}</p>}
 
           <div className="border-t border-line-soft pt-5">
-            <p className="text-sm text-muted">
+            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-line bg-surface-2 p-4">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+                className="mt-1 h-4 w-4 shrink-0 accent-[var(--grad-1)]"
+              />
+              <span className="text-sm leading-6 text-muted">
+                I am taking part myself, or I am the parent or guardian of everyone named above
+                and I agree to their name and date of birth being held for this event and shared
+                with its organiser.{" "}
+                <Link href="/privacy" className="font-semibold text-gold hover:text-accent-ink">
+                  How we handle this
+                </Link>
+              </span>
+            </label>
+
+            <p className="mt-4 text-sm text-muted">
               {formatFee(category.feeAmount)} payable to the organiser. Nothing is charged here.
             </p>
             <button
               type="button"
               className="cf-btn-primary mt-4"
               onClick={submit}
-              disabled={saving}
+              disabled={saving || !consent}
             >
               {saving ? "Entering…" : "Confirm this entry"}
             </button>

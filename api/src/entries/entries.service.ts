@@ -10,6 +10,7 @@ import { SupabaseService } from "../supabase/supabase.service";
 import {
   CancelEntryDto,
   CreateEntryDto,
+  ENTRY_CONSENT_VERSION,
   EntryDto,
   EntryMemberDto,
   SetEntryPaymentDto,
@@ -147,8 +148,12 @@ export class EntriesService {
   async create(caller: Caller, body: CreateEntryDto): Promise<EntryDto> {
     const db = this.supabase.asUser(caller.accessToken);
 
+    // The version is the server's, not the caller's: a client cannot record
+    // agreement to wording it did not show. Validation has already refused
+    // anything but consentGiven === true.
     const { data, error } = await db.rpc("enter_event", {
       p_category_id: body.categoryId,
+      p_consent_version: ENTRY_CONSENT_VERSION,
       p_participant_name: body.participantName.trim(),
       p_participant_dob: body.participantDob ?? null,
       p_members: (body.members ?? []).map((m) => ({ name: m.name.trim(), dob: m.dob ?? null })),

@@ -3,6 +3,7 @@ import { Type } from "class-transformer";
 import {
   ArrayMaxSize,
   IsArray,
+  Equals,
   IsBoolean,
   IsDateString,
   IsIn,
@@ -12,6 +13,15 @@ import {
   Length,
   ValidateNested,
 } from "class-validator";
+
+/**
+ * The wording an entrant agreed to, stored with the entry.
+ *
+ * Bump this when the text on the entry form changes, and change the form in
+ * the same commit — old rows keep the version they were given, which is the
+ * point of recording it rather than a bare boolean.
+ */
+export const ENTRY_CONSENT_VERSION = "2026-09-13";
 
 export const ENTRY_STATUSES = ["confirmed", "cancelled"] as const;
 export const PAYMENT_STATUSES = ["unpaid", "paid", "refund_due", "refunded", "waived"] as const;
@@ -157,6 +167,18 @@ export class CreateEntryDto {
   @IsOptional()
   @IsDateString()
   participantDob?: string;
+
+  @ApiProperty({
+    description:
+      "Must be true. The entrant confirms they are the participant, or the participant's parent " +
+      "or guardian consenting to their name and date of birth being held for this event. An " +
+      "entry is the one place this product takes a child's name, so the service records which " +
+      "wording was agreed and when, and refuses the entry without it.",
+    example: true,
+  })
+  @IsBoolean()
+  @Equals(true)
+  consentGiven!: boolean;
 
   @ApiPropertyOptional({
     type: [EntryMemberInputDto],

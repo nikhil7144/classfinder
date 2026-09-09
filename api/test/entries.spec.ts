@@ -6,6 +6,7 @@ import { AuthGuard } from "../src/auth/auth.guard";
 import { configureApp } from "../src/configure";
 import { EntriesController, EventEntriesController } from "../src/entries/entries.controller";
 import { EntriesService } from "../src/entries/entries.service";
+import { ENTRY_CONSENT_VERSION } from "../src/entries/dto/entry.dto";
 import { SupabaseService } from "../src/supabase/supabase.service";
 
 const ENTRY_ID = "11111111-1111-4111-8111-111111111111";
@@ -95,6 +96,7 @@ describe("/api/v1/entries", () => {
     const res = await auth(
       request(app.getHttpServer()).post("/api/v1/entries").send({
         categoryId: CATEGORY_ID,
+        consentGiven: true,
         participantName: "  Aarav Sharma  ",
         participantDob: "2016-04-02",
       }),
@@ -102,6 +104,7 @@ describe("/api/v1/entries", () => {
 
     expect(rpc).toHaveBeenCalledWith("enter_event", {
       p_category_id: CATEGORY_ID,
+      p_consent_version: ENTRY_CONSENT_VERSION,
       // Trimmed here so the name a family typed with a stray space is not a
       // different child from the one they typed without it.
       p_participant_name: "Aarav Sharma",
@@ -119,7 +122,7 @@ describe("/api/v1/entries", () => {
     const res = await auth(
       request(app.getHttpServer())
         .post("/api/v1/entries")
-        .send({ categoryId: CATEGORY_ID, participantName: "Aarav Sharma" }),
+        .send({ categoryId: CATEGORY_ID, consentGiven: true, participantName: "Aarav Sharma" }),
     ).expect(201);
 
     expect(res.body.amountDue).toBe(750);
@@ -137,10 +140,37 @@ describe("/api/v1/entries", () => {
     const res = await auth(
       request(app.getHttpServer())
         .post("/api/v1/entries")
-        .send({ categoryId: CATEGORY_ID, participantName: "Aarav Sharma" }),
+        .send({ categoryId: CATEGORY_ID, consentGiven: true, participantName: "Aarav Sharma" }),
     ).expect(400);
 
     expect(res.body.message).toBe("That category is full.");
+  });
+
+  it("refuses an entry with no consent, and does not reach the database", async () => {
+    rpc.mockResolvedValue({ data: ENTRY_ID, error: null });
+    results["event_entries:one"] = { data: ROW, error: null };
+
+    await auth(
+      request(app.getHttpServer())
+        .post("/api/v1/entries")
+        .send({ categoryId: CATEGORY_ID, participantName: "Aarav Sharma" }),
+    ).expect(400);
+
+    // A child's name and date of birth are what this endpoint takes. Validation
+    // has to stop before the definer function, not after it has written a row.
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("refuses consentGiven: false as firmly as its absence", async () => {
+    await auth(
+      request(app.getHttpServer()).post("/api/v1/entries").send({
+        categoryId: CATEGORY_ID,
+        consentGiven: false,
+        participantName: "Aarav Sharma",
+      }),
+    ).expect(400);
+
+    expect(rpc).not.toHaveBeenCalled();
   });
 
   it("explains a double tap rather than reporting a unique index", async () => {
@@ -152,7 +182,7 @@ describe("/api/v1/entries", () => {
     const res = await auth(
       request(app.getHttpServer())
         .post("/api/v1/entries")
-        .send({ categoryId: CATEGORY_ID, participantName: "Aarav Sharma" }),
+        .send({ categoryId: CATEGORY_ID, consentGiven: true, participantName: "Aarav Sharma" }),
     ).expect(400);
 
     expect(res.body.message).toContain("already entered");
@@ -167,6 +197,7 @@ describe("/api/v1/entries", () => {
         .post("/api/v1/entries")
         .send({
           categoryId: CATEGORY_ID,
+          consentGiven: true,
           participantName: "Aarav Sharma",
           members: [{ name: "  Ishaan Rao  ", dob: "2016-01-01" }],
         }),
@@ -269,7 +300,7 @@ describe("/api/v1/entries", () => {
     await request(app.getHttpServer()).get("/api/v1/entries/mine").expect(401);
     await request(app.getHttpServer())
       .post("/api/v1/entries")
-      .send({ categoryId: CATEGORY_ID, participantName: "Aarav Sharma" })
+      .send({ categoryId: CATEGORY_ID, consentGiven: true, participantName: "Aarav Sharma" })
       .expect(401);
     await request(app.getHttpServer()).get(`/api/v1/events/${EVENT_ID}/entries`).expect(401);
   });
