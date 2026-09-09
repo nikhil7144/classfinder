@@ -176,8 +176,12 @@ export class CreateEntryDto {
       "wording was agreed and when, and refuses the entry without it.",
     example: true,
   })
-  @IsBoolean()
-  @Equals(true)
+  // A message, because this one reaches a reader. Nest returns validation
+  // failures as a message array and the web client shows the first of them,
+  // so the default — "consentGiven must be equal to true" — would put a DTO
+  // field name in front of a parent.
+  @IsBoolean({ message: "Confirm the consent line before entering." })
+  @Equals(true, { message: "Confirm the consent line before entering." })
   consentGiven!: boolean;
 
   @ApiPropertyOptional({
