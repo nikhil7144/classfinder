@@ -45,6 +45,18 @@ export default function Footer() {
           <p className="cf-eyebrow mt-2">{BRAND.slogan}</p>
           <p className="mt-4 max-w-xl text-sm leading-7 text-muted">{BRAND.legalName}</p>
           <p className="mt-2 max-w-xl text-sm leading-7 text-faint">{BRAND.tagline}</p>
+
+          {/* Beneath the legal name rather than in a nav column: these are the
+              two documents Google asks for before it will verify the sign-in
+              screen, so they have to be reachable from every page. */}
+          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
+            <Link href="/privacy" className={footerLinkClass}>
+              Privacy
+            </Link>
+            <Link href="/terms" className={footerLinkClass}>
+              Terms
+            </Link>
+          </div>
         </div>
 
         <div className="grid gap-8 sm:grid-cols-2">
