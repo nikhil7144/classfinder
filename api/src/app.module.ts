@@ -14,6 +14,7 @@ import { ReferenceModule } from "./reference/reference.module";
 import { StudentsModule } from "./students/students.module";
 import { SuggestionsModule } from "./suggestions/suggestions.module";
 import { SubscriptionsModule } from "./subscriptions/subscriptions.module";
+import { ThreadsModule } from "./threads/threads.module";
 import { SupabaseModule } from "./supabase/supabase.module";
 
 @Module({
@@ -31,6 +32,7 @@ import { SupabaseModule } from "./supabase/supabase.module";
     ReferenceModule,
     StudentsModule,
     SuggestionsModule,
+    ThreadsModule,
   ],
   controllers: [HealthController],
   providers: [

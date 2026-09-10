@@ -655,6 +655,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/threads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Every conversation the caller is in
+         * @description Group pitches and direct enquiries in one list. Title, subtitle, unread and iAmSeeker are already resolved for the reader, so the same thread reads differently to the two people in it. threadId is unique within its kind and not across both — pair them for a key.
+         */
+        get: operations["ThreadsController_mine_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/threads/{kind}/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The conversation
+         * @description Newest first, so `before` pages backwards. A thread the caller is not party to is an empty list, not a 403 — the row policies decide, and saying 'forbidden' would confirm it exists.
+         */
+        get: operations["ThreadsController_messages_v1"];
+        put?: never;
+        /**
+         * Say something
+         * @description The sender is the caller. Bodies are 1 to 4000 characters, which is the database's own constraint stated where a reader can be told about it.
+         */
+        post: operations["ThreadsController_send_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/threads/{kind}/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark it read, for whichever side is asking
+         * @description Writes the caller's own read timestamp. Which column that is depends on who they are, which is why it stays a definer function rather than an update the client composes.
+         */
+        post: operations["ThreadsController_read_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1452,6 +1516,68 @@ export interface components {
              * @enum {string}
              */
             reason?: "not_a_provider" | "no_demand";
+        };
+        ThreadDto: {
+            /**
+             * @description Which surface the conversation belongs to. It decides where the messages live and which actions the thread offers, so a client must branch on it.
+             * @enum {string}
+             */
+            kind: "group" | "enquiry";
+            /**
+             * Format: uuid
+             * @description The group request or the enquiry. Unique within its kind, not across both — pair it with kind before using it as a key.
+             */
+            threadId: string;
+            /**
+             * Format: uuid
+             * @description Group threads only.
+             */
+            groupId: string | null;
+            /** Format: uuid */
+            providerId: string | null;
+            /** @description Already resolved for this reader. */
+            title: string | null;
+            subtitle: string | null;
+            photoUrl: string | null;
+            /** @description The message that started it. */
+            opening: string | null;
+            /** @description Where the approach or enquiry stands. */
+            status: string | null;
+            /**
+             * @description Who opened it. A group pitch is always the coach's approach.
+             * @enum {string}
+             */
+            initiatedBy: "provider" | "seeker";
+            /** Format: date-time */
+            createdAt: string;
+            lastMessage: string | null;
+            /** Format: date-time */
+            lastMessageAt: string | null;
+            /** Format: uuid */
+            lastSenderId: string | null;
+            messageCount: number;
+            /** @description Something arrived after this reader last looked, and they did not send it. Computed for the caller, so it means different things to the two sides of the same thread. */
+            unread: boolean;
+            /** @description Which side of this conversation the caller is on. */
+            iAmSeeker: boolean;
+        };
+        MessageDto: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: uuid
+             * @description The group request or enquiry this belongs to.
+             */
+            threadId: string;
+            /** Format: uuid */
+            senderId: string;
+            body: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        SendMessageDto: {
+            /** @description The ceiling is the database's own check constraint, repeated here so an over-long message is a sentence about length rather than a constraint violation. */
+            body: string;
         };
     };
     responses: never;
@@ -2283,6 +2409,97 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["StudentSuggestionsDto"];
                 };
+            };
+        };
+    };
+    ThreadsController_mine_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreadDto"][];
+                };
+            };
+        };
+    };
+    ThreadsController_messages_v1: {
+        parameters: {
+            query?: {
+                limit?: number;
+                /** @description Return messages older than this. Pass the createdAt of the oldest you hold. */
+                before?: string;
+            };
+            header?: never;
+            path: {
+                kind: "group" | "enquiry";
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageDto"][];
+                };
+            };
+        };
+    };
+    ThreadsController_send_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "group" | "enquiry";
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendMessageDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageDto"];
+                };
+            };
+        };
+    };
+    ThreadsController_read_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "group" | "enquiry";
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

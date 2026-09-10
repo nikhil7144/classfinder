@@ -1494,6 +1494,209 @@
           "suggestions"
         ]
       }
+    },
+    "/api/v1/threads": {
+      "get": {
+        "description": "Group pitches and direct enquiries in one list. Title, subtitle, unread and iAmSeeker are already resolved for the reader, so the same thread reads differently to the two people in it. threadId is unique within its kind and not across both — pair them for a key.",
+        "operationId": "ThreadsController_mine_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ThreadDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Every conversation the caller is in",
+        "tags": [
+          "threads"
+        ]
+      }
+    },
+    "/api/v1/threads/{kind}/{id}/messages": {
+      "get": {
+        "description": "Newest first, so `before` pages backwards. A thread the caller is not party to is an empty list, not a 403 — the row policies decide, and saying 'forbidden' would confirm it exists.",
+        "operationId": "ThreadsController_messages_v1",
+        "parameters": [
+          {
+            "name": "kind",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "group",
+                "enquiry"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 200,
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "before",
+            "required": false,
+            "in": "query",
+            "description": "Return messages older than this. Pass the createdAt of the oldest you hold.",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MessageDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The conversation",
+        "tags": [
+          "threads"
+        ]
+      },
+      "post": {
+        "description": "The sender is the caller. Bodies are 1 to 4000 characters, which is the database's own constraint stated where a reader can be told about it.",
+        "operationId": "ThreadsController_send_v1",
+        "parameters": [
+          {
+            "name": "kind",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "group",
+                "enquiry"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendMessageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Say something",
+        "tags": [
+          "threads"
+        ]
+      }
+    },
+    "/api/v1/threads/{kind}/{id}/read": {
+      "post": {
+        "description": "Writes the caller's own read timestamp. Which column that is depends on who they are, which is why it stays a definer function rather than an update the client composes.",
+        "operationId": "ThreadsController_read_v1",
+        "parameters": [
+          {
+            "name": "kind",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "group",
+                "enquiry"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark it read, for whichever side is asking",
+        "tags": [
+          "threads"
+        ]
+      }
     }
   },
   "info": {
@@ -3891,6 +4094,160 @@
         },
         "required": [
           "suggestions"
+        ]
+      },
+      "ThreadDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "group",
+              "enquiry"
+            ],
+            "description": "Which surface the conversation belongs to. It decides where the messages live and which actions the thread offers, so a client must branch on it."
+          },
+          "threadId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The group request or the enquiry. Unique within its kind, not across both — pair it with kind before using it as a key."
+          },
+          "groupId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid",
+            "description": "Group threads only."
+          },
+          "providerId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true,
+            "description": "Already resolved for this reader."
+          },
+          "subtitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "opening": {
+            "type": "string",
+            "nullable": true,
+            "description": "The message that started it."
+          },
+          "status": {
+            "type": "string",
+            "nullable": true,
+            "description": "Where the approach or enquiry stands."
+          },
+          "initiatedBy": {
+            "type": "string",
+            "enum": [
+              "provider",
+              "seeker"
+            ],
+            "description": "Who opened it. A group pitch is always the coach's approach."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastMessageAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "lastSenderId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "messageCount": {
+            "type": "number"
+          },
+          "unread": {
+            "type": "boolean",
+            "description": "Something arrived after this reader last looked, and they did not send it. Computed for the caller, so it means different things to the two sides of the same thread."
+          },
+          "iAmSeeker": {
+            "type": "boolean",
+            "description": "Which side of this conversation the caller is on."
+          }
+        },
+        "required": [
+          "kind",
+          "threadId",
+          "groupId",
+          "providerId",
+          "title",
+          "subtitle",
+          "photoUrl",
+          "opening",
+          "status",
+          "initiatedBy",
+          "createdAt",
+          "lastMessage",
+          "lastMessageAt",
+          "lastSenderId",
+          "messageCount",
+          "unread",
+          "iAmSeeker"
+        ]
+      },
+      "MessageDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "threadId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The group request or enquiry this belongs to."
+          },
+          "senderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "body": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "threadId",
+          "senderId",
+          "body",
+          "createdAt"
+        ]
+      },
+      "SendMessageDto": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000,
+            "description": "The ceiling is the database's own check constraint, repeated here so an over-long message is a sentence about length rather than a constraint violation."
+          }
+        },
+        "required": [
+          "body"
         ]
       }
     }
