@@ -1345,6 +1345,311 @@
         ]
       }
     },
+    "/api/v1/spaces/following": {
+      "get": {
+        "description": "The roster, not the reading surface — GET /feeds/me is what those coaches have been posting. Declared before /:providerId so it is not parsed as a coach called following.",
+        "operationId": "SpacesController_following_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FollowedSpaceDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Spaces the caller follows",
+        "tags": [
+          "spaces"
+        ]
+      }
+    },
+    "/api/v1/spaces/posts/{postId}/reaction": {
+      "put": {
+        "description": "One reaction per person per post. Send null to clear it; sending the same one again is not a toggle, so a client that wants toggling decides that itself.",
+        "operationId": "SpacesController_setReaction_v1",
+        "parameters": [
+          {
+            "name": "postId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetReactionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Like, wow, surprise — or take it back",
+        "tags": [
+          "spaces"
+        ]
+      }
+    },
+    "/api/v1/spaces/posts/{postId}": {
+      "delete": {
+        "description": "Somebody else's is a 404, because saying 'forbidden' would confirm it exists.",
+        "operationId": "SpacesController_deletePost_v1",
+        "parameters": [
+          {
+            "name": "postId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete your own post",
+        "tags": [
+          "spaces"
+        ]
+      }
+    },
+    "/api/v1/spaces/{providerId}": {
+      "get": {
+        "description": "Readable signed out. iFollow and isMine are answers about the caller, so they are false for a guest. A suspended Space is a 404 to everyone but its owner, and only the owner is told why.",
+        "operationId": "SpacesController_one_v1",
+        "parameters": [
+          {
+            "name": "providerId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpaceDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "One coach's Space",
+        "tags": [
+          "spaces"
+        ]
+      }
+    },
+    "/api/v1/spaces/{providerId}/posts": {
+      "get": {
+        "description": "Newest first, so `before` pages backwards. Reaction counts are computed server-side because space_reactions is readable only for your own rows — counting in a client would report one.",
+        "operationId": "SpacesController_posts_v1",
+        "parameters": [
+          {
+            "name": "providerId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 60,
+              "default": 30,
+              "type": "number"
+            }
+          },
+          {
+            "name": "before",
+            "required": false,
+            "in": "query",
+            "description": "Posts older than this.",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SpacePostDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "What they have posted",
+        "tags": [
+          "spaces"
+        ]
+      },
+      "post": {
+        "description": "The image is already in Storage; send its public URL as imageUrl. A video carries the 11-character YouTube id and nothing else.",
+        "operationId": "SpacesController_createPost_v1",
+        "parameters": [
+          {
+            "name": "providerId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSpacePostDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpacePostDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Post to your own Space",
+        "tags": [
+          "spaces"
+        ]
+      }
+    },
+    "/api/v1/spaces/{providerId}/follow": {
+      "put": {
+        "description": "Idempotent — following twice is following once. Returns the Space as it now reads.",
+        "operationId": "SpacesController_follow_v1",
+        "parameters": [
+          {
+            "name": "providerId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpaceDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Follow it",
+        "tags": [
+          "spaces"
+        ]
+      },
+      "delete": {
+        "operationId": "SpacesController_unfollow_v1",
+        "parameters": [
+          {
+            "name": "providerId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpaceDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Stop following it",
+        "tags": [
+          "spaces"
+        ]
+      }
+    },
     "/api/v1/students": {
       "get": {
         "description": "Parents who have written down a requirement, and groups of neighbours who agreed on one together, filtered to what this coach teaches and where they teach it. Untouched rows first, then nearest, then newest. Carries no name, email or phone number: a coach answers through Aspire91 and contact details arrive only if the family shares them.",
@@ -3818,6 +4123,240 @@
           "serviceCategories",
           "providerCategories",
           "teachingPlaces"
+        ]
+      },
+      "FollowedSpaceDto": {
+        "type": "object",
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "headline": {
+            "type": "string",
+            "nullable": true
+          },
+          "postCount": {
+            "type": "number"
+          },
+          "followedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "providerId",
+          "displayName",
+          "photoUrl",
+          "headline",
+          "postCount",
+          "followedAt"
+        ]
+      },
+      "SetReactionDto": {
+        "type": "object",
+        "properties": {
+          "reaction": {
+            "type": "string",
+            "enum": [
+              "like",
+              "wow",
+              "surprise"
+            ],
+            "nullable": true,
+            "description": "Null clears the caller's reaction. Sending the same one again is not a toggle."
+          }
+        },
+        "required": [
+          "reaction"
+        ]
+      },
+      "SpaceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "headline": {
+            "type": "string",
+            "nullable": true
+          },
+          "about": {
+            "type": "string",
+            "nullable": true
+          },
+          "categoryName": {
+            "type": "string",
+            "nullable": true
+          },
+          "followerCount": {
+            "type": "number"
+          },
+          "postCount": {
+            "type": "number",
+            "description": "Hidden posts are not counted."
+          },
+          "iFollow": {
+            "type": "boolean",
+            "description": "Whether the caller follows it. False when signed out."
+          },
+          "isMine": {
+            "type": "boolean",
+            "description": "Whether the caller owns it."
+          },
+          "isSuspended": {
+            "type": "boolean"
+          },
+          "suspendedReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why it was taken down. The owner's business and nobody else's, so null to them."
+          }
+        },
+        "required": [
+          "id",
+          "providerId",
+          "displayName",
+          "photoUrl",
+          "headline",
+          "about",
+          "categoryName",
+          "followerCount",
+          "postCount",
+          "iFollow",
+          "isMine",
+          "isSuspended",
+          "suspendedReason"
+        ]
+      },
+      "SpacePostDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "photo",
+              "video"
+            ]
+          },
+          "body": {
+            "type": "string",
+            "nullable": true
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "youtubeId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The 11-character YouTube id."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isHidden": {
+            "type": "boolean",
+            "description": "A hidden post stays in the table — the report queue is about it, and deleting the evidence when the complaint arrives is the wrong instinct. Only the owner sees one."
+          },
+          "hiddenReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Owner-only, like suspendedReason."
+          },
+          "likes": {
+            "type": "number"
+          },
+          "wows": {
+            "type": "number"
+          },
+          "surprises": {
+            "type": "number"
+          },
+          "myReaction": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "like",
+              "wow",
+              "surprise"
+            ],
+            "description": "The caller's own. Counted server-side: space_reactions is readable only for your own rows."
+          },
+          "iReported": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "body",
+          "imageUrl",
+          "youtubeId",
+          "createdAt",
+          "isHidden",
+          "hiddenReason",
+          "likes",
+          "wows",
+          "surprises",
+          "myReaction",
+          "iReported"
+        ]
+      },
+      "CreateSpacePostDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "photo",
+              "video"
+            ]
+          },
+          "body": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 4000
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Storage URL for a photo post. The database refuses anything not http(s)."
+          },
+          "youtubeId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The 11-character id only."
+          }
+        },
+        "required": [
+          "kind"
         ]
       },
       "DemandRowDto": {

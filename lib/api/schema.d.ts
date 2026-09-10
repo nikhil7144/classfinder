@@ -595,6 +595,131 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/spaces/following": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Spaces the caller follows
+         * @description The roster, not the reading surface — GET /feeds/me is what those coaches have been posting. Declared before /:providerId so it is not parsed as a coach called following.
+         */
+        get: operations["SpacesController_following_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/posts/{postId}/reaction": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Like, wow, surprise — or take it back
+         * @description One reaction per person per post. Send null to clear it; sending the same one again is not a toggle, so a client that wants toggling decides that itself.
+         */
+        put: operations["SpacesController_setReaction_v1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/posts/{postId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete your own post
+         * @description Somebody else's is a 404, because saying 'forbidden' would confirm it exists.
+         */
+        delete: operations["SpacesController_deletePost_v1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{providerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One coach's Space
+         * @description Readable signed out. iFollow and isMine are answers about the caller, so they are false for a guest. A suspended Space is a 404 to everyone but its owner, and only the owner is told why.
+         */
+        get: operations["SpacesController_one_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{providerId}/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What they have posted
+         * @description Newest first, so `before` pages backwards. Reaction counts are computed server-side because space_reactions is readable only for your own rows — counting in a client would report one.
+         */
+        get: operations["SpacesController_posts_v1"];
+        put?: never;
+        /**
+         * Post to your own Space
+         * @description The image is already in Storage; send its public URL as imageUrl. A video carries the 11-character YouTube id and nothing else.
+         */
+        post: operations["SpacesController_createPost_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{providerId}/follow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Follow it
+         * @description Idempotent — following twice is following once. Returns the Space as it now reads.
+         */
+        put: operations["SpacesController_follow_v1"];
+        post?: never;
+        /** Stop following it */
+        delete: operations["SpacesController_unfollow_v1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/students": {
         parameters: {
             query?: never;
@@ -1414,6 +1539,78 @@ export interface components {
             serviceCategories: components["schemas"]["ServiceCategoryRefDto"][];
             providerCategories: components["schemas"]["ProviderCategoryRefDto"][];
             teachingPlaces: components["schemas"]["TeachingPlaceRefDto"][];
+        };
+        FollowedSpaceDto: {
+            /** Format: uuid */
+            providerId: string;
+            displayName: string | null;
+            photoUrl: string | null;
+            headline: string | null;
+            postCount: number;
+            /** Format: date-time */
+            followedAt: string;
+        };
+        SetReactionDto: {
+            /**
+             * @description Null clears the caller's reaction. Sending the same one again is not a toggle.
+             * @enum {string|null}
+             */
+            reaction: "like" | "wow" | "surprise" | null;
+        };
+        SpaceDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            providerId: string;
+            displayName: string | null;
+            photoUrl: string | null;
+            headline: string | null;
+            about: string | null;
+            categoryName: string | null;
+            followerCount: number;
+            /** @description Hidden posts are not counted. */
+            postCount: number;
+            /** @description Whether the caller follows it. False when signed out. */
+            iFollow: boolean;
+            /** @description Whether the caller owns it. */
+            isMine: boolean;
+            isSuspended: boolean;
+            /** @description Why it was taken down. The owner's business and nobody else's, so null to them. */
+            suspendedReason: string | null;
+        };
+        SpacePostDto: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "photo" | "video";
+            body: string | null;
+            imageUrl: string | null;
+            /** @description The 11-character YouTube id. */
+            youtubeId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description A hidden post stays in the table — the report queue is about it, and deleting the evidence when the complaint arrives is the wrong instinct. Only the owner sees one. */
+            isHidden: boolean;
+            /** @description Owner-only, like suspendedReason. */
+            hiddenReason: string | null;
+            likes: number;
+            wows: number;
+            surprises: number;
+            /**
+             * @description The caller's own. Counted server-side: space_reactions is readable only for your own rows.
+             * @enum {string|null}
+             */
+            myReaction: "like" | "wow" | "surprise" | null;
+            iReported: boolean;
+        };
+        CreateSpacePostDto: {
+            /** @enum {string} */
+            kind: "photo" | "video";
+            body?: string | null;
+            /** @description Storage URL for a photo post. The database refuses anything not http(s). */
+            imageUrl?: string | null;
+            /** @description The 11-character id only. */
+            youtubeId?: string | null;
         };
         DemandRowDto: {
             /** @enum {string} */
@@ -2340,6 +2537,180 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReferenceDto"];
+                };
+            };
+        };
+    };
+    SpacesController_following_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FollowedSpaceDto"][];
+                };
+            };
+        };
+    };
+    SpacesController_setReaction_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetReactionDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    SpacesController_deletePost_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    SpacesController_one_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpaceDto"];
+                };
+            };
+        };
+    };
+    SpacesController_posts_v1: {
+        parameters: {
+            query?: {
+                limit?: number;
+                /** @description Posts older than this. */
+                before?: string;
+            };
+            header?: never;
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpacePostDto"][];
+                };
+            };
+        };
+    };
+    SpacesController_createPost_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSpacePostDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpacePostDto"];
+                };
+            };
+        };
+    };
+    SpacesController_follow_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpaceDto"];
+                };
+            };
+        };
+    };
+    SpacesController_unfollow_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpaceDto"];
                 };
             };
         };
