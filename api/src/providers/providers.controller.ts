@@ -1,5 +1,14 @@
-import { Controller, Get, Param, ParseUUIDPipe, Query } from "@nestjs/common";
-import { ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Put,
+  Query,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Caller, CurrentUser } from "../auth/current-user.decorator";
 import { Public } from "../auth/public.decorator";
 import {
@@ -7,6 +16,8 @@ import {
   ProviderSearchQueryDto,
   ProviderSearchResultDto,
 } from "./dto/provider.dto";
+import { SaveProviderProfileDto } from "./dto/save-profile.dto";
+import { SavedProfileDto } from "./dto/saved-profile.dto";
 import { ProvidersService } from "./providers.service";
 
 /**
@@ -34,6 +45,25 @@ export class ProvidersController {
   @ApiOkResponse({ type: [ProviderSearchResultDto] })
   search(@Query() query: ProviderSearchQueryDto): Promise<ProviderSearchResultDto[]> {
     return this.providers.search(query);
+  }
+
+  @Put("me")
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "Save the caller's own listing",
+    description:
+      "The whole listing, not a patch: branches and service areas are replaced wholesale, so a " +
+      "partial payload would clear what it left out. One transaction — it lands or it does not. " +
+      "A first save leaves the listing waiting for review; an edit does not change approval, so " +
+      "adjusting your fees will not take you out of search.",
+  })
+  @ApiOkResponse({ type: SavedProfileDto })
+  saveMine(
+    @CurrentUser() caller: Caller | null,
+    @Body() body: SaveProviderProfileDto,
+  ): Promise<SavedProfileDto> {
+    if (!caller) throw new UnauthorizedException("Sign in first.");
+    return this.providers.saveProfile(caller, body);
   }
 
   @Public()

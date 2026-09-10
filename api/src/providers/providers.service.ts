@@ -1,4 +1,9 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from "@nestjs/common";
 import { Caller } from "../auth/current-user.decorator";
 import { SupabaseService } from "../supabase/supabase.service";
 import {
@@ -6,6 +11,8 @@ import {
   ProviderSearchQueryDto,
   ProviderSearchResultDto,
 } from "./dto/provider.dto";
+import { SaveProviderProfileDto } from "./dto/save-profile.dto";
+import { SavedProfileDto } from "./dto/saved-profile.dto";
 
 /** A row as search_providers() returns it. */
 export type SearchRow = {
@@ -119,6 +126,77 @@ export class ProvidersService {
 
     if (error) throw new InternalServerErrorException(error.message);
     return ((data as SearchRow[]) ?? []).map(toSearchResult);
+  }
+
+  /**
+   * Save the caller's own listing, whole.
+   *
+   * One call to save_provider_profile(), which is one transaction. The form on
+   * the web does this as four round trips and discards the result of six of
+   * them; the delete of branches or service areas runs before the insert that
+   * replaces them, so a failure in between leaves a coach discoverable
+   * nowhere and tells them it saved.
+   *
+   * The payload is snake_cased here rather than in the function, so the
+   * contract stays camelCase like every other endpoint and the SQL stays
+   * readable against the columns it writes.
+   *
+   * approved is not sent and cannot be. The function decides: false on a first
+   * save, untouched on an edit.
+   */
+  async saveProfile(caller: Caller, body: SaveProviderProfileDto): Promise<SavedProfileDto> {
+    const db = this.supabase.asUser(caller.accessToken);
+
+    const { data, error } = await db.rpc("save_provider_profile", {
+      p_profile: {
+        provider_type: body.providerType,
+        provider_category_id: body.providerCategoryId ?? null,
+        display_name: body.displayName,
+        bio: body.bio ?? null,
+        help_statement: body.helpStatement ?? null,
+        age: body.age ?? null,
+        experience_years: body.experienceYears ?? null,
+        fee_min: body.feeMin ?? null,
+        fee_max: body.feeMax ?? null,
+        fee_period: body.feePeriod ?? null,
+        fees_note: body.feesNote ?? null,
+        teaching_places: body.teachingPlaces ?? [],
+        travels_to_students: body.travelsToStudents ?? false,
+        certifications: body.certifications ?? [],
+        availability: body.availability ?? [],
+        service_category_ids: body.serviceCategoryIds ?? [],
+        photo_url: body.photoUrl ?? null,
+        branches: (body.branches ?? []).map((b) => ({
+          label: b.label ?? null,
+          address: b.address ?? null,
+          area_id: b.areaId,
+          phone: b.phone ?? null,
+        })),
+        service_area_ids: body.serviceAreaIds ?? [],
+      },
+    });
+
+    if (error) {
+      // The function raises sentences — "Sign in first.", "Choose what kind of
+      // provider this is." — and P0001 carries them. Anything else is ours.
+      if (error.code === "P0001") throw new BadRequestException(error.message);
+      throw new InternalServerErrorException(error.message);
+    }
+
+    // Not through get_provider_profile(): it answers null for an unapproved
+    // listing, so reading a first save back through it would 404 the thing
+    // that just succeeded. The owner's own row instead — "owner read own
+    // provider row" covers it — carrying whether anyone can see them yet.
+    const { data: row, error: readError } = await db
+      .from("providers")
+      .select("id, approved, is_suspended")
+      .eq("id", data as string)
+      .single();
+
+    if (readError) throw new InternalServerErrorException(readError.message);
+
+    const saved = row as { id: string; approved: boolean; is_suspended: boolean };
+    return { id: saved.id, approved: saved.approved, isSuspended: saved.is_suspended };
   }
 
   /**

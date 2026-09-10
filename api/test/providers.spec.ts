@@ -129,11 +129,13 @@ describe("provider row mapping", () => {
 describe("GET /api/v1/providers", () => {
   let app: INestApplication;
   const rpc = jest.fn();
+  const from = jest.fn();
 
   beforeAll(async () => {
+    const client = { rpc, from };
     const supabase: Partial<SupabaseService> = {
-      anon: () => ({ rpc }) as never,
-      asUser: () => ({ rpc }) as never,
+      anon: () => client as never,
+      asUser: () => client as never,
       userFromToken: async (token: string) => (token === "good" ? { id: "user-1" } : null),
     };
 
@@ -156,7 +158,17 @@ describe("GET /api/v1/providers", () => {
   });
 
   afterAll(async () => app.close());
-  beforeEach(() => rpc.mockReset());
+  beforeEach(() => {
+    rpc.mockReset();
+    from.mockReset();
+  });
+
+  const query = (result: unknown) => {
+    const chain: Record<string, unknown> = {};
+    for (const m of ["select", "eq"]) chain[m] = jest.fn(() => chain);
+    chain.single = jest.fn(async () => result);
+    return chain;
+  };
 
   it("searches without a token, because a family looks before it joins", async () => {
     rpc.mockResolvedValue({ data: [searchRow], error: null });
@@ -234,5 +246,100 @@ describe("GET /api/v1/providers", () => {
   it("rejects a coach id that is not a uuid", async () => {
     await request(app.getHttpServer()).get("/api/v1/providers/not-a-uuid").expect(400);
     expect(rpc).not.toHaveBeenCalled();
+  });
+
+  describe("PUT /me", () => {
+    const auth = (req: request.Test) => req.set("Authorization", "Bearer good");
+
+    const listing = {
+      providerType: "individual",
+      displayName: "Krishna",
+      serviceAreaIds: [AREA],
+      serviceCategoryIds: ["77777777-7777-4777-8777-777777777777"],
+    };
+
+    it("saves in one call and answers with the owner's own row", async () => {
+      rpc.mockResolvedValue({ data: PROVIDER, error: null });
+      from.mockReturnValue(
+        query({ data: { id: PROVIDER, approved: false, is_suspended: false }, error: null }),
+      );
+
+      const res = await auth(
+        request(app.getHttpServer()).put("/api/v1/providers/me").send(listing),
+      ).expect(200);
+
+      // A first save is unapproved, and get_provider_profile() answers null
+      // for that — reading it back through the public path would 404 the thing
+      // that just succeeded. The owner's row says so instead.
+      expect(res.body).toEqual({ id: PROVIDER, approved: false, isSuspended: false });
+      expect(rpc).toHaveBeenCalledTimes(1);
+      expect(rpc).toHaveBeenCalledWith("save_provider_profile", expect.anything());
+    });
+
+    it("sends the whole listing as one snake_cased payload", async () => {
+      rpc.mockResolvedValue({ data: PROVIDER, error: null });
+      from.mockReturnValue(
+        query({ data: { id: PROVIDER, approved: true, is_suspended: false }, error: null }),
+      );
+
+      await auth(
+        request(app.getHttpServer())
+          .put("/api/v1/providers/me")
+          .send({ ...listing, branches: [{ areaId: AREA, label: "Main" }] }),
+      ).expect(200);
+
+      const payload = rpc.mock.calls[0][1].p_profile;
+      expect(payload.provider_type).toBe("individual");
+      expect(payload.display_name).toBe("Krishna");
+      expect(payload.service_area_ids).toEqual([AREA]);
+      expect(payload.branches[0].area_id).toBe(AREA);
+      // approved is the function's decision and is never sent.
+      expect("approved" in payload).toBe(false);
+    });
+
+    it("refuses to let a caller set their own approval", async () => {
+      await auth(
+        request(app.getHttpServer())
+          .put("/api/v1/providers/me")
+          .send({ ...listing, approved: true }),
+      ).expect(400);
+      expect(rpc).not.toHaveBeenCalled();
+    });
+
+    it("refuses without a token", async () => {
+      await request(app.getHttpServer()).put("/api/v1/providers/me").send(listing).expect(401);
+      expect(rpc).not.toHaveBeenCalled();
+    });
+
+    it("refuses a provider type that is not one of the three", async () => {
+      await auth(
+        request(app.getHttpServer())
+          .put("/api/v1/providers/me")
+          .send({ ...listing, providerType: "wizard" }),
+      ).expect(400);
+      expect(rpc).not.toHaveBeenCalled();
+    });
+
+    it("refuses a branch with no area, because that is what makes it findable", async () => {
+      await auth(
+        request(app.getHttpServer())
+          .put("/api/v1/providers/me")
+          .send({ ...listing, providerType: "institution", branches: [{ label: "Main" }] }),
+      ).expect(400);
+      expect(rpc).not.toHaveBeenCalled();
+    });
+
+    it("turns the function's own sentence into a 400, not a 500", async () => {
+      rpc.mockResolvedValue({
+        data: null,
+        error: { code: "P0001", message: "Choose what kind of provider this is." },
+      });
+
+      const res = await auth(
+        request(app.getHttpServer()).put("/api/v1/providers/me").send(listing),
+      ).expect(400);
+
+      expect(res.body.message).toBe("Choose what kind of provider this is.");
+    });
   });
 });

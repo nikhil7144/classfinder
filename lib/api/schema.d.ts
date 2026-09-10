@@ -514,6 +514,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/providers/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save the caller's own listing
+         * @description The whole listing, not a patch: branches and service areas are replaced wholesale, so a partial payload would clear what it left out. One transaction — it lands or it does not. A first save leaves the listing waiting for review; an edit does not change approval, so adjusting your fees will not take you out of search.
+         */
+        put: operations["ProvidersController_saveMine_v1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/providers/{id}": {
         parameters: {
             query?: never;
@@ -1417,6 +1437,67 @@ export interface components {
             cityName: string | null;
             /** @description Kilometres from the origin. */
             distanceKm: number | null;
+        };
+        CertificationInputDto: {
+            name: string;
+            issuer: string;
+            /** @description Text, because coaches write '2019' and 'expected 2027' alike. */
+            year: string;
+        };
+        AvailabilityInputDto: {
+            /** @example mon */
+            day: string;
+            /** @description Which teaching place this slot is at. */
+            place: string;
+            /** @example 16:00 */
+            start: string;
+            /** @example 18:00 */
+            end: string;
+        };
+        BranchInputDto: {
+            label?: string | null;
+            address?: string | null;
+            /**
+             * Format: uuid
+             * @description Where it is. This is what makes it findable.
+             */
+            areaId: string;
+            phone?: string | null;
+        };
+        SaveProviderProfileDto: {
+            /** @enum {string} */
+            providerType: "individual" | "institution" | "event_planner";
+            /** Format: uuid */
+            providerCategoryId?: string | null;
+            displayName: string;
+            bio?: string | null;
+            helpStatement?: string | null;
+            age?: number | null;
+            experienceYears?: number | null;
+            feeMin?: number | null;
+            feeMax?: number | null;
+            /** @example per_month */
+            feePeriod?: string | null;
+            feesNote?: string | null;
+            teachingPlaces?: string[];
+            travelsToStudents?: boolean;
+            certifications?: components["schemas"]["CertificationInputDto"][];
+            availability?: components["schemas"]["AvailabilityInputDto"][];
+            serviceCategoryIds?: string[];
+            /** @description A Storage URL, never bytes. */
+            photoUrl?: string | null;
+            /** @description Institutions only. Cleared for anybody else, so a change of type is not half a listing. */
+            branches?: components["schemas"]["BranchInputDto"][];
+            /** @description Individuals only. The areas they will travel to or teach in. */
+            serviceAreaIds?: string[];
+        };
+        SavedProfileDto: {
+            /** Format: uuid */
+            id: string;
+            /** @description False until an admin reads the listing. A first save is always false. */
+            approved: boolean;
+            /** @description Taken down. Different from never approved, and says so. */
+            isSuspended: boolean;
         };
         CertificationDto: {
             name: string;
@@ -2487,6 +2568,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProviderSearchResultDto"][];
+                };
+            };
+        };
+    };
+    ProvidersController_saveMine_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveProviderProfileDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedProfileDto"];
                 };
             };
         };
