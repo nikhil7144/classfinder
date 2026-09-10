@@ -33,6 +33,65 @@
         ]
       }
     },
+    "/api/v1/alerts": {
+      "get": {
+        "description": "One read for every badge in the product. Answers for whoever is asking, so a client shows the counters its role uses rather than requesting a subset. Always an object, zeroes included — never null.",
+        "operationId": "AlertsController_mine_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "What is waiting on the caller",
+        "tags": [
+          "alerts"
+        ]
+      }
+    },
+    "/api/v1/alerts/read": {
+      "post": {
+        "description": "Pass threadId to clear one conversation's, or omit it to clear the lot — which is what opening the bell means.",
+        "operationId": "AlertsController_read_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkNotificationsReadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark notifications read",
+        "tags": [
+          "alerts"
+        ]
+      }
+    },
     "/api/v1/subscriptions/plans": {
       "get": {
         "description": "Three catalogues keyed by audience — an events company, a coach, an advertiser — and no plan belongs to two of them.",
@@ -2027,6 +2086,59 @@
       }
     },
     "schemas": {
+      "AlertsDto": {
+        "type": "object",
+        "properties": {
+          "pendingPitches": {
+            "type": "number",
+            "description": "Coach pitches waiting on a decision, for groups the caller made."
+          },
+          "groupsNeedingMembers": {
+            "type": "number",
+            "description": "The caller's groups that are still short of the members to go live."
+          },
+          "acceptedPitches": {
+            "type": "number",
+            "description": "Pitches the caller accepted."
+          },
+          "pendingApproaches": {
+            "type": "number",
+            "description": "Coaches who approached the caller and are waiting on them."
+          },
+          "unreadThreads": {
+            "type": "number",
+            "description": "Conversations with something arrived since the caller last looked."
+          },
+          "unansweredEnquiries": {
+            "type": "number",
+            "description": "Enquiries a coach has not answered."
+          },
+          "needsYou": {
+            "type": "number",
+            "description": "Unread notifications of the kinds that want an action. The bell number, and not the sum of the counters above."
+          }
+        },
+        "required": [
+          "pendingPitches",
+          "groupsNeedingMembers",
+          "acceptedPitches",
+          "pendingApproaches",
+          "unreadThreads",
+          "unansweredEnquiries",
+          "needsYou"
+        ]
+      },
+      "MarkNotificationsReadDto": {
+        "type": "object",
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Mark only this conversation's notifications read. Omit to clear everything — which is what opening the bell means."
+          }
+        }
+      },
       "PlanDto": {
         "type": "object",
         "properties": {
