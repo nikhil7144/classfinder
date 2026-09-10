@@ -12,11 +12,17 @@ export type SearchRow = {
   id: string;
   display_name: string | null;
   bio: string | null;
+  help_statement: string | null;
   provider_type: string;
   provider_category_id: string | null;
   photo_url: string | null;
   is_featured: boolean;
   service_category_ids: string[] | null;
+  experience_years: number | null;
+  fee_min: number | null;
+  fee_max: number | null;
+  fee_period: string | null;
+  teaching_places: string[] | null;
   nearest_area_id: string | null;
   nearest_area_name: string | null;
   city_name: string | null;
@@ -40,11 +46,17 @@ export const toSearchResult = (row: SearchRow): ProviderSearchResultDto => ({
   id: row.id,
   displayName: row.display_name,
   bio: row.bio,
+  helpStatement: row.help_statement,
   providerType: row.provider_type,
   providerCategoryId: row.provider_category_id,
   photoUrl: row.photo_url,
   isFeatured: row.is_featured,
   serviceCategoryIds: row.service_category_ids ?? [],
+  experienceYears: num(row.experience_years),
+  feeMin: num(row.fee_min),
+  feeMax: num(row.fee_max),
+  feePeriod: row.fee_period,
+  teachingPlaces: row.teaching_places ?? [],
   nearestAreaId: row.nearest_area_id,
   nearestAreaName: row.nearest_area_name,
   cityName: row.city_name,

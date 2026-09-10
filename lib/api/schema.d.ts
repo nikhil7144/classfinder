@@ -1123,6 +1123,8 @@ export interface components {
             id: string;
             displayName: string | null;
             bio: string | null;
+            /** @description What they say they can help with. */
+            helpStatement: string | null;
             /** @enum {string} */
             providerType: "individual" | "institution" | "event_planner";
             /** Format: uuid */
@@ -1130,6 +1132,13 @@ export interface components {
             photoUrl: string | null;
             isFeatured: boolean;
             serviceCategoryIds: string[];
+            experienceYears: number | null;
+            feeMin: number | null;
+            feeMax: number | null;
+            /** @example per_month */
+            feePeriod: string | null;
+            /** @description Where they teach — own centre, at home, online. */
+            teachingPlaces: string[];
             /** Format: uuid */
             nearestAreaId: string | null;
             nearestAreaName: string | null;

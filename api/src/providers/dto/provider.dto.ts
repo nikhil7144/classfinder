@@ -71,6 +71,9 @@ export class ProviderSearchResultDto {
   @ApiProperty({ type: String, nullable: true })
   bio!: string | null;
 
+  @ApiProperty({ type: String, nullable: true, description: "What they say they can help with." })
+  helpStatement!: string | null;
+
   @ApiProperty({ enum: PROVIDER_TYPES })
   providerType!: string;
 
@@ -85,6 +88,21 @@ export class ProviderSearchResultDto {
 
   @ApiProperty({ type: [String], format: "uuid" })
   serviceCategoryIds!: string[];
+
+  @ApiProperty({ type: Number, nullable: true })
+  experienceYears!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true })
+  feeMin!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true })
+  feeMax!: number | null;
+
+  @ApiProperty({ type: String, nullable: true, example: "per_month" })
+  feePeriod!: string | null;
+
+  @ApiProperty({ type: [String], description: "Where they teach — own centre, at home, online." })
+  teachingPlaces!: string[];
 
   @ApiProperty({ type: String, nullable: true, format: "uuid" })
   nearestAreaId!: string | null;

@@ -2850,6 +2850,11 @@
             "type": "string",
             "nullable": true
           },
+          "helpStatement": {
+            "type": "string",
+            "nullable": true,
+            "description": "What they say they can help with."
+          },
           "providerType": {
             "type": "string",
             "enum": [
@@ -2877,6 +2882,30 @@
               "format": "uuid"
             }
           },
+          "experienceYears": {
+            "type": "number",
+            "nullable": true
+          },
+          "feeMin": {
+            "type": "number",
+            "nullable": true
+          },
+          "feeMax": {
+            "type": "number",
+            "nullable": true
+          },
+          "feePeriod": {
+            "type": "string",
+            "nullable": true,
+            "example": "per_month"
+          },
+          "teachingPlaces": {
+            "description": "Where they teach — own centre, at home, online.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "nearestAreaId": {
             "type": "string",
             "nullable": true,
@@ -2900,11 +2929,17 @@
           "id",
           "displayName",
           "bio",
+          "helpStatement",
           "providerType",
           "providerCategoryId",
           "photoUrl",
           "isFeatured",
           "serviceCategoryIds",
+          "experienceYears",
+          "feeMin",
+          "feeMax",
+          "feePeriod",
+          "teachingPlaces",
           "nearestAreaId",
           "nearestAreaName",
           "cityName",

@@ -16,11 +16,18 @@ const searchRow = {
   id: PROVIDER,
   display_name: "Krishna Sports Academy",
   bio: "Cricket and athletics.",
+  help_statement: "Beginners welcome.",
   provider_type: "institution",
   provider_category_id: "66666666-6666-4666-8666-666666666666",
   photo_url: null,
   is_featured: false,
   service_category_ids: ["77777777-7777-4777-8777-777777777777"],
+  experience_years: 12,
+  // numeric over PostgREST, same as the profile's fees.
+  fee_min: "1500.00" as unknown as number,
+  fee_max: "3000.00" as unknown as number,
+  fee_period: "per_month",
+  teaching_places: ["own_centre"],
   nearest_area_id: AREA,
   nearest_area_name: "Indirapuram",
   city_name: "Ghaziabad",
@@ -62,6 +69,19 @@ describe("provider row mapping", () => {
     expect(row.providerType).toBe("institution");
     expect(row.nearestAreaName).toBe("Indirapuram");
     expect(row.serviceCategoryIds).toEqual(["77777777-7777-4777-8777-777777777777"]);
+  });
+
+  it("carries every column phase1f added, not just phase1e's twelve", () => {
+    // search_providers was redefined once and grew six columns. The cards on
+    // the search page render fees and experience, so dropping them here would
+    // quietly empty half of each result.
+    const row = toSearchResult(searchRow);
+    expect(row.helpStatement).toBe("Beginners welcome.");
+    expect(row.experienceYears).toBe(12);
+    expect(row.feeMin).toBe(1500);
+    expect(row.feeMax).toBe(3000);
+    expect(row.feePeriod).toBe("per_month");
+    expect(row.teachingPlaces).toEqual(["own_centre"]);
   });
 
   it("coerces a distance that arrived as a string", () => {
