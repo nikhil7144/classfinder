@@ -12,6 +12,7 @@ import {
   ProviderSearchResultDto,
 } from "./dto/provider.dto";
 import { SaveProviderProfileDto } from "./dto/save-profile.dto";
+import { MyListingDto } from "./dto/my-listing.dto";
 import { SavedProfileDto } from "./dto/saved-profile.dto";
 
 /** A row as search_providers() returns it. */
@@ -126,6 +127,70 @@ export class ProvidersService {
 
     if (error) throw new InternalServerErrorException(error.message);
     return ((data as SearchRow[]) ?? []).map(toSearchResult);
+  }
+
+  /**
+   * The caller's own listing, as they edit it.
+   *
+   * Three reads of their own rows rather than get_provider_profile(), which
+   * answers null while a listing is unapproved — the screen a new coach fills
+   * in could never load through it. "owner read own provider row" and the
+   * branch and service-area policies cover all three, so nothing here has
+   * privilege the browser did not already have.
+   *
+   * Null when they have not started one. That is a real state, not an error:
+   * a coach who has chosen their role but filled nothing in yet.
+   */
+  async myListing(caller: Caller): Promise<MyListingDto | null> {
+    const db = this.supabase.asUser(caller.accessToken);
+
+    const [{ data: provider, error }, { data: profile }] = await Promise.all([
+      db.from("providers").select("*").eq("user_id", caller.id).maybeSingle(),
+      db.from("profiles").select("profile_complete").eq("id", caller.id).maybeSingle(),
+    ]);
+
+    if (error) throw new InternalServerErrorException(error.message);
+    if (!provider) return null;
+
+    const row = provider as Record<string, unknown>;
+    const id = row.id as string;
+
+    const [{ data: branches }, { data: areas }] = await Promise.all([
+      db.from("branches").select("id, label, address, area_id, phone").eq("provider_id", id),
+      db.from("provider_service_areas").select("area_id").eq("provider_id", id),
+    ]);
+
+    return {
+      id,
+      providerType: row.provider_type as string,
+      providerCategoryId: (row.provider_category_id as string | null) ?? null,
+      displayName: (row.display_name as string | null) ?? null,
+      bio: (row.bio as string | null) ?? null,
+      helpStatement: (row.help_statement as string | null) ?? null,
+      age: num(row.age),
+      experienceYears: num(row.experience_years),
+      feeMin: num(row.fee_min),
+      feeMax: num(row.fee_max),
+      feePeriod: (row.fee_period as string | null) ?? null,
+      feesNote: (row.fees_note as string | null) ?? null,
+      teachingPlaces: list<string>(row.teaching_places),
+      travelsToStudents: Boolean(row.travels_to_students),
+      certifications: list(row.certifications),
+      availability: list(row.availability),
+      serviceCategoryIds: list<string>(row.service_category_ids),
+      photoUrl: (row.photo_url as string | null) ?? null,
+      branches: list<Record<string, unknown>>(branches).map((b) => ({
+        id: b.id as string,
+        label: (b.label as string | null) ?? null,
+        address: (b.address as string | null) ?? null,
+        areaId: (b.area_id as string | null) ?? null,
+        phone: (b.phone as string | null) ?? null,
+      })),
+      serviceAreaIds: list<Record<string, unknown>>(areas).map((a) => a.area_id as string),
+      approved: Boolean(row.approved),
+      isSuspended: Boolean(row.is_suspended),
+      profileComplete: Boolean((profile as { profile_complete?: boolean } | null)?.profile_complete),
+    };
   }
 
   /**

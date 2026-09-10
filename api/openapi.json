@@ -1144,6 +1144,32 @@
       }
     },
     "/api/v1/providers/me": {
+      "get": {
+        "description": "Not the public profile: that one is null while a listing is unapproved, so the screen a new coach fills in could never load through it. Field names match the save endpoint so a client can load, edit and send it back unchanged. Null when they have not started one — a real state, not an error. Declared before /:id so it is not read as a coach id.",
+        "operationId": "ProvidersController_myListing_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyListingDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The caller's own listing, as they edit it",
+        "tags": [
+          "providers"
+        ]
+      },
       "put": {
         "description": "The whole listing, not a patch: branches and service areas are replaced wholesale, so a partial payload would clear what it left out. One transaction — it lands or it does not. A first save leaves the listing waiting for review; an edit does not change approval, so adjusting your fees will not take you out of search.",
         "operationId": "ProvidersController_saveMine_v1",
@@ -3688,6 +3714,228 @@
           "distanceKm"
         ]
       },
+      "CertificationDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "issuer": {
+            "type": "string"
+          },
+          "year": {
+            "type": "string",
+            "description": "Kept as text: parents write '2019' and 'expected 2027' alike."
+          }
+        },
+        "required": [
+          "name",
+          "issuer",
+          "year"
+        ]
+      },
+      "AvailabilitySlotDto": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string",
+            "example": "mon"
+          },
+          "place": {
+            "type": "string",
+            "description": "Which of the coach's teaching places this slot is at."
+          },
+          "start": {
+            "type": "string",
+            "example": "16:00"
+          },
+          "end": {
+            "type": "string",
+            "example": "18:00"
+          }
+        },
+        "required": [
+          "day",
+          "place",
+          "start",
+          "end"
+        ]
+      },
+      "MyBranchDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "areaId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "address",
+          "areaId",
+          "phone"
+        ]
+      },
+      "MyListingDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerType": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "institution",
+              "event_planner"
+            ]
+          },
+          "providerCategoryId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "bio": {
+            "type": "string",
+            "nullable": true
+          },
+          "helpStatement": {
+            "type": "string",
+            "nullable": true
+          },
+          "age": {
+            "type": "number",
+            "nullable": true
+          },
+          "experienceYears": {
+            "type": "number",
+            "nullable": true
+          },
+          "feeMin": {
+            "type": "number",
+            "nullable": true
+          },
+          "feeMax": {
+            "type": "number",
+            "nullable": true
+          },
+          "feePeriod": {
+            "type": "string",
+            "nullable": true
+          },
+          "feesNote": {
+            "type": "string",
+            "nullable": true
+          },
+          "teachingPlaces": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "travelsToStudents": {
+            "type": "boolean"
+          },
+          "certifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CertificationDto"
+            }
+          },
+          "availability": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AvailabilitySlotDto"
+            }
+          },
+          "serviceCategoryIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "branches": {
+            "description": "Institutions. Empty for anybody else.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MyBranchDto"
+            }
+          },
+          "serviceAreaIds": {
+            "description": "Individuals. Empty for an institution.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "approved": {
+            "type": "boolean",
+            "description": "False until an admin has read it. Not the caller's to change."
+          },
+          "isSuspended": {
+            "type": "boolean",
+            "description": "Taken down. Different from never approved."
+          },
+          "profileComplete": {
+            "type": "boolean",
+            "description": "Whether the listing has ever been saved in full."
+          }
+        },
+        "required": [
+          "id",
+          "providerType",
+          "providerCategoryId",
+          "displayName",
+          "bio",
+          "helpStatement",
+          "age",
+          "experienceYears",
+          "feeMin",
+          "feeMax",
+          "feePeriod",
+          "feesNote",
+          "teachingPlaces",
+          "travelsToStudents",
+          "certifications",
+          "availability",
+          "serviceCategoryIds",
+          "photoUrl",
+          "branches",
+          "serviceAreaIds",
+          "approved",
+          "isSuspended",
+          "profileComplete"
+        ]
+      },
       "CertificationInputDto": {
         "type": "object",
         "properties": {
@@ -3892,53 +4140,6 @@
           "id",
           "approved",
           "isSuspended"
-        ]
-      },
-      "CertificationDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "issuer": {
-            "type": "string"
-          },
-          "year": {
-            "type": "string",
-            "description": "Kept as text: parents write '2019' and 'expected 2027' alike."
-          }
-        },
-        "required": [
-          "name",
-          "issuer",
-          "year"
-        ]
-      },
-      "AvailabilitySlotDto": {
-        "type": "object",
-        "properties": {
-          "day": {
-            "type": "string",
-            "example": "mon"
-          },
-          "place": {
-            "type": "string",
-            "description": "Which of the coach's teaching places this slot is at."
-          },
-          "start": {
-            "type": "string",
-            "example": "16:00"
-          },
-          "end": {
-            "type": "string",
-            "example": "18:00"
-          }
-        },
-        "required": [
-          "day",
-          "place",
-          "start",
-          "end"
         ]
       },
       "ProviderServiceDto": {

@@ -16,6 +16,7 @@ import {
   ProviderSearchQueryDto,
   ProviderSearchResultDto,
 } from "./dto/provider.dto";
+import { MyListingDto } from "./dto/my-listing.dto";
 import { SaveProviderProfileDto } from "./dto/save-profile.dto";
 import { SavedProfileDto } from "./dto/saved-profile.dto";
 import { ProvidersService } from "./providers.service";
@@ -45,6 +46,22 @@ export class ProvidersController {
   @ApiOkResponse({ type: [ProviderSearchResultDto] })
   search(@Query() query: ProviderSearchQueryDto): Promise<ProviderSearchResultDto[]> {
     return this.providers.search(query);
+  }
+
+  @Get("me")
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "The caller's own listing, as they edit it",
+    description:
+      "Not the public profile: that one is null while a listing is unapproved, so the screen a " +
+      "new coach fills in could never load through it. Field names match the save endpoint so a " +
+      "client can load, edit and send it back unchanged. Null when they have not started one — " +
+      "a real state, not an error. Declared before /:id so it is not read as a coach id.",
+  })
+  @ApiOkResponse({ type: MyListingDto })
+  myListing(@CurrentUser() caller: Caller | null): Promise<MyListingDto | null> {
+    if (!caller) throw new UnauthorizedException("Sign in first.");
+    return this.providers.myListing(caller);
   }
 
   @Put("me")

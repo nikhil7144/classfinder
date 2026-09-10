@@ -167,6 +167,8 @@ describe("GET /api/v1/providers", () => {
     const chain: Record<string, unknown> = {};
     for (const m of ["select", "eq"]) chain[m] = jest.fn(() => chain);
     chain.single = jest.fn(async () => result);
+    chain.maybeSingle = jest.fn(async () => result);
+    chain.then = (resolve: (v: unknown) => unknown) => Promise.resolve(result).then(resolve);
     return chain;
   };
 
@@ -246,6 +248,70 @@ describe("GET /api/v1/providers", () => {
   it("rejects a coach id that is not a uuid", async () => {
     await request(app.getHttpServer()).get("/api/v1/providers/not-a-uuid").expect(400);
     expect(rpc).not.toHaveBeenCalled();
+  });
+
+  describe("GET /me", () => {
+    const auth = (req: request.Test) => req.set("Authorization", "Bearer good");
+
+    const providerRow = {
+      id: PROVIDER,
+      provider_type: "individual",
+      provider_category_id: null,
+      display_name: "Krishna",
+      bio: "Cricket.",
+      help_statement: null,
+      age: null,
+      experience_years: 12,
+      fee_min: "1500.00",
+      fee_max: null,
+      fee_period: "per_month",
+      fees_note: null,
+      teaching_places: ["own_centre"],
+      travels_to_students: true,
+      certifications: [{ name: "NIS", issuer: "SAI", year: "2014" }],
+      availability: [],
+      service_category_ids: ["77777777-7777-4777-8777-777777777777"],
+      photo_url: null,
+      approved: false,
+      is_suspended: false,
+    };
+
+    it("loads an unapproved listing, which the public profile cannot", async () => {
+      // The whole reason this endpoint exists: get_provider_profile() answers
+      // null while approved is false, so a new coach's edit screen could never
+      // load through it.
+      from.mockImplementation((table: string) => {
+        if (table === "providers") return query({ data: providerRow, error: null });
+        if (table === "profiles") return query({ data: { profile_complete: false }, error: null });
+        if (table === "provider_service_areas") return query({ data: [{ area_id: AREA }], error: null });
+        return query({ data: [], error: null });
+      });
+
+      const res = await auth(request(app.getHttpServer()).get("/api/v1/providers/me")).expect(200);
+
+      expect(res.body.approved).toBe(false);
+      expect(res.body.profileComplete).toBe(false);
+      expect(res.body.displayName).toBe("Krishna");
+      expect(res.body.serviceAreaIds).toEqual([AREA]);
+      expect(res.body.feeMin).toBe(1500);
+    });
+
+    it("answers null for a coach who has not started one", async () => {
+      from.mockImplementation(() => query({ data: null, error: null }));
+
+      const res = await auth(request(app.getHttpServer()).get("/api/v1/providers/me")).expect(200);
+      expect(res.body).toEqual({});
+    });
+
+    it("reads /me as the route and not as a coach id", async () => {
+      from.mockImplementation(() => query({ data: null, error: null }));
+      await auth(request(app.getHttpServer()).get("/api/v1/providers/me")).expect(200);
+      expect(rpc).not.toHaveBeenCalled();
+    });
+
+    it("refuses without a token", async () => {
+      await request(app.getHttpServer()).get("/api/v1/providers/me").expect(401);
+    });
   });
 
   describe("PUT /me", () => {

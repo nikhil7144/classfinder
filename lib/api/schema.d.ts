@@ -521,7 +521,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * The caller's own listing, as they edit it
+         * @description Not the public profile: that one is null while a listing is unapproved, so the screen a new coach fills in could never load through it. Field names match the save endpoint so a client can load, edit and send it back unchanged. Null when they have not started one — a real state, not an error. Declared before /:id so it is not read as a coach id.
+         */
+        get: operations["ProvidersController_myListing_v1"];
         /**
          * Save the caller's own listing
          * @description The whole listing, not a patch: branches and service areas are replaced wholesale, so a partial payload would clear what it left out. One transaction — it lands or it does not. A first save leaves the listing waiting for review; an edit does not change approval, so adjusting your fees will not take you out of search.
@@ -1438,6 +1442,64 @@ export interface components {
             /** @description Kilometres from the origin. */
             distanceKm: number | null;
         };
+        CertificationDto: {
+            name: string;
+            issuer: string;
+            /** @description Kept as text: parents write '2019' and 'expected 2027' alike. */
+            year: string;
+        };
+        AvailabilitySlotDto: {
+            /** @example mon */
+            day: string;
+            /** @description Which of the coach's teaching places this slot is at. */
+            place: string;
+            /** @example 16:00 */
+            start: string;
+            /** @example 18:00 */
+            end: string;
+        };
+        MyBranchDto: {
+            /** Format: uuid */
+            id: string;
+            label: string | null;
+            address: string | null;
+            /** Format: uuid */
+            areaId: string | null;
+            phone: string | null;
+        };
+        MyListingDto: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            providerType: "individual" | "institution" | "event_planner";
+            /** Format: uuid */
+            providerCategoryId: string | null;
+            displayName: string | null;
+            bio: string | null;
+            helpStatement: string | null;
+            age: number | null;
+            experienceYears: number | null;
+            feeMin: number | null;
+            feeMax: number | null;
+            feePeriod: string | null;
+            feesNote: string | null;
+            teachingPlaces: string[];
+            travelsToStudents: boolean;
+            certifications: components["schemas"]["CertificationDto"][];
+            availability: components["schemas"]["AvailabilitySlotDto"][];
+            serviceCategoryIds: string[];
+            photoUrl: string | null;
+            /** @description Institutions. Empty for anybody else. */
+            branches: components["schemas"]["MyBranchDto"][];
+            /** @description Individuals. Empty for an institution. */
+            serviceAreaIds: string[];
+            /** @description False until an admin has read it. Not the caller's to change. */
+            approved: boolean;
+            /** @description Taken down. Different from never approved. */
+            isSuspended: boolean;
+            /** @description Whether the listing has ever been saved in full. */
+            profileComplete: boolean;
+        };
         CertificationInputDto: {
             name: string;
             issuer: string;
@@ -1498,22 +1560,6 @@ export interface components {
             approved: boolean;
             /** @description Taken down. Different from never approved, and says so. */
             isSuspended: boolean;
-        };
-        CertificationDto: {
-            name: string;
-            issuer: string;
-            /** @description Kept as text: parents write '2019' and 'expected 2027' alike. */
-            year: string;
-        };
-        AvailabilitySlotDto: {
-            /** @example mon */
-            day: string;
-            /** @description Which of the coach's teaching places this slot is at. */
-            place: string;
-            /** @example 16:00 */
-            start: string;
-            /** @example 18:00 */
-            end: string;
         };
         ProviderServiceDto: {
             /** Format: uuid */
@@ -2568,6 +2614,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProviderSearchResultDto"][];
+                };
+            };
+        };
+    };
+    ProvidersController_myListing_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyListingDto"];
                 };
             };
         };
