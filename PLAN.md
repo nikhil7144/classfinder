@@ -952,6 +952,14 @@ A real gateway (Razorpay, given the India context) wired into Phase 3 bookings.
 **Mobile app** isn't a phase — it's a separate client, and Phase 1's RLS work
 is what makes it straightforward rather than a rewrite.
 
+That claim needs one correction now the API exists: RLS makes a second client
+*safe*, not *straightforward*. Search, provider profiles, threads, Spaces,
+groups and the demand feed are still read through SQL functions rather than the
+API, and a Flutter client cannot be pointed at those without becoming the
+second schema-guessing client the API tier was built to prevent. The order that
+work has to happen in, and what each of the 50 web screens becomes on a phone,
+is in **`MOBILE-PLAN.md`**.
+
 ---
 
 ## Decisions worth not relitigating
