@@ -454,6 +454,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/providers/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Coaches near a place, teaching a thing
+         * @description Ordered by distance from the search origin: the given lat/lng if there is one, otherwise the centroid of the area. Only approved, unsuspended coaches, and only in live areas — the area-wise launch gate is the database's, not this endpoint's. Declared before the :id route so /providers/search is not parsed as a coach whose id is the word search.
+         */
+        get: operations["ProvidersController_search_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/providers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One coach's public profile
+         * @description Services, fees, branches, the areas they cover, certifications and availability. A coach who is not approved, is suspended, or is an event planner is a 404 — the same answer a stranger gets for an id that was never real.
+         */
+        get: operations["ProvidersController_one_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/queries": {
         parameters: {
             query?: never;
@@ -1077,6 +1117,86 @@ export interface components {
             /** Format: uri */
             websiteUrl?: string;
             officeAddress?: string;
+        };
+        ProviderSearchResultDto: {
+            /** Format: uuid */
+            id: string;
+            displayName: string | null;
+            bio: string | null;
+            /** @enum {string} */
+            providerType: "individual" | "institution" | "event_planner";
+            /** Format: uuid */
+            providerCategoryId: string | null;
+            photoUrl: string | null;
+            isFeatured: boolean;
+            serviceCategoryIds: string[];
+            /** Format: uuid */
+            nearestAreaId: string | null;
+            nearestAreaName: string | null;
+            cityName: string | null;
+            /** @description Kilometres from the origin. */
+            distanceKm: number | null;
+        };
+        CertificationDto: {
+            name: string;
+            issuer: string;
+            /** @description Kept as text: parents write '2019' and 'expected 2027' alike. */
+            year: string;
+        };
+        AvailabilitySlotDto: {
+            /** @example mon */
+            day: string;
+            /** @description Which of the coach's teaching places this slot is at. */
+            place: string;
+            /** @example 16:00 */
+            start: string;
+            /** @example 18:00 */
+            end: string;
+        };
+        ProviderServiceDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @description Which taxonomy group it belongs to — sport, subject, and so on. */
+            group: string;
+        };
+        ProviderBranchDto: {
+            label: string | null;
+            address: string | null;
+            areaName: string | null;
+            cityName: string | null;
+        };
+        ProviderServiceAreaDto: {
+            areaName: string | null;
+            cityName: string | null;
+        };
+        ProviderProfileDto: {
+            /** Format: uuid */
+            id: string;
+            displayName: string | null;
+            bio: string | null;
+            /** @description What they say they can help with. */
+            helpStatement: string | null;
+            /** @enum {string} */
+            providerType: "individual" | "institution" | "event_planner";
+            photoUrl: string | null;
+            isFeatured: boolean;
+            age: number | null;
+            experienceYears: number | null;
+            feeMin: number | null;
+            feeMax: number | null;
+            /** @example month */
+            feePeriod: string | null;
+            feesNote: string | null;
+            /** @description Where they teach — at their centre, at home, online. */
+            teachingPlaces: string[];
+            certifications: components["schemas"]["CertificationDto"][];
+            availability: components["schemas"]["AvailabilitySlotDto"][];
+            /** @description Their provider category, by name. */
+            categoryName: string | null;
+            services: components["schemas"]["ProviderServiceDto"][];
+            branches: components["schemas"]["ProviderBranchDto"][];
+            serviceAreas: components["schemas"]["ProviderServiceAreaDto"][];
         };
         QueryDto: {
             /** Format: uuid */
@@ -1831,6 +1951,56 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OrganiserDto"];
+                };
+            };
+        };
+    };
+    ProvidersController_search_v1: {
+        parameters: {
+            query?: {
+                /** @description Search origin. Both or neither; falls back to the area. */
+                lat?: number;
+                lng?: number;
+                /** @description The area to search in. */
+                areaId?: string;
+                serviceCategoryId?: string;
+                providerType?: "individual" | "institution" | "event_planner";
+                radiusKm?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderSearchResultDto"][];
+                };
+            };
+        };
+    };
+    ProvidersController_one_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderProfileDto"];
                 };
             };
         };

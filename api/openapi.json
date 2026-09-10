@@ -986,6 +986,136 @@
         ]
       }
     },
+    "/api/v1/providers/search": {
+      "get": {
+        "description": "Ordered by distance from the search origin: the given lat/lng if there is one, otherwise the centroid of the area. Only approved, unsuspended coaches, and only in live areas — the area-wise launch gate is the database's, not this endpoint's. Declared before the :id route so /providers/search is not parsed as a coach whose id is the word search.",
+        "operationId": "ProvidersController_search_v1",
+        "parameters": [
+          {
+            "name": "lat",
+            "required": false,
+            "in": "query",
+            "description": "Search origin. Both or neither; falls back to the area.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "lng",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "areaId",
+            "required": false,
+            "in": "query",
+            "description": "The area to search in.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "serviceCategoryId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "providerType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "individual",
+                "institution",
+                "event_planner"
+              ]
+            }
+          },
+          {
+            "name": "radiusKm",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 15,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProviderSearchResultDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Coaches near a place, teaching a thing",
+        "tags": [
+          "providers"
+        ]
+      }
+    },
+    "/api/v1/providers/{id}": {
+      "get": {
+        "description": "Services, fees, branches, the areas they cover, certifications and availability. A coach who is not approved, is suspended, or is an event planner is a 404 — the same answer a stranger gets for an id that was never real.",
+        "operationId": "ProvidersController_one_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderProfileDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "One coach's public profile",
+        "tags": [
+          "providers"
+        ]
+      }
+    },
     "/api/v1/queries": {
       "get": {
         "description": "A coach gets the ones raised with them, a parent gets their own. One endpoint for both sides — the row policy decides which rows those are, so neither has to say who it is.",
@@ -2704,6 +2834,320 @@
             "maxLength": 500
           }
         }
+      },
+      "ProviderSearchResultDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "bio": {
+            "type": "string",
+            "nullable": true
+          },
+          "providerType": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "institution",
+              "event_planner"
+            ]
+          },
+          "providerCategoryId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "isFeatured": {
+            "type": "boolean"
+          },
+          "serviceCategoryIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "nearestAreaId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "nearestAreaName": {
+            "type": "string",
+            "nullable": true
+          },
+          "cityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "distanceKm": {
+            "type": "number",
+            "nullable": true,
+            "description": "Kilometres from the origin."
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "bio",
+          "providerType",
+          "providerCategoryId",
+          "photoUrl",
+          "isFeatured",
+          "serviceCategoryIds",
+          "nearestAreaId",
+          "nearestAreaName",
+          "cityName",
+          "distanceKm"
+        ]
+      },
+      "CertificationDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "issuer": {
+            "type": "string"
+          },
+          "year": {
+            "type": "string",
+            "description": "Kept as text: parents write '2019' and 'expected 2027' alike."
+          }
+        },
+        "required": [
+          "name",
+          "issuer",
+          "year"
+        ]
+      },
+      "AvailabilitySlotDto": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string",
+            "example": "mon"
+          },
+          "place": {
+            "type": "string",
+            "description": "Which of the coach's teaching places this slot is at."
+          },
+          "start": {
+            "type": "string",
+            "example": "16:00"
+          },
+          "end": {
+            "type": "string",
+            "example": "18:00"
+          }
+        },
+        "required": [
+          "day",
+          "place",
+          "start",
+          "end"
+        ]
+      },
+      "ProviderServiceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "group": {
+            "type": "string",
+            "description": "Which taxonomy group it belongs to — sport, subject, and so on."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "group"
+        ]
+      },
+      "ProviderBranchDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "areaName": {
+            "type": "string",
+            "nullable": true
+          },
+          "cityName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "label",
+          "address",
+          "areaName",
+          "cityName"
+        ]
+      },
+      "ProviderServiceAreaDto": {
+        "type": "object",
+        "properties": {
+          "areaName": {
+            "type": "string",
+            "nullable": true
+          },
+          "cityName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "areaName",
+          "cityName"
+        ]
+      },
+      "ProviderProfileDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "bio": {
+            "type": "string",
+            "nullable": true
+          },
+          "helpStatement": {
+            "type": "string",
+            "nullable": true,
+            "description": "What they say they can help with."
+          },
+          "providerType": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "institution",
+              "event_planner"
+            ]
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "isFeatured": {
+            "type": "boolean"
+          },
+          "age": {
+            "type": "number",
+            "nullable": true
+          },
+          "experienceYears": {
+            "type": "number",
+            "nullable": true
+          },
+          "feeMin": {
+            "type": "number",
+            "nullable": true
+          },
+          "feeMax": {
+            "type": "number",
+            "nullable": true
+          },
+          "feePeriod": {
+            "type": "string",
+            "nullable": true,
+            "example": "month"
+          },
+          "feesNote": {
+            "type": "string",
+            "nullable": true
+          },
+          "teachingPlaces": {
+            "description": "Where they teach — at their centre, at home, online.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "certifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CertificationDto"
+            }
+          },
+          "availability": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AvailabilitySlotDto"
+            }
+          },
+          "categoryName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Their provider category, by name."
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProviderServiceDto"
+            }
+          },
+          "branches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProviderBranchDto"
+            }
+          },
+          "serviceAreas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProviderServiceAreaDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "bio",
+          "helpStatement",
+          "providerType",
+          "photoUrl",
+          "isFeatured",
+          "age",
+          "experienceYears",
+          "feeMin",
+          "feeMax",
+          "feePeriod",
+          "feesNote",
+          "teachingPlaces",
+          "certifications",
+          "availability",
+          "categoryName",
+          "services",
+          "branches",
+          "serviceAreas"
+        ]
       },
       "QueryDto": {
         "type": "object",

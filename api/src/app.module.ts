@@ -8,6 +8,7 @@ import { FeedsModule } from "./feeds/feeds.module";
 import { HealthController } from "./health/health.controller";
 import { MeModule } from "./me/me.module";
 import { OrganisersModule } from "./organisers/organisers.module";
+import { ProvidersModule } from "./providers/providers.module";
 import { QueriesModule } from "./queries/queries.module";
 import { ReferenceModule } from "./reference/reference.module";
 import { SuggestionsModule } from "./suggestions/suggestions.module";
@@ -24,6 +25,7 @@ import { SupabaseModule } from "./supabase/supabase.module";
     FeedsModule,
     MeModule,
     OrganisersModule,
+    ProvidersModule,
     QueriesModule,
     ReferenceModule,
     SuggestionsModule,
