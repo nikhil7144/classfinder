@@ -1345,6 +1345,90 @@
         ]
       }
     },
+    "/api/v1/students": {
+      "get": {
+        "description": "Parents who have written down a requirement, and groups of neighbours who agreed on one together, filtered to what this coach teaches and where they teach it. Untouched rows first, then nearest, then newest. Carries no name, email or phone number: a coach answers through Aspire91 and contact details arrive only if the family shares them.",
+        "operationId": "StudentsController_mine_v1",
+        "parameters": [
+          {
+            "name": "providerId",
+            "required": true,
+            "in": "query",
+            "description": "The coach's own listing. Must belong to them.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "serviceCategoryId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "nullable": true,
+              "type": "string"
+            }
+          },
+          {
+            "name": "areaId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "nullable": true,
+              "type": "string"
+            }
+          },
+          {
+            "name": "radiusKm",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 200,
+              "default": 15,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 200,
+              "default": 60,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DemandRowDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Families looking for this coach",
+        "tags": [
+          "students"
+        ]
+      }
+    },
     "/api/v1/suggestions/coaches": {
       "post": {
         "description": "For a signed-in parent with a stated requirement. search_providers() decides who is eligible; the model only orders them and says why. Answers are cached against a fingerprint of the requirement and the candidate set, so a second look is free until one of them changes. Always returns a list where one exists — `ranked: false` means it is in plain distance order, not that anything failed.",
@@ -3531,6 +3615,161 @@
           "serviceCategories",
           "providerCategories",
           "teachingPlaces"
+        ]
+      },
+      "DemandRowDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "student",
+              "group"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The seeker or the group. Unique within its kind."
+          },
+          "serviceCategoryIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "serviceNames": {
+            "description": "The service names, as they read today.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "serviceGroups": {
+            "description": "Which taxonomy groups those services sit in.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "areaId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "areaName": {
+            "type": "string",
+            "nullable": true
+          },
+          "cityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "distanceKm": {
+            "type": "number",
+            "nullable": true,
+            "description": "Kilometres from the nearest place this coach can be found at."
+          },
+          "learnerAge": {
+            "type": "number",
+            "nullable": true,
+            "description": "The learner's age. Never their name."
+          },
+          "level": {
+            "type": "string",
+            "nullable": true,
+            "example": "beginner"
+          },
+          "preferredModes": {
+            "description": "At home, at your centre, online.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "preferredDays": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "preferredTime": {
+            "type": "string",
+            "nullable": true
+          },
+          "budgetMin": {
+            "type": "number",
+            "nullable": true
+          },
+          "budgetMax": {
+            "type": "number",
+            "nullable": true
+          },
+          "budgetPeriod": {
+            "type": "string",
+            "nullable": true,
+            "example": "per_month"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Whatever the family typed."
+          },
+          "studentCount": {
+            "type": "number",
+            "description": "How many children this is for."
+          },
+          "memberCount": {
+            "type": "number",
+            "description": "Families in the group. 1 for a single parent's requirement."
+          },
+          "expiresAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "description": "When a group stops accepting answers. Null for a single requirement."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "contactStatus": {
+            "type": "string",
+            "nullable": true,
+            "description": "Set once this coach has written to them, and null until. Rows with a status are pushed below the untouched ones and are not re-ranked by the suggestions endpoint."
+          },
+          "threadId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid",
+            "description": "The conversation, once one exists."
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "serviceCategoryIds",
+          "serviceNames",
+          "serviceGroups",
+          "areaId",
+          "areaName",
+          "cityName",
+          "distanceKm",
+          "learnerAge",
+          "level",
+          "preferredModes",
+          "preferredDays",
+          "preferredTime",
+          "budgetMin",
+          "budgetMax",
+          "budgetPeriod",
+          "notes",
+          "studentCount",
+          "memberCount",
+          "createdAt",
+          "contactStatus",
+          "threadId"
         ]
       },
       "CoachSuggestionDto": {

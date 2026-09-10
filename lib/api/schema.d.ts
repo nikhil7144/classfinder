@@ -595,6 +595,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/students": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Families looking for this coach
+         * @description Parents who have written down a requirement, and groups of neighbours who agreed on one together, filtered to what this coach teaches and where they teach it. Untouched rows first, then nearest, then newest. Carries no name, email or phone number: a coach answers through Aspire91 and contact details arrive only if the family shares them.
+         */
+        get: operations["StudentsController_mine_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/suggestions/coaches": {
         parameters: {
             query?: never;
@@ -1330,6 +1350,58 @@ export interface components {
             serviceCategories: components["schemas"]["ServiceCategoryRefDto"][];
             providerCategories: components["schemas"]["ProviderCategoryRefDto"][];
             teachingPlaces: components["schemas"]["TeachingPlaceRefDto"][];
+        };
+        DemandRowDto: {
+            /** @enum {string} */
+            kind: "student" | "group";
+            /**
+             * Format: uuid
+             * @description The seeker or the group. Unique within its kind.
+             */
+            id: string;
+            serviceCategoryIds: string[];
+            /** @description The service names, as they read today. */
+            serviceNames: string[];
+            /** @description Which taxonomy groups those services sit in. */
+            serviceGroups: string[];
+            /** Format: uuid */
+            areaId: string | null;
+            areaName: string | null;
+            cityName: string | null;
+            /** @description Kilometres from the nearest place this coach can be found at. */
+            distanceKm: number | null;
+            /** @description The learner's age. Never their name. */
+            learnerAge: number | null;
+            /** @example beginner */
+            level: string | null;
+            /** @description At home, at your centre, online. */
+            preferredModes: string[];
+            preferredDays: string[];
+            preferredTime: string | null;
+            budgetMin: number | null;
+            budgetMax: number | null;
+            /** @example per_month */
+            budgetPeriod: string | null;
+            /** @description Whatever the family typed. */
+            notes: string | null;
+            /** @description How many children this is for. */
+            studentCount: number;
+            /** @description Families in the group. 1 for a single parent's requirement. */
+            memberCount: number;
+            /**
+             * Format: date-time
+             * @description When a group stops accepting answers. Null for a single requirement.
+             */
+            expiresAt?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description Set once this coach has written to them, and null until. Rows with a status are pushed below the untouched ones and are not re-ranked by the suggestions endpoint. */
+            contactStatus: string | null;
+            /**
+             * Format: uuid
+             * @description The conversation, once one exists.
+             */
+            threadId: string | null;
         };
         CoachSuggestionDto: {
             /** @description A row as search_providers() returns it, passed through unchanged. */
@@ -2142,6 +2214,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReferenceDto"];
+                };
+            };
+        };
+    };
+    StudentsController_mine_v1: {
+        parameters: {
+            query: {
+                /** @description The coach's own listing. Must belong to them. */
+                providerId: string;
+                serviceCategoryId?: string | null;
+                areaId?: string | null;
+                radiusKm?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemandRowDto"][];
                 };
             };
         };

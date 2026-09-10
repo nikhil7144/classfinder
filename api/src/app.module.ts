@@ -11,6 +11,7 @@ import { OrganisersModule } from "./organisers/organisers.module";
 import { ProvidersModule } from "./providers/providers.module";
 import { QueriesModule } from "./queries/queries.module";
 import { ReferenceModule } from "./reference/reference.module";
+import { StudentsModule } from "./students/students.module";
 import { SuggestionsModule } from "./suggestions/suggestions.module";
 import { SubscriptionsModule } from "./subscriptions/subscriptions.module";
 import { SupabaseModule } from "./supabase/supabase.module";
@@ -28,6 +29,7 @@ import { SupabaseModule } from "./supabase/supabase.module";
     ProvidersModule,
     QueriesModule,
     ReferenceModule,
+    StudentsModule,
     SuggestionsModule,
   ],
   controllers: [HealthController],
