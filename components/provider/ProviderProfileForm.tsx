@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { saveProviderProfile } from "@/lib/api/my-provider";
 import {
   fetchAllLocations,
   fetchTaxonomy,
@@ -396,95 +397,62 @@ export default function ProviderProfileForm({ redirectTo = "/dashboard", variant
       return;
     }
 
+    if (providerType !== "individual" && providerType !== "institution") {
+      setFormError("Choose what kind of provider this is.");
+      setIsSaving(false);
+      return;
+    }
+
     const cleanBranches = branches.filter((b) => !isBlankBranch(b));
     const cleanCerts = certifications.filter((c) => !isBlankCertification(c));
-    const isFirstSave = !hasExistingProfile;
 
-    // City/area now come from areas, but the legacy text columns are still on
-    // the table — keep them roughly in step until they're dropped.
-    const primaryAreaId = isInstitution ? cleanBranches[0]?.areaId : serviceAreaIds[0];
-    const primaryArea = areas.find((a) => a.id === primaryAreaId);
-    const primaryCity = cities.find((c) => c.id === primaryArea?.cityId);
+    // One call, one transaction. This used to be four writes — upsert
+    // providers, delete-and-reinsert branches or service areas, then set
+    // profile_complete — and six of them discarded their result. The delete
+    // ran before the insert that replaced it, so a failure in between left a
+    // coach in neither table and therefore discoverable nowhere, while this
+    // form reported success.
+    //
+    // The legacy city/area text columns are derived inside the function now,
+    // from the primary area, so they are no longer assembled here.
+    const { saved, error: saveError } = await saveProviderProfile({
+      providerType,
+      providerCategoryId: providerCategoryId || null,
+      displayName,
+      bio,
+      helpStatement: helpStatement || null,
+      age: age.trim() ? Number(age) : null,
+      experienceYears: experienceYears.trim() ? Number(experienceYears) : null,
+      feeMin: feeMin.trim() ? Number(feeMin) : null,
+      feeMax: feeMax.trim() ? Number(feeMax) : null,
+      feePeriod: feePeriod || null,
+      feesNote: feesNote || null,
+      teachingPlaces,
+      travelsToStudents: travelsToStudents ?? false,
+      certifications: cleanCerts,
+      availability,
+      serviceCategoryIds: selectedServiceCategories,
+      photoUrl,
+      // The service clears whichever of these does not belong to the type, so
+      // a coach who switches does not stay findable through the old rows.
+      branches: isInstitution
+        ? cleanBranches.map((b) => ({
+            label: b.label || null,
+            address: b.address || null,
+            areaId: b.areaId as string,
+            phone: b.phone || null,
+          }))
+        : [],
+      serviceAreaIds: isInstitution ? [] : serviceAreaIds,
+    });
 
-    const { data: saved, error } = await supabase
-      .from("providers")
-      .upsert(
-        {
-          user_id: userId,
-          provider_type: providerType,
-          provider_category_id: providerCategoryId,
-          display_name: displayName,
-          bio,
-          help_statement: helpStatement || null,
-          age: age.trim() ? Number(age) : null,
-          experience_years: experienceYears.trim() ? Number(experienceYears) : null,
-          fee_min: feeMin.trim() ? Number(feeMin) : null,
-          fee_max: feeMax.trim() ? Number(feeMax) : null,
-          fee_period: feePeriod || null,
-          fees_note: feesNote || null,
-          teaching_places: teachingPlaces,
-          travels_to_students: travelsToStudents,
-          certifications: cleanCerts,
-          availability,
-          city: primaryCity?.name ?? null,
-          area: primaryArea?.name ?? null,
-          service_category_ids: selectedServiceCategories,
-          photo_url: photoUrl,
-          approved: isFirstSave ? false : undefined,
-        },
-        { onConflict: "user_id" }
-      )
-      .select("id")
-      .single();
-
-    if (error || !saved) {
-      setFormError(error?.message || "Unable to save profile.");
+    if (saveError || !saved) {
+      setFormError(saveError || "Unable to save profile.");
       setIsSaving(false);
       return;
     }
 
     setProviderId(saved.id);
-
-    // Replace-all is the simplest correct approach while the whole form saves
-    // at once; a dedicated "add branch" action later can append instead.
-    if (isInstitution) {
-      await supabase.from("branches").delete().eq("provider_id", saved.id);
-      if (cleanBranches.length) {
-        await supabase.from("branches").insert(
-          cleanBranches.map((b) => ({
-            provider_id: saved.id,
-            label: b.label,
-            address: b.address,
-            area_id: b.areaId,
-            city: areas.find((a) => a.id === b.areaId)
-              ? cities.find((c) => c.id === areas.find((a) => a.id === b.areaId)!.cityId)?.name ?? null
-              : null,
-            area: areas.find((a) => a.id === b.areaId)?.name ?? null,
-            phone: b.phone,
-          }))
-        );
-      }
-      await supabase.from("provider_service_areas").delete().eq("provider_id", saved.id);
-    } else {
-      await supabase.from("provider_service_areas").delete().eq("provider_id", saved.id);
-      if (serviceAreaIds.length) {
-        await supabase
-          .from("provider_service_areas")
-          .insert(serviceAreaIds.map((areaId) => ({ provider_id: saved.id, area_id: areaId })));
-      }
-      await supabase.from("branches").delete().eq("provider_id", saved.id);
-    }
-
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .update({ profile_complete: true })
-      .eq("id", userId);
-
-    if (profileError) {
-      setFormError("Profile saved, but completion status could not be updated.");
-      setIsSaving(false);
-      return;
-    }
 
     setIsSaving(false);
     setHasExistingProfile(true);
