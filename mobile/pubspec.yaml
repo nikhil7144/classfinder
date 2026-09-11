@@ -18,7 +18,10 @@ dependencies:
   # Everything else goes through api.aspire91.com via the generated client.
   dio: ^5.4.0
 
-  go_router: ^14.0.0
+  # State, routing and DI. GetX is a framework rather than a state library, so
+  # it owns navigation too — which is why go_router is deliberately absent.
+  # Confined to the presentation layer: nothing under lib/src/data imports it.
+  get: ^4.7.3
   google_fonts: ^6.2.1
 
 dev_dependencies:
