@@ -18,10 +18,18 @@ dependencies:
   # Everything else goes through api.aspire91.com via the generated client.
   dio: ^5.4.0
 
-  # State, routing and DI. GetX is a framework rather than a state library, so
-  # it owns navigation too — which is why go_router is deliberately absent.
-  # Confined to the presentation layer: nothing under lib/src/data imports it.
-  get: ^4.7.3
+  # State and dependency injection. Written by hand rather than with
+  # riverpod_generator: a provider you can read is worth more here than one
+  # build_runner writes, particularly to somebody meeting Riverpod on this
+  # codebase for the first time.
+  #
+  # Confined to the presentation layer. Nothing under lib/src/data imports it,
+  # so the API client, the Supabase layer and the repositories stay pure Dart.
+  flutter_riverpod: ^3.4.3
+
+  # Routing. Riverpod does not own navigation, so this is a separate choice.
+  go_router: ^14.0.0
+
   google_fonts: ^6.2.1
 
 dev_dependencies:
