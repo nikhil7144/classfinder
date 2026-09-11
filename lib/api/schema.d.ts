@@ -558,6 +558,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/enquiries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Write to a coach
+         * @description The family's direction. A coach approaching a family is POST /students/{kind}/{id}/approach — two inserts into one table under two policies with every clause inverted, so they stay two endpoints.
+         */
+        post: operations["EnquiriesController_create_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/enquiries/{id}/respond": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Answer a coach who approached you
+         * @description Accepting opens the conversation; declining closes it. Answers with the thread as it now reads — a declined one included, carrying status `declined`, because that is what a client needs to render the answer.
+         */
+        post: operations["EnquiriesController_respond_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/enquiries/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Take back an approach nobody has answered
+         * @description The coach's side only, and only while it is still pending. The row is deleted rather than marked, because an approach nobody saw is not a conversation that happened.
+         */
+        delete: operations["EnquiriesController_withdraw_v1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/enquiries/{id}/phone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Share your number, or stop
+         * @description Per enquiry, never per account: sharing a number with one coach is not sharing it with every coach who ever writes. Revocable, and the contact endpoints stop answering the moment it is off.
+         */
+        put: operations["EnquiriesController_setPhoneSharing_v1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/providers/search": {
         parameters: {
             query?: never;
@@ -1603,6 +1683,95 @@ export interface components {
              */
             marketingOptIn: boolean;
         };
+        CreateEnquiryDto: {
+            /**
+             * Format: uuid
+             * @description The coach being written to. Must be approved.
+             */
+            providerId: string;
+            /**
+             * Format: uuid
+             * @description What they are asking about. Optional: a parent may just want to talk, and forcing a taxonomy pick before the first message is friction at exactly the wrong moment.
+             */
+            serviceCategoryId?: string;
+            /** @description A coach is judging a stranger on this, so there is a floor. */
+            message: string;
+            /**
+             * @description Whether the coach may see this family's number. Opt in, never a default, and per enquiry rather than per account: sharing it with one coach is not sharing it with every coach who ever writes.
+             * @default false
+             */
+            sharePhone: boolean;
+        };
+        RespondToApproachDto: {
+            /** @description True opens the conversation, false declines it. */
+            accept: boolean;
+            /**
+             * @description Ignored when declining.
+             * @default false
+             */
+            sharePhone: boolean;
+        };
+        QueryOriginDto: {
+            /** Format: uuid */
+            queryId: string;
+            /** @description What they asked about. */
+            serviceName: string | null;
+            /**
+             * Format: date-time
+             * @description When they asked, not when the coach replied.
+             */
+            askedAt: string;
+        };
+        ThreadDto: {
+            /**
+             * @description Which surface the conversation belongs to. It decides where the messages live and which actions the thread offers, so a client must branch on it.
+             * @enum {string}
+             */
+            kind: "group" | "enquiry";
+            /**
+             * Format: uuid
+             * @description The group request or the enquiry. Unique within its kind, not across both — pair it with kind before using it as a key.
+             */
+            threadId: string;
+            /**
+             * Format: uuid
+             * @description Group threads only.
+             */
+            groupId: string | null;
+            /** Format: uuid */
+            providerId: string | null;
+            /** @description Already resolved for this reader. */
+            title: string | null;
+            subtitle: string | null;
+            photoUrl: string | null;
+            /** @description The message that started it. */
+            opening: string | null;
+            /** @description Where the approach or enquiry stands. */
+            status: string | null;
+            /**
+             * @description Who opened it. A group pitch is always the coach's approach.
+             * @enum {string}
+             */
+            initiatedBy: "provider" | "seeker";
+            /** Format: date-time */
+            createdAt: string;
+            lastMessage: string | null;
+            /** Format: date-time */
+            lastMessageAt: string | null;
+            /** Format: uuid */
+            lastSenderId: string | null;
+            messageCount: number;
+            /** @description Something arrived after this reader last looked, and they did not send it. Computed for the caller, so it means different things to the two sides of the same thread. */
+            unread: boolean;
+            /** @description Which side of this conversation the caller is on. */
+            iAmSeeker: boolean;
+            /** @description Set when this conversation began with a request for a call. A message from somebody you never wrote to is what makes contact feel unsolicited, so the parent is told which of their own requests produced it. Null for every other thread. */
+            origin: components["schemas"]["QueryOriginDto"] | null;
+        };
+        SetPhoneSharingDto: {
+            /** @description Revocable on purpose. A parent who shared a number and then thought better of it can take it back, and the contact endpoints stop answering immediately. */
+            share: boolean;
+        };
         ProviderSearchResultDto: {
             /** Format: uuid */
             id: string;
@@ -2119,63 +2288,6 @@ export interface components {
              * @enum {string}
              */
             reason?: "not_a_provider" | "no_demand";
-        };
-        QueryOriginDto: {
-            /** Format: uuid */
-            queryId: string;
-            /** @description What they asked about. */
-            serviceName: string | null;
-            /**
-             * Format: date-time
-             * @description When they asked, not when the coach replied.
-             */
-            askedAt: string;
-        };
-        ThreadDto: {
-            /**
-             * @description Which surface the conversation belongs to. It decides where the messages live and which actions the thread offers, so a client must branch on it.
-             * @enum {string}
-             */
-            kind: "group" | "enquiry";
-            /**
-             * Format: uuid
-             * @description The group request or the enquiry. Unique within its kind, not across both — pair it with kind before using it as a key.
-             */
-            threadId: string;
-            /**
-             * Format: uuid
-             * @description Group threads only.
-             */
-            groupId: string | null;
-            /** Format: uuid */
-            providerId: string | null;
-            /** @description Already resolved for this reader. */
-            title: string | null;
-            subtitle: string | null;
-            photoUrl: string | null;
-            /** @description The message that started it. */
-            opening: string | null;
-            /** @description Where the approach or enquiry stands. */
-            status: string | null;
-            /**
-             * @description Who opened it. A group pitch is always the coach's approach.
-             * @enum {string}
-             */
-            initiatedBy: "provider" | "seeker";
-            /** Format: date-time */
-            createdAt: string;
-            lastMessage: string | null;
-            /** Format: date-time */
-            lastMessageAt: string | null;
-            /** Format: uuid */
-            lastSenderId: string | null;
-            messageCount: number;
-            /** @description Something arrived after this reader last looked, and they did not send it. Computed for the caller, so it means different things to the two sides of the same thread. */
-            unread: boolean;
-            /** @description Which side of this conversation the caller is on. */
-            iAmSeeker: boolean;
-            /** @description Set when this conversation began with a request for a call. A message from somebody you never wrote to is what makes contact feel unsolicited, so the parent is told which of their own requests produced it. Null for every other thread. */
-            origin: components["schemas"]["QueryOriginDto"] | null;
         };
         MessageDto: {
             /** Format: uuid */
@@ -2902,6 +3014,96 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MySeekerDto"];
+                };
+            };
+        };
+    };
+    EnquiriesController_create_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateEnquiryDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    EnquiriesController_respond_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RespondToApproachDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreadDto"];
+                };
+            };
+        };
+    };
+    EnquiriesController_withdraw_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    EnquiriesController_setPhoneSharing_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetPhoneSharingDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreadDto"];
                 };
             };
         };

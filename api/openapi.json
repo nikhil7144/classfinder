@@ -1185,6 +1185,161 @@
         ]
       }
     },
+    "/api/v1/enquiries": {
+      "post": {
+        "description": "The family's direction. A coach approaching a family is POST /students/{kind}/{id}/approach — two inserts into one table under two policies with every clause inverted, so they stay two endpoints.",
+        "operationId": "EnquiriesController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEnquiryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Write to a coach",
+        "tags": [
+          "enquiries"
+        ]
+      }
+    },
+    "/api/v1/enquiries/{id}/respond": {
+      "post": {
+        "description": "Accepting opens the conversation; declining closes it. Answers with the thread as it now reads — a declined one included, carrying status `declined`, because that is what a client needs to render the answer.",
+        "operationId": "EnquiriesController_respond_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespondToApproachDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThreadDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Answer a coach who approached you",
+        "tags": [
+          "enquiries"
+        ]
+      }
+    },
+    "/api/v1/enquiries/{id}": {
+      "delete": {
+        "description": "The coach's side only, and only while it is still pending. The row is deleted rather than marked, because an approach nobody saw is not a conversation that happened.",
+        "operationId": "EnquiriesController_withdraw_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take back an approach nobody has answered",
+        "tags": [
+          "enquiries"
+        ]
+      }
+    },
+    "/api/v1/enquiries/{id}/phone": {
+      "put": {
+        "description": "Per enquiry, never per account: sharing a number with one coach is not sharing it with every coach who ever writes. Revocable, and the contact endpoints stop answering the moment it is off.",
+        "operationId": "EnquiriesController_setPhoneSharing_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPhoneSharingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThreadDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Share your number, or stop",
+        "tags": [
+          "enquiries"
+        ]
+      }
+    },
     "/api/v1/providers/search": {
       "get": {
         "description": "Ordered by distance from the search origin: the given lat/lng if there is one, otherwise the centroid of the area. Only approved, unsuspended coaches, and only in live areas — the area-wise launch gate is the database's, not this endpoint's. Declared before the :id route so /providers/search is not parsed as a coach whose id is the word search.",
@@ -4132,6 +4287,208 @@
           "areaId"
         ]
       },
+      "CreateEnquiryDto": {
+        "type": "object",
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The coach being written to. Must be approved."
+          },
+          "serviceCategoryId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "What they are asking about. Optional: a parent may just want to talk, and forcing a taxonomy pick before the first message is friction at exactly the wrong moment."
+          },
+          "message": {
+            "type": "string",
+            "minLength": 20,
+            "maxLength": 4000,
+            "description": "A coach is judging a stranger on this, so there is a floor."
+          },
+          "sharePhone": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether the coach may see this family's number. Opt in, never a default, and per enquiry rather than per account: sharing it with one coach is not sharing it with every coach who ever writes."
+          }
+        },
+        "required": [
+          "providerId",
+          "message"
+        ]
+      },
+      "RespondToApproachDto": {
+        "type": "object",
+        "properties": {
+          "accept": {
+            "type": "boolean",
+            "description": "True opens the conversation, false declines it."
+          },
+          "sharePhone": {
+            "type": "boolean",
+            "default": false,
+            "description": "Ignored when declining."
+          }
+        },
+        "required": [
+          "accept"
+        ]
+      },
+      "QueryOriginDto": {
+        "type": "object",
+        "properties": {
+          "queryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "serviceName": {
+            "type": "string",
+            "nullable": true,
+            "description": "What they asked about."
+          },
+          "askedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When they asked, not when the coach replied."
+          }
+        },
+        "required": [
+          "queryId",
+          "serviceName",
+          "askedAt"
+        ]
+      },
+      "ThreadDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "group",
+              "enquiry"
+            ],
+            "description": "Which surface the conversation belongs to. It decides where the messages live and which actions the thread offers, so a client must branch on it."
+          },
+          "threadId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The group request or the enquiry. Unique within its kind, not across both — pair it with kind before using it as a key."
+          },
+          "groupId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid",
+            "description": "Group threads only."
+          },
+          "providerId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true,
+            "description": "Already resolved for this reader."
+          },
+          "subtitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "opening": {
+            "type": "string",
+            "nullable": true,
+            "description": "The message that started it."
+          },
+          "status": {
+            "type": "string",
+            "nullable": true,
+            "description": "Where the approach or enquiry stands."
+          },
+          "initiatedBy": {
+            "type": "string",
+            "enum": [
+              "provider",
+              "seeker"
+            ],
+            "description": "Who opened it. A group pitch is always the coach's approach."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastMessageAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "lastSenderId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "messageCount": {
+            "type": "number"
+          },
+          "unread": {
+            "type": "boolean",
+            "description": "Something arrived after this reader last looked, and they did not send it. Computed for the caller, so it means different things to the two sides of the same thread."
+          },
+          "iAmSeeker": {
+            "type": "boolean",
+            "description": "Which side of this conversation the caller is on."
+          },
+          "origin": {
+            "nullable": true,
+            "description": "Set when this conversation began with a request for a call. A message from somebody you never wrote to is what makes contact feel unsolicited, so the parent is told which of their own requests produced it. Null for every other thread.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QueryOriginDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "threadId",
+          "groupId",
+          "providerId",
+          "title",
+          "subtitle",
+          "photoUrl",
+          "opening",
+          "status",
+          "initiatedBy",
+          "createdAt",
+          "lastMessage",
+          "lastMessageAt",
+          "lastSenderId",
+          "messageCount",
+          "unread",
+          "iAmSeeker",
+          "origin"
+        ]
+      },
+      "SetPhoneSharingDto": {
+        "type": "object",
+        "properties": {
+          "share": {
+            "type": "boolean",
+            "description": "Revocable on purpose. A parent who shared a number and then thought better of it can take it back, and the contact endpoints stop answering immediately."
+          }
+        },
+        "required": [
+          "share"
+        ]
+      },
       "ProviderSearchResultDto": {
         "type": "object",
         "properties": {
@@ -5776,149 +6133,6 @@
         },
         "required": [
           "suggestions"
-        ]
-      },
-      "QueryOriginDto": {
-        "type": "object",
-        "properties": {
-          "queryId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "serviceName": {
-            "type": "string",
-            "nullable": true,
-            "description": "What they asked about."
-          },
-          "askedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When they asked, not when the coach replied."
-          }
-        },
-        "required": [
-          "queryId",
-          "serviceName",
-          "askedAt"
-        ]
-      },
-      "ThreadDto": {
-        "type": "object",
-        "properties": {
-          "kind": {
-            "type": "string",
-            "enum": [
-              "group",
-              "enquiry"
-            ],
-            "description": "Which surface the conversation belongs to. It decides where the messages live and which actions the thread offers, so a client must branch on it."
-          },
-          "threadId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The group request or the enquiry. Unique within its kind, not across both — pair it with kind before using it as a key."
-          },
-          "groupId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid",
-            "description": "Group threads only."
-          },
-          "providerId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
-          },
-          "title": {
-            "type": "string",
-            "nullable": true,
-            "description": "Already resolved for this reader."
-          },
-          "subtitle": {
-            "type": "string",
-            "nullable": true
-          },
-          "photoUrl": {
-            "type": "string",
-            "nullable": true
-          },
-          "opening": {
-            "type": "string",
-            "nullable": true,
-            "description": "The message that started it."
-          },
-          "status": {
-            "type": "string",
-            "nullable": true,
-            "description": "Where the approach or enquiry stands."
-          },
-          "initiatedBy": {
-            "type": "string",
-            "enum": [
-              "provider",
-              "seeker"
-            ],
-            "description": "Who opened it. A group pitch is always the coach's approach."
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "lastMessage": {
-            "type": "string",
-            "nullable": true
-          },
-          "lastMessageAt": {
-            "type": "string",
-            "nullable": true,
-            "format": "date-time"
-          },
-          "lastSenderId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
-          },
-          "messageCount": {
-            "type": "number"
-          },
-          "unread": {
-            "type": "boolean",
-            "description": "Something arrived after this reader last looked, and they did not send it. Computed for the caller, so it means different things to the two sides of the same thread."
-          },
-          "iAmSeeker": {
-            "type": "boolean",
-            "description": "Which side of this conversation the caller is on."
-          },
-          "origin": {
-            "nullable": true,
-            "description": "Set when this conversation began with a request for a call. A message from somebody you never wrote to is what makes contact feel unsolicited, so the parent is told which of their own requests produced it. Null for every other thread.",
-            "type": "object",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/QueryOriginDto"
-              }
-            ]
-          }
-        },
-        "required": [
-          "kind",
-          "threadId",
-          "groupId",
-          "providerId",
-          "title",
-          "subtitle",
-          "photoUrl",
-          "opening",
-          "status",
-          "initiatedBy",
-          "createdAt",
-          "lastMessage",
-          "lastMessageAt",
-          "lastSenderId",
-          "messageCount",
-          "unread",
-          "iAmSeeker",
-          "origin"
         ]
       },
       "MessageDto": {
