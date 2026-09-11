@@ -9,6 +9,7 @@ import '../../theme/theme.dart';
 import '../../widgets/branding.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/states.dart';
+import '../auth/choose_role_screen.dart';
 
 /// What happens between signing in and seeing the app.
 ///
@@ -19,8 +20,8 @@ import '../../widgets/states.dart';
 ///     other app. Never offered a role switch: switch_role() deletes the row
 ///     for the role being left, and offering that to somebody who simply
 ///     installed the wrong app would destroy a finished listing,
-///   * no role chosen yet — see the note on _NoRole below, this one is not
-///     finishable in the app today,
+///   * no role chosen yet — asked, on the spot. That used to be a dead end
+///     pointing at the website; PUT /me/role made it a screen,
 ///   * a read that failed — say so, offer to retry.
 class GateScreen extends ConsumerWidget {
   const GateScreen({super.key, required this.child});
@@ -43,32 +44,12 @@ class GateScreen extends ConsumerWidget {
         ),
       ),
       data: (me) {
-        if (me.role == null) return const _NoRole();
+        if (me.role == null) return const ChooseRoleScreen();
         if (!me.belongsIn(appFlavor.roles)) return _WrongApp(role: me.role!);
         return child;
       },
     );
   }
-}
-
-/// A verified account that has not picked a role.
-///
-/// Not finishable here yet, and the screen says so rather than pretending. The
-/// web writes profiles.role directly from the signup form; there is no endpoint
-/// for it, so the app cannot create a coach account on its own. That gap is
-/// worth closing before this ships to anyone who is not already a user — see
-/// MOBILE-PLAN.md.
-class _NoRole extends StatelessWidget {
-  const _NoRole();
-
-  @override
-  Widget build(BuildContext context) => const _Message(
-        eyebrow: 'Almost there',
-        title: 'Finish setting up your account',
-        body:
-            'Your account exists but has not been set up as a coach yet. Head to '
-            'aspire91.com to finish, then come back and sign in here.',
-      );
 }
 
 /// The wrong app for this account.
