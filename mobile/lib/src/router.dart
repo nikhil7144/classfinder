@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'features/auth/sign_in_screen.dart';
-import 'features/home/placeholder_home.dart';
+import 'features/students/students_screen.dart';
 import 'features/shell/gate_screen.dart';
 import 'providers.dart';
 
@@ -37,7 +37,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // belongs to this flavor.
       GoRoute(
           path: '/',
-          builder: (_, __) => const GateScreen(child: PlaceholderHome())),
+          builder: (_, __) => const GateScreen(child: StudentsScreen())),
     ],
   );
 });

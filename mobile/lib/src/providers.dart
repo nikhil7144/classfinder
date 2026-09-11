@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'data/api.dart';
 import 'data/models/me.dart';
 import 'data/repositories/auth_repository.dart';
+import 'data/models/demand.dart';
 import 'data/repositories/me_repository.dart';
+import 'data/repositories/students_repository.dart';
 
 /// Everything the app can be handed.
 ///
@@ -35,6 +37,10 @@ final authStateProvider = StreamProvider<bool>((ref) {
   return auth.changes.map((_) => auth.isSignedIn);
 });
 
+final studentsRepositoryProvider = Provider<StudentsRepository>(
+  (ref) => StudentsRepository(ref.watch(apiClientProvider)),
+);
+
 /// Who the caller is. The gate every signed-in screen waits on.
 ///
 /// Invalidated when the session changes, so signing out or signing in as
@@ -42,4 +48,20 @@ final authStateProvider = StreamProvider<bool>((ref) {
 final meProvider = FutureProvider<Me>((ref) async {
   ref.watch(authStateProvider);
   return ref.watch(meRepositoryProvider).me();
+});
+
+/// The coach's demand feed.
+///
+/// Depends on meProvider for the listing id rather than taking one: a screen
+/// should not have to carry an identifier the account already knows, and a
+/// coach with no listing yet has no feed to ask for.
+final demandFeedProvider = FutureProvider<List<Demand>>((ref) async {
+  final me = await ref.watch(meProvider.future);
+  final providerId = me.provider?.id;
+
+  // Not an error. A coach who has chosen their role but not filled in a
+  // listing has nothing to see, and the screen says so rather than failing.
+  if (providerId == null) return const [];
+
+  return ref.watch(studentsRepositoryProvider).feed(providerId: providerId);
 });
