@@ -307,3 +307,43 @@ and applies to mobile unchanged, because it is enforced in Postgres:
 
 Payments (`PLAN.md` Phase 6), advertising (Phase 5), and any mobile-only
 feature not present on the web. Both are downstream of the app existing.
+
+---
+
+## 9. Where a screen lives
+
+Organised screen-wise, under `lib/src/screens/`. One folder per screen,
+holding the screen and the widgets only that screen uses — `demand_card.dart`
+is not a feature, it is the part of the students screen that would otherwise
+make one 400-line file.
+
+The web's layout is not a choice anyone made: Next.js App Router requires
+`app/students/page.tsx` to sit at that path, because the folder structure *is*
+the URL structure. Flutter declares its routes in `router.dart`, so the file
+layout is free — and where the two correspond, they are named the same.
+
+Three places they deliberately do not correspond, because a literal mirror
+would encode a shape that does not fit:
+
+- **`/dashboard`** renders SeekerHome, ProviderHome or OrganiserHome by role.
+  The flavor does that job on mobile, so there is no dashboard screen.
+- **`/dashboard/messages` and `/account/messages`** are one inbox at two paths
+  for two roles. Mobile has one.
+- **`/students`** is one file on the web and several here: screen, card, and
+  soon detail and composer.
+
+| Web route | Dart |
+|---|---|
+| `/login`, `/signup/provider` | `screens/auth/sign_in_screen.dart` |
+| `/choose-role` | `screens/auth/choose_role_screen.dart` |
+| — (role gate, no web equivalent) | `screens/shell/gate_screen.dart` |
+| `/students` | `screens/students/` |
+| `/dashboard/messages` | `screens/threads/` *(not built)* |
+| `/dashboard/space` | `screens/space/` *(not built)* |
+| `/events`, `/events/new`, `/events/[id]/edit` | `screens/events/` *(not built)* |
+| `/dashboard/queries` | `screens/queries/` *(not built)* |
+| `/account/profile` | `screens/listing/` *(not built)* |
+| `/admin/*` | never — web only |
+
+Keep this table current. It is the answer to "where is the Flutter version of
+that page", and it is cheaper to maintain than to reconstruct.

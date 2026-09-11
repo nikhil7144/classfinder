@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'features/auth/sign_in_screen.dart';
-import 'features/students/students_screen.dart';
-import 'features/shell/gate_screen.dart';
+import 'screens/auth/sign_in_screen.dart';
+import 'screens/students/students_screen.dart';
+import 'screens/shell/gate_screen.dart';
 import 'providers.dart';
 
 /// Where the app is.
