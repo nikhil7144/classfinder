@@ -14,7 +14,10 @@ import '../config/env.dart';
 Future<void> initSupabase() async {
   await Supabase.initialize(
     url: Env.supabaseUrl,
-    anonKey: Env.supabaseAnonKey,
+    // A rename, not a new kind of key: supabase_flutter resolves
+    // `publishableKey ?? anonKey` to the same value, and anonKey is deprecated.
+    // The legacy anon JWT the web already ships goes here unchanged.
+    publishableKey: Env.supabaseAnonKey,
   );
 }
 
