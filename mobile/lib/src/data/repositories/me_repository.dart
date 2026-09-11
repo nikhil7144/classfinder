@@ -15,6 +15,17 @@ class MeRepository {
     return Me.fromJson(json as Map<String, dynamic>);
   }
 
+  /// The number families and the office reach them on.
+  ///
+  /// A separate call because it lives on `profiles`, not on the provider row —
+  /// the listing form asks for it alongside everything else and then saves it
+  /// on its own. Answers with the whole of /me, so the caller does not have to
+  /// re-read to learn what changed.
+  Future<Me> setPhone(String phone) async {
+    final json = await _api.put('/api/v1/me/phone', body: {'phone': phone});
+    return Me.fromJson(json as Map<String, dynamic>);
+  }
+
   /// Pick a side, once.
   ///
   /// Only settable while the account has no role; the service refuses to

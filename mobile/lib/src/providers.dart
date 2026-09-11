@@ -6,8 +6,12 @@ import 'data/repositories/auth_repository.dart';
 import 'data/models/demand.dart';
 import 'data/repositories/me_repository.dart';
 import 'data/models/alerts.dart';
+import 'data/models/listing.dart';
+import 'data/models/reference.dart';
 import 'data/models/thread.dart';
 import 'data/repositories/alerts_repository.dart';
+import 'data/repositories/listing_repository.dart';
+import 'data/repositories/reference_repository.dart';
 import 'data/repositories/students_repository.dart';
 import 'data/repositories/threads_repository.dart';
 
@@ -39,6 +43,32 @@ final meRepositoryProvider =
 final authStateProvider = StreamProvider<bool>((ref) {
   final auth = ref.watch(authRepositoryProvider);
   return auth.changes.map((_) => auth.isSignedIn);
+});
+
+final referenceRepositoryProvider = Provider<ReferenceRepository>(
+  (ref) => ReferenceRepository(ref.watch(apiClientProvider)),
+);
+
+final listingRepositoryProvider = Provider<ListingRepository>(
+  (ref) => ListingRepository(ref.watch(apiClientProvider)),
+);
+
+/// Cities, areas and the taxonomy.
+///
+/// Read once and kept for the session. It is public, identical for everybody,
+/// and changes only when an admin edits it — so it is not invalidated by
+/// anything the coach does, and the pickers never wait on a network call.
+final referenceProvider = FutureProvider<Reference>(
+  (ref) => ref.watch(referenceRepositoryProvider).all(),
+);
+
+/// The coach's own listing, or null if they have not started one.
+///
+/// Null is a state, not a failure. A coach who has chosen their role has an
+/// account and no provider row until the first save writes one.
+final myListingProvider = FutureProvider<Listing?>((ref) async {
+  ref.watch(authStateProvider);
+  return ref.watch(listingRepositoryProvider).mine();
 });
 
 final studentsRepositoryProvider = Provider<StudentsRepository>(

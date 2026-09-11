@@ -50,8 +50,11 @@ class _DemandDetailScreenState extends ConsumerState<DemandDetailScreen> {
     final me = ref.read(meProvider).value;
     final providerId = me?.provider?.id;
     if (providerId == null) {
-      setState(
-          () => _error = 'Finish your listing before writing to families.');
+      // Not just a refusal. Until the Listing tab existed this told a coach to
+      // do something the app gave them no way to do.
+      setState(() => _error =
+          'Finish your listing first — it is the Listing tab. Families see it '
+              'when they read your message.');
       return;
     }
 

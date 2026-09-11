@@ -338,11 +338,11 @@ would encode a shape that does not fit:
 | `/choose-role` | `screens/auth/choose_role_screen.dart` |
 | — (role gate, no web equivalent) | `screens/shell/gate_screen.dart` |
 | `/students` | `screens/students/` |
-| `/dashboard/messages` | `screens/threads/` *(not built)* |
+| `/dashboard/messages`, `/account/messages` | `screens/threads/` |
+| `/account/profile` | `screens/listing/` |
 | `/dashboard/space` | `screens/space/` *(not built)* |
 | `/events`, `/events/new`, `/events/[id]/edit` | `screens/events/` *(not built)* |
 | `/dashboard/queries` | `screens/queries/` *(not built)* |
-| `/account/profile` | `screens/listing/` *(not built)* |
 | `/admin/*` | never — web only |
 
 Keep this table current. It is the answer to "where is the Flutter version of

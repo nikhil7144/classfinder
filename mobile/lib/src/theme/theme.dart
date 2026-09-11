@@ -109,6 +109,39 @@ class A91 {
           side: const BorderSide(color: border),
         ),
       ),
+      // Inputs were M3 defaults until the listing form arrived and put forty
+      // of them on one screen. Filled and softly outlined, so a field reads as
+      // a place to type without drawing a box around every line.
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: surface2,
+        hintStyle: const TextStyle(color: faint),
+        labelStyle: const TextStyle(color: muted),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          // Coral at one pixel is a focus ring, not a call to action. The
+          // gradient stays with PrimaryButton.
+          borderSide: const BorderSide(color: grad1, width: 1.4),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: danger),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: danger, width: 1.4),
+        ),
+      ),
       dividerColor: border,
     );
   }

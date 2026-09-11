@@ -32,6 +32,10 @@ dependencies:
 
   google_fonts: ^6.2.1
 
+  # Picking a profile photo off the camera roll or out of the camera. The
+  # bytes go straight to Storage from there — see ListingRepository.
+  image_picker: ^1.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

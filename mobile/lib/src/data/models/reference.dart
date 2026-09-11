@@ -159,8 +159,8 @@ class Reference {
   String teachingPlaceLabel(String id) => teachingPlaces
       .firstWhere(
         (p) => p.id == id,
-        orElse: () => TeachingPlace(
-            id: id, label: id, description: null, sortOrder: 999),
+        orElse: () =>
+            TeachingPlace(id: id, label: id, description: null, sortOrder: 999),
       )
       .label;
 

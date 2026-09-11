@@ -4,23 +4,35 @@ Flutter, Android + iOS, **one codebase, two flavors**: `seeker` (parents) and
 `provider` (coaches, academies, event organisers).
 
 Read `../MOBILE-PLAN.md` first — it explains why two flavors, what every one of
-the 50 web screens becomes, and, most importantly, **which backend work has to
-land before most screens can be built.** This file is the setup guide.
+the 50 web screens becomes, and which backend work has to land before the rest
+can be built. This file is the setup guide.
 
 ---
 
-## Read this before you start
+## State of play
 
-**Nothing here has been compiled.** It was written on a machine with no Flutter,
-Dart or Gradle installed. The Dart is structured and commented, and the palette
-is copied from the web's stylesheet, but:
+**The provider (coach) app is partly built. The seeker app is not started.**
 
-- dependency versions in `pubspec.yaml` are unverified — expect to bump them,
-- `android/` and `ios/` **do not exist yet**; you generate them in step 2,
-- there are no product screens, only a placeholder that proves the wiring.
+What runs today, on the provider flavor:
 
-Treat it as a starting skeleton and a set of decisions already made, not as a
-running app. Your first commit will probably be "make it build".
+| Screen | Files | Status |
+|---|---|---|
+| Sign in — email OTP | `screens/auth/sign_in_screen.dart` | built |
+| Choose a role | `screens/auth/choose_role_screen.dart` | built |
+| Role gate | `screens/shell/gate_screen.dart` | built |
+| Students — the demand feed, and the one message | `screens/students/` | built |
+| Messages — inbox and conversation, live | `screens/threads/` | built |
+| Listing — the whole coach profile | `screens/listing/` | built |
+| Spaces, events, queries | — | not started |
+
+`flutter analyze` is clean and `flutter test` passes (30 tests). It has **never
+been built into an APK** — the machine it was written on has no Android SDK, so
+`flutter build` could not run. `test/smoke_test.dart` imports both entry points
+specifically so the whole tree is compiled by `flutter test`; that is as close
+to proof as this repo can get on its own. Expect your first job to be `flutter
+build apk` and whatever falls out of it.
+
+Google sign-in and deep links are **not wired** — see §7.
 
 ---
 
@@ -28,185 +40,169 @@ running app. Your first commit will probably be "make it build".
 
 | Tool | Version |
 |---|---|
-| Flutter SDK | 3.24+ (Dart 3.4+) |
+| Flutter SDK | 3.35+ (Dart 3.9+). Written against Flutter 3.47.3 / Dart 3.13.3 |
 | Android Studio | Ladybug or newer, with the Flutter and Dart plugins |
 | JDK | 17 |
 | Xcode | 15+ — macOS only, for iOS |
-| Node.js | 20+ — only if you regenerate the API client |
+| Node.js | 20+ — only if you regenerate `api/openapi.json` |
 
 ```bash
-flutter doctor        # must be clean for android + ios before you continue
+flutter doctor        # must be clean for android before you continue
+cd mobile && flutter pub get
 ```
 
 ---
 
-## 2. Generate the platform folders
+## 2. Configuration
 
-The repo carries the Dart source only. Platform folders are machine-generated
-and are not checked in until you create them:
-
-```bash
-cd mobile
-flutter create --platforms=android,ios --org com.trustcabbage --project-name aspire91 .
-flutter pub get
-```
-
-`flutter create` will not overwrite `lib/` or `pubspec.yaml` that already
-exist. If it complains about `pubspec.yaml`, keep ours — it has the
-dependencies.
-
----
-
-## 3. Android flavors
-
-Add to `android/app/build.gradle.kts`, inside `android { }`:
-
-```kotlin
-flavorDimensions += "audience"
-
-productFlavors {
-    create("seeker") {
-        dimension = "audience"
-        // The base id. Parents' app.
-        resValue("string", "app_name", "Aspire91")
-    }
-    create("provider") {
-        dimension = "audience"
-        applicationIdSuffix = ".coach"
-        resValue("string", "app_name", "Aspire91 for Coaches")
-    }
-}
-```
-
-<details>
-<summary>Groovy equivalent, if your Flutter version still generates build.gradle</summary>
-
-```groovy
-flavorDimensions "audience"
-productFlavors {
-    seeker   { dimension "audience"; resValue "string", "app_name", "Aspire91" }
-    provider { dimension "audience"; applicationIdSuffix ".coach"
-               resValue "string", "app_name", "Aspire91 for Coaches" }
-}
-```
-</details>
-
-Then in `android/app/src/main/AndroidManifest.xml`, change the `<application>`
-label so each flavor picks up its own name:
-
-```xml
-android:label="@string/app_name"
-```
-
-Resulting application ids:
-
-| Flavor | Application id |
-|---|---|
-| seeker | `com.trustcabbage.aspire91` |
-| provider | `com.trustcabbage.aspire91.coach` |
-
----
-
-## 4. iOS flavors
-
-Xcode calls them schemes. In `ios/Runner.xcodeproj`:
-
-1. Duplicate the three build configurations (`Debug`, `Release`, `Profile`)
-   into `Debug-seeker`, `Release-seeker`, `Profile-seeker`, and the same for
-   `provider`.
-2. Create two schemes, `seeker` and `provider`, each pointing at its own
-   configurations.
-3. Set `PRODUCT_BUNDLE_IDENTIFIER` per configuration:
-   `com.trustcabbage.aspire91` and `com.trustcabbage.aspire91.coach`.
-4. Set `PRODUCT_NAME` / `CFBundleDisplayName` to `Aspire91` and
-   `Aspire91 for Coaches`.
-
----
-
-## 5. Configuration
-
-No `.env` file ships with the app. Everything comes in through `--dart-define`
-so nothing config-shaped is readable in the bundle. `Env.assertConfigured()`
-throws a named error at startup if any is missing.
+No `.env` ships with the app. Everything comes in through `--dart-define`, and
+`Env.assertConfigured()` throws a named error at startup if any is missing.
 
 | Define | Value |
 |---|---|
 | `SUPABASE_URL` | `https://wpegcnmqygdaqrjhryit.supabase.co` |
-| `SUPABASE_ANON_KEY` | ask — it is the same anon key the web uses, and it is public by design |
+| `SUPABASE_ANON_KEY` | **ask for it** — not committed |
 | `API_BASE_URL` | `https://api.aspire91.com` |
 
-The **anon key is not a secret** — it is already in the web bundle, and every
-request is authorised by RLS as the calling user. Do not put the service role
-key in the app; it does not exist on the client and must never be added.
+The anon key is **public by design**: it is already in the web bundle, and
+every request is authorised by RLS as the calling user. It is kept out of the
+repo as hygiene, not because leaking it is a breach. The **service role key
+must never be in the app** — it is not on the client and must not be added.
 
 ### Run
 
 ```bash
-flutter run --flavor seeker -t lib/main_seeker.dart \
+flutter run --flavor provider -t lib/main_provider.dart \
   --dart-define=SUPABASE_URL=https://wpegcnmqygdaqrjhryit.supabase.co \
   --dart-define=SUPABASE_ANON_KEY=<anon key> \
   --dart-define=API_BASE_URL=https://api.aspire91.com
 ```
 
-Swap `seeker` → `provider` and `main_seeker.dart` → `main_provider.dart` for
-the other app.
+Swap `provider` → `seeker` and `main_provider.dart` → `main_seeker.dart` for
+the other app. The seeker flavor builds and signs in; there are no seeker
+screens behind it yet.
 
 ### Android Studio
 
-Create two run configurations (Run → Edit Configurations → **+** → Flutter):
+Two run configurations (Run → Edit Configurations → **+** → Flutter):
 
 | Field | Seeker | Provider |
 |---|---|---|
 | Dart entrypoint | `lib/main_seeker.dart` | `lib/main_provider.dart` |
 | Build flavor | `seeker` | `provider` |
-| Additional args | the three `--dart-define`s above | same |
+| Additional args | the three `--dart-define`s | same |
 
-Put both under `.idea/runConfigurations/` and commit them so nobody has to
-retype the defines.
+Commit them under `.idea/runConfigurations/` so nobody retypes the defines.
 
 ---
 
-## 6. The typed API client
+## 3. Flavors
 
-`api/openapi.json` is generated from the same DTOs that validate requests at
-runtime, so the Dart client is generated too — never hand-written. Same rule as
-`lib/api/schema.d.ts` on the web.
+Android is **done** — `android/app/build.gradle.kts` carries the
+`audience` dimension and both product flavors.
 
-```bash
-npm i -g @openapitools/openapi-generator-cli
-./tool/gen_api_client.sh
-dart run build_runner build --delete-conflicting-outputs
+| Flavor | Application id | Store name |
+|---|---|---|
+| seeker | `com.aspire91.app` | Aspire91 |
+| provider | `com.aspire91.app.coach` | Aspire91 for Coaches |
+
+> **Confirm the application id before the first Play upload.** It is permanent
+> once published — a published app's id can never be changed. `com.aspire91.app`
+> was chosen to match the brand and the domain; if the business wants something
+> else, change it now, in `android/app/build.gradle.kts` and the Kotlin package
+> under `android/app/src/main/kotlin/`.
+
+Release builds are still signed with the **debug** keystore, so that `flutter
+run --release` works at all. A real signing config is your job before upload.
+
+### iOS is not done
+
+Xcode calls them schemes, and they cannot be generated from a Windows machine.
+In `ios/Runner.xcodeproj`:
+
+1. Duplicate `Debug`, `Release` and `Profile` into `Debug-seeker`,
+   `Release-seeker`, `Profile-seeker`, and the same for `provider`.
+2. Create two schemes, `seeker` and `provider`, each on its own configurations.
+3. `PRODUCT_BUNDLE_IDENTIFIER` per configuration: `com.aspire91.app` and
+   `com.aspire91.app.coach`.
+4. `CFBundleDisplayName`: `Aspire91` and `Aspire91 for Coaches`.
+
+`ios/Runner/Info.plist` already carries `NSCameraUsageDescription` and
+`NSPhotoLibraryUsageDescription` — the listing screen's photo picker. iOS
+terminates the app rather than refusing the picker when those are missing.
+
+---
+
+## 4. How the code is arranged
+
+Screen-wise, mirroring the web's routes. `MOBILE-PLAN.md` §9 holds the
+route → folder table and **should be kept current** — it is the answer to
+"where is the Flutter version of that page".
+
+```
+mobile/
+  lib/
+    main_seeker.dart          flavor entry point
+    main_provider.dart        flavor entry point
+    src/
+      app.dart                shared MaterialApp.router
+      flavor.dart             Flavor enum, role mapping
+      router.dart             go_router, one auth redirect
+      providers.dart          every Riverpod provider, hand-written
+      config/env.dart         --dart-define reader, startup assertion
+      theme/theme.dart        Charcoal & Coral, ported from globals.css
+      data/
+        api.dart              Dio + bearer + the service's own error sentence
+        supabase.dart         auth, realtime, Storage — nothing else
+        listing_rules.dart    port of the web's lib/profile-rules.ts
+        models/               hand-written, field names match the DTOs
+        repositories/         one per surface; pure Dart, no Riverpod
+      screens/                one folder per screen
+      widgets/                shared: PrimaryButton, states, branding
+  test/                       30 tests, no device needed
 ```
 
-Output lands in `lib/src/data/generated/`, which is **gitignored on purpose**.
-Regenerate after any API change rather than editing it.
+`lib/src/providers.dart` is the seam. Below it — `lib/src/data` — is pure Dart
+that imports nothing from Riverpod, so it stays testable. Above it, screens
+read providers and never construct a repository themselves.
+
+### Models are hand-written, on purpose
+
+`tool/gen_api_client.sh` holds the openapi-generator command, and it is **not
+used**. The generator needs a JDK 11+ toolchain that the authoring machine did
+not have, so the models the built screens need were written by hand with field
+names matching the DTOs exactly — swapping to a generated client later is a
+deletion, not a rewrite. If you have the toolchain and want to switch, that is
+a reasonable first improvement.
+
+`api/openapi.json` is generated from the same DTOs that validate requests at
+runtime (`cd api && npm run spec`). It is the contract; do not hand-edit it.
 
 ---
 
-## 7. Architecture rules that are not negotiable
+## 5. Architecture rules that are not negotiable
 
-These come from `../PLAN.md` and exist for reasons that already bit this
-project once.
+From `../PLAN.md`, and each one cost something to learn.
 
 ### Two doors, and only two, go straight to Supabase
 
 `supabase_flutter` is for **auth, realtime and Storage**. That is it.
 
-- **Realtime** — thread subscriptions are websockets with RLS applied per
-  connection. Proxying them through the API rebuilds that for no gain.
-- **File bytes** — uploads go to Storage against a signed URL and images serve
-  from the CDN. Never forward 5 MB through the API.
+- **Realtime** — `ThreadsRepository.incoming()` subscribes to
+  `group_messages` / `enquiry_messages`. RLS applies per connection; proxying
+  a websocket rebuilds that for no gain.
+- **File bytes** — `ListingRepository.uploadPhoto()` writes to the
+  `provider-photos` bucket. Never forward megabytes through the API.
 
 Everything else goes through `api.aspire91.com`.
 
 ### Do not read unmigrated tables or RPCs from the app
 
-You will notice the web still calls 33 SQL functions and 22 tables directly,
-and that `supabase_flutter` would happily let you do the same. **Don't.** RLS
-would keep it safe, but it would make this the second client guessing at the
-schema — which is precisely what the API tier was built to stop, and the copies
-drift. If a screen needs a surface that is not on the API yet, the API work
-comes first. The list and the order are in `MOBILE-PLAN.md` §3.
+The web still calls SQL functions and tables directly, and `supabase_flutter`
+would happily let you do the same. **Don't.** RLS would keep it safe, but it
+makes the app a second client guessing at the schema — which is what the API
+tier exists to stop. If a screen needs a surface the API does not have yet, the
+API work comes first. `MOBILE-PLAN.md` §3 has the order.
 
 > A **surface** reads one way or the other, never both. Migrate a whole surface
 > or none of it.
@@ -217,41 +213,68 @@ comes first. The list and the order are in `MOBILE-PLAN.md` §3.
 `user_id`. `switch_role()` refuses once a profile is complete and **deletes**
 the row for the role being left. So:
 
-- the seeker app never asks "are you a coach?" — the flavor decides,
-- an account whose role does not match the flavor must be told plainly and
-  pointed at the other app. **Do not route them to a role chooser**; that
-  offers `switch_role`, which would destroy a completed listing.
+- the coach app never asks "are you a parent?" — the flavor decides,
+- an account whose role does not match the flavor is told plainly and pointed
+  at the other app. **Do not route them to the role chooser**: that offers
+  `switch_role`, which would destroy a completed listing. `GateScreen` and
+  `_WrongAppEscape` already handle this; keep it that way.
 
 ### Show the API's own sentence
 
 The service answers a refusal with something a reader can act on — *"Finish
-your coach or company profile before creating an event"*. Use `apiMessage()`
-in `lib/src/data/api.dart` rather than replacing it with "Something went
-wrong". The web shipped that bug and it was worth fixing.
+your coach or company profile before creating an event"*. `ApiClient` already
+extracts it; show it. Replacing it with "Something went wrong" is a bug the
+web shipped once and was worth fixing.
+
+### The listing saves whole, never in parts
+
+`save_provider_profile()` replaces branches and service areas wholesale, in one
+transaction. This exists because the web did it as four round trips with six
+unchecked results: the delete ran before the insert, so a failure in between
+left a coach **discoverable nowhere** and told them it had saved. Do not add a
+partial-save or autosave path to `ListingScreen`.
 
 ---
 
-## 8. Still to do before auth works end to end
+## 6. Tests
 
-Auth is email OTP plus Google. Both need platform work that does not exist yet:
+```bash
+flutter test          # 30 tests, no device or SDK needed
+```
+
+- `test/listing_rules_test.dart` pins the completeness rules against the web's
+  `lib/profile-rules.ts`. If you change one, change both — a coach who
+  completes a listing in the app and opens it on the web must not be told it is
+  unfinished.
+- `test/smoke_test.dart` imports both entry points so `flutter test` compiles
+  the whole tree.
+
+The API has its own suite: `cd api && npm test` (202 tests, 56 endpoints).
+
+---
+
+## 7. Still to do before auth works end to end
+
+Auth is email OTP plus Google. **Only email OTP is wired.** Both need platform
+work that does not exist yet:
 
 - **Deep links.** `/auth/callback` is a web page; on mobile the OTP link and
   the Google round trip must return into the app. Needs
   `https://www.aspire91.com/.well-known/assetlinks.json` (Android) and an Apple
-  App Site Association file, plus the app's redirect URL added to the Supabase
+  App Site Association file, plus the app's redirect URL on the Supabase
   allowlist.
-- **Native Google sign-in.** Use the platform SDK rather than a webview —
-  Google blocks OAuth in embedded webviews. You will need an Android OAuth
-  client (with the release and debug SHA-1s) and an iOS client, both in the
-  same Google Cloud project as the existing web client.
+- **Native Google sign-in.** Use the platform SDK, not a webview — Google
+  blocks OAuth in embedded webviews. Needs an Android OAuth client (release and
+  debug SHA-1s) and an iOS client, both in the same Google Cloud project as the
+  existing web client.
 
-Note the Google consent screen currently reads *"to continue to
-wpegcnmqygdaqrjhryit.supabase.co"*. That is a known open item on the backend
-side, not something the app can fix.
+The Google consent screen currently reads *"to continue to
+wpegcnmqygdaqrjhryit.supabase.co"*. That is a backend item — it needs a
+Supabase custom domain — and nothing the app can fix.
 
 ---
 
-## 9. Compliance, before either store review
+## 8. Compliance, before either store review
 
 - `/privacy` and `/terms` are live on the website; link to them in-app. Both
   stores require it.
@@ -259,39 +282,26 @@ side, not something the app can fix.
   exactly** — including that a learner's age, level and the parent's free-text
   notes are sent to Google's Gemini for ranking.
 - Event entry is the one place the product takes a child's name and date of
-  birth. The consent wording shown in the app must match
-  `ENTRY_CONSENT_VERSION` in `api/src/entries/dto/entry.dto.ts`, and the API
-  refuses the entry without it — so a Flutter client gets no further than the
-  web form does.
-- Age rating: the app is used by adults about children. Answer the
+  birth. The consent wording shown in the app must match `ENTRY_CONSENT_VERSION`
+  in `api/src/entries/dto/entry.dto.ts`; the API refuses the entry without it,
+  so a Flutter client gets no further than the web form does.
+- The listing screen uploads a coach's own photo. That is an adult's photo of
+  themselves and is shown publicly — say so in the labels.
+- Age rating: the app is used by adults, about children. Answer the
   questionnaires with that in mind.
 
 ---
 
-## 10. What to build, in what order
+## 9. What to build next
 
-`MOBILE-PLAN.md` §3 and §4. In short, the seeker app needs backend migrations
-M1–M4 (search, coach profile, Spaces, chat) before it is worth shipping; the
-provider app needs M5, M4, M3, M2. Events, entries, queries, suggestions and
-the reference data are already on the API and can be built today.
+In order, for the provider app:
+
+1. **Spaces** — `/dashboard/space`. Post photos and video. The camera roll is
+   the one place mobile genuinely beats the web. API is built (8 endpoints).
+2. **Events** — create, edit, entries. API is built.
+3. **Queries** — leads, status, callbacks. API is built.
+
+Then the seeker flavor, which needs nothing new from the API that the provider
+side has not already forced.
 
 Twelve `/admin/*` routes stay on the web permanently and are out of scope.
-
-## Layout
-
-```
-mobile/
-  lib/
-    main_seeker.dart          flavor entry point
-    main_provider.dart        flavor entry point
-    src/
-      app.dart                shared MaterialApp shell
-      flavor.dart             Flavor enum, role mapping
-      config/env.dart         --dart-define reader, startup assertion
-      theme/theme.dart        Charcoal & Coral, ported from globals.css
-      data/supabase.dart      auth, realtime, Storage — nothing else
-      data/api.dart           Dio + bearer + apiMessage()
-      data/generated/         typed client (gitignored, generated)
-      features/               one folder per screen, as you add them
-  tool/gen_api_client.sh
-```
