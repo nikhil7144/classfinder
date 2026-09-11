@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'screens/auth/sign_in_screen.dart';
+import 'data/models/demand.dart';
+import 'screens/students/demand_detail_screen.dart';
 import 'screens/students/students_screen.dart';
 import 'screens/shell/gate_screen.dart';
 import 'providers.dart';
@@ -36,8 +38,27 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Everything past the gate is only reachable by an account whose role
       // belongs to this flavor.
       GoRoute(
-          path: '/',
-          builder: (_, __) => const GateScreen(child: StudentsScreen())),
+        path: '/',
+        builder: (_, __) => const GateScreen(child: StudentsScreen()),
+        routes: [
+          // The row travels as extra rather than being refetched by id: the
+          // list already holds it, and there is no deep link into this screen
+          // to arrive without one. If that changes — a notification opening a
+          // requirement — this wants a fetch-by-id endpoint, which does not
+          // exist yet. Until then a missing extra falls back to the list
+          // rather than crashing.
+          GoRoute(
+            path: 'demand',
+            builder: (context, state) {
+              final demand = state.extra;
+              if (demand is! Demand) {
+                return const GateScreen(child: StudentsScreen());
+              }
+              return DemandDetailScreen(demand: demand);
+            },
+          ),
+        ],
+      ),
     ],
   );
 });

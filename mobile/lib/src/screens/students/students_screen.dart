@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../data/api_exception.dart';
 import '../../providers.dart';
@@ -72,8 +73,10 @@ class StudentsScreen extends ConsumerWidget {
                     padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
                     sliver: SliverList.builder(
                       itemCount: demands.length,
-                      itemBuilder: (context, i) =>
-                          DemandCard(demand: demands[i]),
+                      itemBuilder: (context, i) => DemandCard(
+                        demand: demands[i],
+                        onTap: () => context.push('/demand', extra: demands[i]),
+                      ),
                     ),
                   ),
               ],
