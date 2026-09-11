@@ -14,10 +14,17 @@ import '../../widgets/primary_button.dart';
 /// account. Until PUT /me/role existed this screen could not exist either, and
 /// the app sent them to the website to finish.
 ///
-/// The flavor decides what is on offer, so nobody is asked a question the app
-/// they installed has already answered. A coach build offers coaching and
-/// running events; a families build offers only itself and the choice is a
-/// confirmation rather than a fork.
+/// The flavor decides what is on offer, because at this moment there is no
+/// account type to decide from — that is the point of the screen. A coach
+/// build offers coaching and running events; a families build offers only
+/// itself, and preselects it.
+///
+/// What the flavor must not do is trap somebody. A parent who installed the
+/// coach app by mistake sees only coach options, and picking one leaves them
+/// holding an account they never wanted that switch_role() will refuse to
+/// change once the profile is complete. So there is a way out that sets no
+/// role at all and says what to do instead — hiding the option does not
+/// prevent the mistake, it funnels them into a worse one.
 class ChooseRoleScreen extends ConsumerStatefulWidget {
   const ChooseRoleScreen({super.key});
 
@@ -136,7 +143,9 @@ class _ChooseRoleScreenState extends ConsumerState<ChooseRoleScreen> {
                     busy: _busy,
                     onPressed: _choice == null || _busy ? null : _submit,
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 18),
+                  const _WrongAppEscape(),
+                  const SizedBox(height: 6),
                   Center(
                     child: TextButton(
                       onPressed: _busy
@@ -150,6 +159,39 @@ class _ChooseRoleScreenState extends ConsumerState<ChooseRoleScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// The way out, for somebody who installed the wrong app.
+///
+/// Sets no role. An account with none is recoverable — they install the other
+/// app, sign in with the same email and choose there. An account with the
+/// wrong one largely is not.
+class _WrongAppEscape extends StatelessWidget {
+  const _WrongAppEscape();
+
+  @override
+  Widget build(BuildContext context) {
+    final coachApp = appFlavor.isProvider;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: A91.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: A91.borderSoft),
+      ),
+      child: Text(
+        coachApp
+            ? 'Looking for classes for your child? This is the coaches app. '
+                'Install Aspire91 and sign in with the same email — nothing is '
+                'set up until you choose here.'
+            : 'Are you a coach or academy? This is the families app. Install '
+                'Aspire91 for Coaches and sign in with the same email — nothing '
+                'is set up until you choose here.',
+        style: const TextStyle(color: A91.faint, height: 1.55, fontSize: 13),
       ),
     );
   }
