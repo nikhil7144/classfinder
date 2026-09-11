@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import ProviderTabs from "@/components/provider/ProviderTabs";
 import PostCard from "@/components/spaces/PostCard";
-import { useAlerts } from "@/components/AlertsBadge";
 import {
   AUTOHIDE_AFTER_REPORTS,
   MAX_BODY,
@@ -29,7 +28,6 @@ type Draft = "photo" | "video";
  */
 export default function MySpacePage() {
   const router = useRouter();
-  const alerts = useAlerts();
 
   const [space, setSpace] = useState<Space | null>(null);
   const [posts, setPosts] = useState<SpacePost[]>([]);
@@ -164,7 +162,7 @@ export default function MySpacePage() {
   return (
     <main className="min-h-screen bg-bg">
       <div className="mx-auto max-w-3xl space-y-5 px-6 py-10">
-        <ProviderTabs messageCount={Number(alerts?.unread_threads || 0)} />
+        <ProviderTabs />
 
         <header className="cf-card p-8">
           <p className="cf-eyebrow">My Space</p>

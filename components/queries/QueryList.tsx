@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   QUERY_STATUS_LABEL,
@@ -8,6 +8,7 @@ import {
   type QueryStatus,
   answerQuery,
   fetchQueries,
+  markQueryRead,
   setQueryStatus,
 } from "@/lib/api/queries";
 
@@ -63,11 +64,30 @@ export default function QueryList({ side }: Props) {
   const [reply, setReply] = useState("");
   const [showDone, setShowDone] = useState(false);
 
+  /** Marked read once per visit, not once per render. */
+  const read = useRef(new Set<string>());
+
+  /**
+   * Looking at the list is reading it.
+   *
+   * phase3q gave the tab a badge, and the badge counts rows nobody has looked
+   * at. Without this it would clear only when a lead's status moved, so a
+   * coach who had read every request would still be told to look.
+   */
+  const markSeen = useCallback((rows: Query[]) => {
+    const unseen = rows.filter((q) => q.unread && !read.current.has(q.id));
+    for (const q of unseen) {
+      read.current.add(q.id);
+      void markQueryRead(q.id);
+    }
+  }, []);
+
   const load = useCallback(async () => {
     const { queries: rows, error: loadError } = await fetchQueries();
     setError(loadError ?? "");
     setQueries(rows);
-  }, []);
+    markSeen(rows);
+  }, [markSeen]);
 
   useEffect(() => {
     let alive = true;
@@ -75,11 +95,12 @@ export default function QueryList({ side }: Props) {
       if (!alive) return;
       setError(loadError ?? "");
       setQueries(rows);
+      markSeen(rows);
     });
     return () => {
       alive = false;
     };
-  }, []);
+  }, [markSeen]);
 
   const move = async (id: string, status: QueryStatus, callbackAt?: string) => {
     setBusyId(id);

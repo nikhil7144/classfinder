@@ -118,3 +118,27 @@ export async function answerQuery(
     return { enquiryId: null, error: "Couldn't reach the server. Try again." };
   }
 }
+
+/**
+ * Mark one read, for whichever side is asking.
+ *
+ * Nothing called this until phase3q gave the Queries tab a badge. Without it
+ * the count clears only when the lead's status moves, which means a coach who
+ * has read every request still sees a number telling them to look.
+ *
+ * Fails silently on purpose: the leads are on screen either way, and an error
+ * about a read receipt is noise about something nobody asked for.
+ */
+export async function markQueryRead(id: string): Promise<void> {
+  const t = await token();
+  if (!t) return;
+
+  try {
+    await api.POST("/api/v1/queries/{id}/read", {
+      headers: { Authorization: `Bearer ${t}` },
+      params: { path: { id } },
+    });
+  } catch {
+    // Ignored.
+  }
+}

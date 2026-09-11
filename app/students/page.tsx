@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { fetchReference } from "@/lib/api/reference";
 import ProviderTabs from "@/components/provider/ProviderTabs";
-import { useAlerts } from "@/components/AlertsBadge";
 import { expiryLabel } from "@/lib/groups";
 import {
   DEFAULT_RADIUS_KM,
@@ -51,7 +50,6 @@ const sidebarButton = (active: boolean) =>
  */
 export default function FindStudentsPage() {
   const router = useRouter();
-  const alerts = useAlerts();
 
   const [providerId, setProviderId] = useState<string | null>(null);
   const [blocked, setBlocked] = useState<string | null>(null);
@@ -290,10 +288,7 @@ export default function FindStudentsPage() {
   return (
     <main className="min-h-screen bg-bg">
       <div className="mx-auto max-w-6xl space-y-5 px-6 py-10">
-        <ProviderTabs
-          studentCount={demand.filter((d) => !d.contact_status).length}
-          messageCount={Number(alerts?.unread_threads || 0)}
-        />
+        <ProviderTabs studentCount={demand.filter((d) => !d.contact_status).length} />
 
         <header className="cf-card p-8">
           <div className="flex flex-wrap items-start justify-between gap-4">

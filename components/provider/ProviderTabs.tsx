@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAlerts } from "@/components/AlertsBadge";
 
 type Tab = { href: string; label: string; badge?: number; soon?: boolean };
 
@@ -10,15 +11,20 @@ type Tab = { href: string; label: string; badge?: number; soon?: boolean };
  * where demand arrives, and Spaces and Events land here as those phases ship.
  * Unbuilt tabs are shown greyed rather than hidden, so a coach can see what
  * the account will do rather than wondering if they've missed it.
+ *
+ * The badges are read here rather than passed in. Two of the four pages that
+ * render this passed nothing, so Messages went unbadged on exactly the screens
+ * a coach sits on — and the other two each kept a useAlerts() call whose only
+ * purpose was to feed this component. One owner, one call, every page.
+ *
+ * `studentCount` stays a prop: it is counted from the demand list that page
+ * already holds, not from alerts.
  */
-export default function ProviderTabs({
-  studentCount = 0,
-  messageCount = 0,
-}: {
-  studentCount?: number;
-  messageCount?: number;
-}) {
+export default function ProviderTabs({ studentCount = 0 }: { studentCount?: number }) {
   const pathname = usePathname();
+  const alerts = useAlerts();
+  const messageCount = Number(alerts?.unread_threads || 0);
+  const queryCount = Number(alerts?.unread_queries || 0);
 
   const tabs: Tab[] = [
     { href: "/dashboard", label: "Overview" },
@@ -30,7 +36,7 @@ export default function ProviderTabs({
     // which feature produced them.
     // Before Messages on purpose: a parent who left a number is waiting on a
     // call, not on a reply, and that is the more perishable of the two.
-    { href: "/dashboard/queries", label: "Queries" },
+    { href: "/dashboard/queries", label: "Queries", badge: queryCount },
     { href: "/dashboard/messages", label: "Messages", badge: messageCount },
     { href: "/dashboard/space", label: "My Space" },
     { href: "/dashboard/events", label: "Events", soon: true },

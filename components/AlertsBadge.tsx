@@ -13,6 +13,8 @@ export type Alerts = {
   unread_threads: number;
   /** Enquiries a coach has never answered — see phase2l. */
   unanswered_enquiries: number;
+  /** Parents who asked to be rung and have not been looked at — see phase3q. */
+  unread_queries: number;
   /** One de-duplicated total of everything actually waiting on this person. */
   needs_you: number;
 };
