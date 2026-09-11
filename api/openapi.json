@@ -1121,6 +1121,70 @@
         ]
       }
     },
+    "/api/v1/seekers/me": {
+      "get": {
+        "description": "404 for a family who has not filled one in yet. That is the expected state and not an error: the account exists from the moment a role is chosen, and the row is written by the first save.",
+        "operationId": "SeekersController_mine_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MySeekerDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Your own profile",
+        "tags": [
+          "seekers"
+        ]
+      },
+      "put": {
+        "description": "The whole profile every time, not a patch: the row is upserted, so a partial payload would clear what it omitted. One call and one transaction — the web does this as an upsert plus a separate profile_complete update.",
+        "operationId": "SeekersController_save_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveSeekerProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MySeekerDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Save it, whole",
+        "tags": [
+          "seekers"
+        ]
+      }
+    },
     "/api/v1/providers/search": {
       "get": {
         "description": "Ordered by distance from the search origin: the given lat/lng if there is one, otherwise the centroid of the area. Only approved, unsuspended coaches, and only in live areas — the area-wise launch gate is the database's, not this endpoint's. Declared before the :id route so /providers/search is not parsed as a coach whose id is the word search.",
@@ -3773,6 +3837,300 @@
             "maxLength": 500
           }
         }
+      },
+      "MySeekerDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "relationToLearner": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "self",
+              "mother",
+              "father",
+              "guardian",
+              "relative",
+              "other"
+            ],
+            "description": "Who they are looking for. A fact about the person rather than the search — a father is a father whether or not he is looking this month — and it changes what a coach is being asked to do."
+          },
+          "areaId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "lat": {
+            "type": "number",
+            "nullable": true
+          },
+          "lng": {
+            "type": "number",
+            "nullable": true
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "lookingFor": {
+            "description": "What they are looking for.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "learnerAge": {
+            "type": "number",
+            "nullable": true
+          },
+          "level": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "beginner",
+              "improver",
+              "advanced",
+              "exam_prep"
+            ]
+          },
+          "preferredModes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "own_centre",
+                "student_home",
+                "online"
+              ]
+            }
+          },
+          "preferredDays": {
+            "example": [
+              "sat",
+              "sun"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "preferredTime": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "weekday_morning",
+              "weekday_afternoon",
+              "weekday_evening",
+              "weekend",
+              "flexible"
+            ]
+          },
+          "budgetMin": {
+            "type": "number",
+            "nullable": true
+          },
+          "budgetMax": {
+            "type": "number",
+            "nullable": true
+          },
+          "budgetPeriod": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "per_hour",
+              "per_session",
+              "per_month",
+              "per_course"
+            ]
+          },
+          "requirementNotes": {
+            "type": "string",
+            "nullable": true
+          },
+          "openToOffers": {
+            "type": "boolean",
+            "description": "The consent switch, and nothing else here reads as one. Off hides them from students_for_provider entirely and immediately."
+          },
+          "marketingOptIn": {
+            "type": "boolean",
+            "description": "Asked in plain words, and defaulted off."
+          },
+          "requirementUpdatedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "description": "Stamped on every save: the demand feed sorts on it."
+          },
+          "profileComplete": {
+            "type": "boolean",
+            "description": "Whether the profile has ever been saved in full."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "relationToLearner",
+          "areaId",
+          "lat",
+          "lng",
+          "photoUrl",
+          "lookingFor",
+          "learnerAge",
+          "level",
+          "preferredModes",
+          "preferredDays",
+          "preferredTime",
+          "budgetMin",
+          "budgetMax",
+          "budgetPeriod",
+          "requirementNotes",
+          "openToOffers",
+          "marketingOptIn",
+          "requirementUpdatedAt",
+          "profileComplete"
+        ]
+      },
+      "SaveSeekerProfileDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "relationToLearner": {
+            "type": "string",
+            "enum": [
+              "self",
+              "mother",
+              "father",
+              "guardian",
+              "relative",
+              "other"
+            ]
+          },
+          "areaId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Where they are. This is what search is centred on."
+          },
+          "lat": {
+            "type": "number",
+            "nullable": true
+          },
+          "lng": {
+            "type": "number",
+            "nullable": true
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "A Storage URL, never bytes."
+          },
+          "lookingFor": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "learnerAge": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 2,
+            "maximum": 99
+          },
+          "level": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "beginner",
+              "improver",
+              "advanced",
+              "exam_prep"
+            ]
+          },
+          "preferredModes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "own_centre",
+                "student_home",
+                "online"
+              ]
+            }
+          },
+          "preferredDays": {
+            "example": [
+              "sat",
+              "sun"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "preferredTime": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "weekday_morning",
+              "weekday_afternoon",
+              "weekday_evening",
+              "weekend",
+              "flexible"
+            ]
+          },
+          "budgetMin": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0
+          },
+          "budgetMax": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0
+          },
+          "budgetPeriod": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "per_hour",
+              "per_session",
+              "per_month",
+              "per_course"
+            ]
+          },
+          "requirementNotes": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 1000
+          },
+          "openToOffers": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether coaches may approach them. Defaults true because a parent who has just typed out what they want has, in the ordinary meaning of it, asked to be found."
+          },
+          "marketingOptIn": {
+            "type": "boolean",
+            "default": false,
+            "description": "Defaulted off, and asked in plain words."
+          }
+        },
+        "required": [
+          "name",
+          "relationToLearner",
+          "areaId"
+        ]
       },
       "ProviderSearchResultDto": {
         "type": "object",

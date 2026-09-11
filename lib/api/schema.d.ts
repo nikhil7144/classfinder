@@ -534,6 +534,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/seekers/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Your own profile
+         * @description 404 for a family who has not filled one in yet. That is the expected state and not an error: the account exists from the moment a role is chosen, and the row is written by the first save.
+         */
+        get: operations["SeekersController_mine_v1"];
+        /**
+         * Save it, whole
+         * @description The whole profile every time, not a patch: the row is upserted, so a partial payload would clear what it omitted. One call and one transaction — the web does this as an upsert plus a separate profile_complete update.
+         */
+        put: operations["SeekersController_save_v1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/providers/search": {
         parameters: {
             query?: never;
@@ -1489,6 +1513,95 @@ export interface components {
             /** Format: uri */
             websiteUrl?: string;
             officeAddress?: string;
+        };
+        MySeekerDto: {
+            /** Format: uuid */
+            id: string;
+            name: string | null;
+            /**
+             * @description Who they are looking for. A fact about the person rather than the search — a father is a father whether or not he is looking this month — and it changes what a coach is being asked to do.
+             * @enum {string|null}
+             */
+            relationToLearner: "self" | "mother" | "father" | "guardian" | "relative" | "other" | null;
+            /** Format: uuid */
+            areaId: string | null;
+            lat: number | null;
+            lng: number | null;
+            photoUrl: string | null;
+            /** @description What they are looking for. */
+            lookingFor: string[];
+            learnerAge: number | null;
+            /** @enum {string|null} */
+            level: "beginner" | "improver" | "advanced" | "exam_prep" | null;
+            preferredModes: ("own_centre" | "student_home" | "online")[];
+            /**
+             * @example [
+             *       "sat",
+             *       "sun"
+             *     ]
+             */
+            preferredDays: string[];
+            /** @enum {string|null} */
+            preferredTime: "weekday_morning" | "weekday_afternoon" | "weekday_evening" | "weekend" | "flexible" | null;
+            budgetMin: number | null;
+            budgetMax: number | null;
+            /** @enum {string|null} */
+            budgetPeriod: "per_hour" | "per_session" | "per_month" | "per_course" | null;
+            requirementNotes: string | null;
+            /** @description The consent switch, and nothing else here reads as one. Off hides them from students_for_provider entirely and immediately. */
+            openToOffers: boolean;
+            /** @description Asked in plain words, and defaulted off. */
+            marketingOptIn: boolean;
+            /**
+             * Format: date-time
+             * @description Stamped on every save: the demand feed sorts on it.
+             */
+            requirementUpdatedAt: string | null;
+            /** @description Whether the profile has ever been saved in full. */
+            profileComplete: boolean;
+        };
+        SaveSeekerProfileDto: {
+            name: string;
+            /** @enum {string} */
+            relationToLearner: "self" | "mother" | "father" | "guardian" | "relative" | "other";
+            /**
+             * Format: uuid
+             * @description Where they are. This is what search is centred on.
+             */
+            areaId: string;
+            lat?: number | null;
+            lng?: number | null;
+            /** @description A Storage URL, never bytes. */
+            photoUrl?: string | null;
+            lookingFor?: string[];
+            learnerAge?: number | null;
+            /** @enum {string|null} */
+            level?: "beginner" | "improver" | "advanced" | "exam_prep" | null;
+            preferredModes?: ("own_centre" | "student_home" | "online")[];
+            /**
+             * @example [
+             *       "sat",
+             *       "sun"
+             *     ]
+             */
+            preferredDays?: string[];
+            /** @enum {string|null} */
+            preferredTime?: "weekday_morning" | "weekday_afternoon" | "weekday_evening" | "weekend" | "flexible" | null;
+            budgetMin?: number | null;
+            budgetMax?: number | null;
+            /** @enum {string|null} */
+            budgetPeriod?: "per_hour" | "per_session" | "per_month" | "per_course" | null;
+            requirementNotes?: string | null;
+            /**
+             * @description Whether coaches may approach them. Defaults true because a parent who has just typed out what they want has, in the ordinary meaning of it, asked to be found.
+             * @default true
+             */
+            openToOffers: boolean;
+            /**
+             * @description Defaulted off, and asked in plain words.
+             * @default false
+             */
+            marketingOptIn: boolean;
         };
         ProviderSearchResultDto: {
             /** Format: uuid */
@@ -2747,6 +2860,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OrganiserDto"];
+                };
+            };
+        };
+    };
+    SeekersController_mine_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MySeekerDto"];
+                };
+            };
+        };
+    };
+    SeekersController_save_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveSeekerProfileDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MySeekerDto"];
                 };
             };
         };
