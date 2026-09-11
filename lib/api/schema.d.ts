@@ -1373,10 +1373,10 @@ export interface components {
             /** Format: uuid */
             id: string;
             /**
-             * @description Null when the account exists but no role has been chosen.
+             * @description Null when the account exists but no role has been chosen. organiser was missing from this list while profiles.role has allowed it since 3E — harmless to a client reading a string, and a deserialisation failure for one generating an enum.
              * @enum {string|null}
              */
-            role: "seeker" | "provider" | "admin" | null;
+            role: "seeker" | "provider" | "organiser" | "admin" | null;
             /** @description Whether they finished the profile their role requires. */
             profileComplete: boolean;
             phone: string | null;

@@ -54,8 +54,11 @@ export class MeDto {
   @ApiProperty({
     type: String,
     nullable: true,
-    enum: ["seeker", "provider", "admin"],
-    description: "Null when the account exists but no role has been chosen.",
+    enum: ["seeker", "provider", "organiser", "admin"],
+    description:
+      "Null when the account exists but no role has been chosen. organiser was missing from this " +
+      "list while profiles.role has allowed it since 3E — harmless to a client reading a string, " +
+      "and a deserialisation failure for one generating an enum.",
   })
   role!: string | null;
 
