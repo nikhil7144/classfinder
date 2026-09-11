@@ -1,0 +1,69 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../providers.dart';
+import '../../theme/theme.dart';
+import '../students/students_screen.dart';
+import '../threads/threads_screen.dart';
+
+/// The two things a coach does daily, behind one bar.
+///
+/// An IndexedStack rather than swapping the body, so the demand feed keeps its
+/// scroll position while somebody reads a message and comes back. Detail
+/// screens push over the whole shell, which is why the bar does not follow
+/// them — a conversation is not a tab.
+class HomeShell extends ConsumerStatefulWidget {
+  const HomeShell({super.key});
+
+  @override
+  ConsumerState<HomeShell> createState() => _HomeShellState();
+}
+
+class _HomeShellState extends ConsumerState<HomeShell> {
+  int _tab = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    // A badge is decoration on a number that may not have loaded. No count is
+    // better than a wrong one, so a failure shows nothing rather than zero.
+    final unread = ref.watch(alertsProvider).value?.unreadThreads ?? 0;
+
+    return Scaffold(
+      body: IndexedStack(
+        index: _tab,
+        children: const [StudentsScreen(), ThreadsScreen()],
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _tab,
+        onDestinationSelected: (i) {
+          setState(() => _tab = i);
+          // Opening the inbox is the moment its numbers are most likely stale.
+          if (i == 1) {
+            ref.invalidate(inboxProvider);
+            ref.invalidate(alertsProvider);
+          }
+        },
+        backgroundColor: A91.surface,
+        indicatorColor: A91.surface3,
+        destinations: [
+          const NavigationDestination(
+            icon: Icon(Icons.people_outline),
+            selectedIcon: Icon(Icons.people),
+            label: 'Students',
+          ),
+          NavigationDestination(
+            icon: Badge(
+              isLabelVisible: unread > 0,
+              label: Text('$unread'),
+              backgroundColor: A91.grad1,
+              textColor: A91.onAccent,
+              child: const Icon(Icons.chat_bubble_outline),
+            ),
+            selectedIcon: const Icon(Icons.chat_bubble),
+            label: 'Messages',
+          ),
+        ],
+      ),
+    );
+  }
+}

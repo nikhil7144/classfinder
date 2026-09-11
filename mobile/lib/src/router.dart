@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'screens/auth/sign_in_screen.dart';
 import 'data/models/demand.dart';
 import 'screens/students/demand_detail_screen.dart';
-import 'screens/students/students_screen.dart';
+import 'data/models/thread.dart';
+import 'screens/shell/home_shell.dart';
+import 'screens/threads/thread_screen.dart';
 import 'screens/shell/gate_screen.dart';
 import 'providers.dart';
 
@@ -39,7 +41,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // belongs to this flavor.
       GoRoute(
         path: '/',
-        builder: (_, __) => const GateScreen(child: StudentsScreen()),
+        builder: (_, __) => const GateScreen(child: HomeShell()),
         routes: [
           // The row travels as extra rather than being refetched by id: the
           // list already holds it, and there is no deep link into this screen
@@ -52,9 +54,19 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) {
               final demand = state.extra;
               if (demand is! Demand) {
-                return const GateScreen(child: StudentsScreen());
+                return const GateScreen(child: HomeShell());
               }
               return DemandDetailScreen(demand: demand);
+            },
+          ),
+          GoRoute(
+            path: 'thread',
+            builder: (context, state) {
+              final thread = state.extra;
+              if (thread is! Thread) {
+                return const GateScreen(child: HomeShell());
+              }
+              return ThreadScreen(thread: thread);
             },
           ),
         ],

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'data/api.dart';
@@ -5,7 +7,11 @@ import 'data/models/me.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/models/demand.dart';
 import 'data/repositories/me_repository.dart';
+import 'data/models/alerts.dart';
+import 'data/models/thread.dart';
+import 'data/repositories/alerts_repository.dart';
 import 'data/repositories/students_repository.dart';
+import 'data/repositories/threads_repository.dart';
 
 /// Everything the app can be handed.
 ///
@@ -65,3 +71,62 @@ final demandFeedProvider = FutureProvider<List<Demand>>((ref) async {
 
   return ref.watch(studentsRepositoryProvider).feed(providerId: providerId);
 });
+
+final threadsRepositoryProvider = Provider<ThreadsRepository>(
+  (ref) => ThreadsRepository(ref.watch(apiClientProvider)),
+);
+
+final alertsRepositoryProvider = Provider<AlertsRepository>(
+  (ref) => AlertsRepository(ref.watch(apiClientProvider)),
+);
+
+/// Every conversation the caller is in.
+final inboxProvider = FutureProvider<List<Thread>>(
+  (ref) => ref.watch(threadsRepositoryProvider).inbox(),
+);
+
+/// One conversation's history. The live messages arrive separately — see
+/// incomingProvider — because a refetch and a delivery are different events
+/// and merging them here would re-read the thread on every keystroke somebody
+/// else makes.
+final messagesProvider =
+    FutureProvider.family<List<Message>, ThreadKey>((ref, key) async {
+  final messages =
+      await ref.watch(threadsRepositoryProvider).messages(key.kind, key.id);
+  // Opening a thread is reading it. Fire and forget: a failure here should not
+  // stop the conversation rendering.
+  unawaited(ref.read(threadsRepositoryProvider).markRead(key.kind, key.id));
+  return messages;
+});
+
+/// New messages as they land, straight from Postgres.
+final incomingProvider = StreamProvider.family<Message, ThreadKey>((ref, key) {
+  return ref.watch(threadsRepositoryProvider).incoming(key.kind, key.id);
+});
+
+/// The badge numbers. Re-read whenever the inbox is, so a thread opened on
+/// this device does not leave a stale count on the tab behind it.
+final alertsProvider = FutureProvider<Alerts>((ref) async {
+  try {
+    return await ref.watch(alertsRepositoryProvider).mine();
+  } catch (_) {
+    // A badge is not worth an error screen. No number is better than a red one.
+    return Alerts.none;
+  }
+});
+
+/// Names a conversation. threadId is unique within its kind and not across
+/// both, so neither half identifies one on its own.
+class ThreadKey {
+  const ThreadKey(this.kind, this.id);
+
+  final String kind;
+  final String id;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ThreadKey && other.kind == kind && other.id == id;
+
+  @override
+  int get hashCode => Object.hash(kind, id);
+}
