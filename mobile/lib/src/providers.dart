@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'data/api.dart';
@@ -89,15 +87,14 @@ final inboxProvider = FutureProvider<List<Thread>>(
 /// incomingProvider — because a refetch and a delivery are different events
 /// and merging them here would re-read the thread on every keystroke somebody
 /// else makes.
-final messagesProvider =
-    FutureProvider.family<List<Message>, ThreadKey>((ref, key) async {
-  final messages =
-      await ref.watch(threadsRepositoryProvider).messages(key.kind, key.id);
-  // Opening a thread is reading it. Fire and forget: a failure here should not
-  // stop the conversation rendering.
-  unawaited(ref.read(threadsRepositoryProvider).markRead(key.kind, key.id));
-  return messages;
-});
+///
+/// A pure read. Marking the thread read is the screen's job, not this one's:
+/// it has to invalidate the inbox afterwards to clear the dot and the badge,
+/// and a provider that quietly writes on every rebuild is the wrong place for
+/// that.
+final messagesProvider = FutureProvider.family<List<Message>, ThreadKey>(
+  (ref, key) => ref.watch(threadsRepositoryProvider).messages(key.kind, key.id),
+);
 
 /// New messages as they land, straight from Postgres.
 final incomingProvider = StreamProvider.family<Message, ThreadKey>((ref, key) {

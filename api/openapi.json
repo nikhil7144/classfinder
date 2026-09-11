@@ -991,6 +991,44 @@
         ]
       }
     },
+    "/api/v1/me/phone": {
+      "put": {
+        "description": "Lives on `profiles`, so it is not part of the listing payload — which left a client that does not write tables unable to set it at all. A listing is not complete without one: a coach nobody can ring is a coach nobody books.",
+        "operationId": "MeController_setPhone_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPhoneDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The number you are reached on",
+        "tags": [
+          "me"
+        ]
+      }
+    },
     "/api/v1/me": {
       "get": {
         "description": "The first call after signing in. `role: null` means a verified account that has not chosen a role yet — send them to pick one; it is not an error. The seeker or provider block is present only for that role.",
@@ -3623,6 +3661,19 @@
           "id",
           "role",
           "profileComplete",
+          "phone"
+        ]
+      },
+      "SetPhoneDto": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "example": "+91 98765 43210",
+            "description": "Digits, optionally with +, spaces or hyphens. Stored as written."
+          }
+        },
+        "required": [
           "phone"
         ]
       },

@@ -470,6 +470,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/phone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * The number you are reached on
+         * @description Lives on `profiles`, so it is not part of the listing payload — which left a client that does not write tables unable to set it at all. A listing is not complete without one: a coach nobody can ring is a coach nobody books.
+         */
+        put: operations["MeController_setPhone_v1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -1431,6 +1451,13 @@ export interface components {
             seeker?: components["schemas"]["MeSeekerDto"] | null;
             /** @description Present only for a provider. */
             provider?: components["schemas"]["MeProviderDto"] | null;
+        };
+        SetPhoneDto: {
+            /**
+             * @description Digits, optionally with +, spaces or hyphens. Stored as written.
+             * @example +91 98765 43210
+             */
+            phone: string;
         };
         OrganiserDto: {
             /** Format: uuid */
@@ -2609,6 +2636,29 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ChooseRoleDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeDto"];
+                };
+            };
+        };
+    };
+    MeController_setPhone_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetPhoneDto"];
             };
         };
         responses: {

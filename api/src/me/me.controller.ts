@@ -2,6 +2,7 @@ import { Body, Controller, Get, Put, UnauthorizedException } from "@nestjs/commo
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Caller, CurrentUser } from "../auth/current-user.decorator";
 import { ChooseRoleDto } from "./dto/choose-role.dto";
+import { SetPhoneDto } from "./dto/set-phone.dto";
 import { MeDto } from "./dto/me.dto";
 import { MeService } from "./me.service";
 
@@ -24,6 +25,21 @@ export class MeController {
   chooseRole(@CurrentUser() caller: Caller | null, @Body() body: ChooseRoleDto): Promise<MeDto> {
     if (!caller) throw new UnauthorizedException("Sign in first.");
     return this.me.chooseRole(caller, body.role);
+  }
+
+  @Put("phone")
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "The number you are reached on",
+    description:
+      "Lives on `profiles`, so it is not part of the listing payload — which left a client " +
+      "that does not write tables unable to set it at all. A listing is not complete without " +
+      "one: a coach nobody can ring is a coach nobody books.",
+  })
+  @ApiOkResponse({ type: MeDto })
+  setPhone(@CurrentUser() caller: Caller | null, @Body() body: SetPhoneDto): Promise<MeDto> {
+    if (!caller) throw new UnauthorizedException("Sign in first.");
+    return this.me.setPhone(caller, body.phone);
   }
 
   @Get()

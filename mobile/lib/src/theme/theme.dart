@@ -113,6 +113,24 @@ class A91 {
     );
   }
 
+  /// The colour for one of the eight taxonomy groups.
+  ///
+  /// A group added to the taxonomy after this shipped falls back to muted
+  /// rather than throwing — a category with the wrong dot beside it is a far
+  /// smaller problem than a screen that will not render.
+  static Color group(String? name) => switch (name) {
+        'sport' => sport,
+        'wellness' => wellness,
+        'mind' => mind,
+        'indoor' => indoor,
+        'dance' => dance,
+        'music' => music,
+        'subject' => subject,
+        'exam' => exam,
+        'acting' => acting,
+        _ => muted,
+      };
+
   /// The eyebrow: mono, uppercase, wide-tracked, gold. Used above headings.
   static TextStyle eyebrow() => GoogleFonts.jetBrainsMono(
         fontSize: 11.5,

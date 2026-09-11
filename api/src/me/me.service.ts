@@ -47,6 +47,29 @@ export class MeService {
     return this.get(caller);
   }
 
+  /**
+   * Set the caller's phone number.
+   *
+   * An update rather than an upsert: the row exists from the moment the email
+   * is verified, and a profile that is somehow missing should surface as a
+   * refusal rather than be conjured here with a phone number and no role.
+   *
+   * Written as the caller, under the same "update own profile" policy the
+   * browser uses. `role` is not reachable from here — the trigger phase 3C
+   * added refuses self-promotion regardless.
+   */
+  async setPhone(caller: Caller, phone: string): Promise<MeDto> {
+    const { error } = await this.supabase
+      .asUser(caller.accessToken)
+      .from("profiles")
+      .update({ phone: phone.trim() })
+      .eq("id", caller.id);
+
+    if (error) throw new InternalServerErrorException(error.message);
+
+    return this.get(caller);
+  }
+
   async get(caller: Caller): Promise<MeDto> {
     const db = this.supabase.asUser(caller.accessToken);
 

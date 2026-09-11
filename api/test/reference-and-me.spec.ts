@@ -283,3 +283,111 @@ describe("PUT /api/v1/me/role", () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 });
+
+describe("PUT /api/v1/me/phone", () => {
+  let app: INestApplication;
+  const from = jest.fn();
+  const update = jest.fn();
+
+  const auth = (req: request.Test) => req.set("Authorization", "Bearer good");
+
+  beforeAll(async () => {
+    const client = { from };
+    const supabase: Partial<SupabaseService> = {
+      anon: () => client as never,
+      asUser: () => client as never,
+      userFromToken: async (token: string) => (token === "good" ? { id: "user-1" } : null),
+    };
+
+    const moduleRef = await Test.createTestingModule({
+      controllers: [MeController],
+      providers: [MeService, Reflector, { provide: SupabaseService, useValue: supabase }],
+    }).compile();
+
+    app = moduleRef.createNestApplication();
+    configureApp(app);
+    app.useGlobalGuards(new AuthGuard(app.get(Reflector), app.get(SupabaseService)));
+    await app.init();
+  });
+
+  afterAll(async () => app.close());
+  beforeEach(() => {
+    from.mockReset();
+    update.mockReset();
+  });
+
+  /** The write, then the read-back /me does. Both go through from(). */
+  const wire = (updateResult: unknown, row: unknown) => {
+    let call = 0;
+    from.mockImplementation(() => {
+      call += 1;
+      if (call === 1) {
+        const chain: Record<string, unknown> = { update };
+        update.mockImplementation(() => ({
+          eq: async () => updateResult,
+        }));
+        return chain;
+      }
+      const chain: Record<string, unknown> = {};
+      for (const m of ["select", "eq"]) chain[m] = jest.fn(() => chain);
+      chain.maybeSingle = jest.fn(async () => ({ data: row, error: null }));
+      return chain;
+    });
+  };
+
+  it("saves the number and answers with the whole of /me", async () => {
+    wire({ error: null }, { role: "provider", profile_complete: false, phone: "+91 98765 43210" });
+
+    const res = await auth(
+      request(app.getHttpServer()).put("/api/v1/me/phone").send({ phone: "+91 98765 43210" }),
+    ).expect(200);
+
+    expect(update).toHaveBeenCalledWith({ phone: "+91 98765 43210" });
+    expect(res.body.phone).toBe("+91 98765 43210");
+  });
+
+  it("trims, so a pasted number with a trailing space is the same number", async () => {
+    wire({ error: null }, { role: "provider", profile_complete: false, phone: "9876543210" });
+
+    await auth(
+      request(app.getHttpServer()).put("/api/v1/me/phone").send({ phone: "  9876543210 " }),
+    ).expect(200);
+
+    expect(update).toHaveBeenCalledWith({ phone: "9876543210" });
+  });
+
+  it("accepts the shapes people actually type", async () => {
+    for (const phone of ["9876543210", "+91 98765 43210", "098765-43210"]) {
+      wire({ error: null }, { role: "provider", profile_complete: false, phone });
+      await auth(
+        request(app.getHttpServer()).put("/api/v1/me/phone").send({ phone }),
+      ).expect(200);
+    }
+  });
+
+  it("refuses something that is not a number, in words worth showing", async () => {
+    const res = await auth(
+      request(app.getHttpServer()).put("/api/v1/me/phone").send({ phone: "ring me" }),
+    ).expect(400);
+
+    expect(res.body.message[0]).toBe(
+      "A phone number can only contain digits, spaces and +.",
+    );
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("refuses too few digits to dial", async () => {
+    await auth(
+      request(app.getHttpServer()).put("/api/v1/me/phone").send({ phone: "12345" }),
+    ).expect(400);
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("refuses without a token", async () => {
+    await request(app.getHttpServer())
+      .put("/api/v1/me/phone")
+      .send({ phone: "9876543210" })
+      .expect(401);
+    expect(from).not.toHaveBeenCalled();
+  });
+});
