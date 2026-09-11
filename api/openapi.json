@@ -1523,6 +1523,336 @@
         ]
       }
     },
+    "/api/v1/groups": {
+      "get": {
+        "description": "Made or joined, both. `pendingRequests` is zero to anybody but the creator — how many coaches have pitched is the creator's business.",
+        "operationId": "GroupsController_mine_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GroupDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Groups you are in",
+        "tags": [
+          "groups"
+        ]
+      },
+      "post": {
+        "description": "The creator becomes its first member in the same call — a group of nobody is not a group.",
+        "operationId": "GroupsController_create_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGroupDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start one",
+        "tags": [
+          "groups"
+        ]
+      }
+    },
+    "/api/v1/groups/{id}/invite": {
+      "get": {
+        "description": "Readable signed out, because the whole point is that a neighbour can be sent a link and decide. It carries nothing about who is in it, and `alreadyMember` is false for a guest.",
+        "operationId": "GroupsController_invite_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupInviteDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "A group, as an invite link shows it",
+        "tags": [
+          "groups"
+        ]
+      }
+    },
+    "/api/v1/groups/{id}": {
+      "patch": {
+        "description": "`closed` is a field rather than its own endpoint: it is a creator saying they are done, and it is reversible while the group has not expired.",
+        "operationId": "GroupsController_update_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGroupDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Edit it, or close it",
+        "tags": [
+          "groups"
+        ]
+      }
+    },
+    "/api/v1/groups/{id}/members": {
+      "post": {
+        "description": "Idempotent — joining twice is joining once.",
+        "operationId": "GroupsController_join_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Join it",
+        "tags": [
+          "groups"
+        ]
+      }
+    },
+    "/api/v1/groups/{id}/members/me": {
+      "delete": {
+        "description": "The creator cannot: the pitches, the threads and the invite all hang off them, so they close the group instead.",
+        "operationId": "GroupsController_leave_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Leave it",
+        "tags": [
+          "groups"
+        ]
+      }
+    },
+    "/api/v1/groups/{id}/pitches": {
+      "get": {
+        "description": "Each one is also a conversation — the messages are GET /threads/group/{id}/messages.",
+        "operationId": "GroupsController_pitches_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GroupPitchDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Coaches who have pitched to it",
+        "tags": [
+          "groups"
+        ]
+      }
+    },
+    "/api/v1/groups/pitches/{requestId}/respond": {
+      "post": {
+        "description": "The creator's decision, and the update policy is what says so.",
+        "operationId": "GroupsController_respondToPitch_v1",
+        "parameters": [
+          {
+            "name": "requestId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespondToPitchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Accept or decline a coach",
+        "tags": [
+          "groups"
+        ]
+      }
+    },
+    "/api/v1/groups/pitches/{requestId}/contact": {
+      "get": {
+        "description": "`phone` is null unless the group shared one, and `shared` says which kind of null it is — withheld, or simply not on file.",
+        "operationId": "GroupsController_pitchContact_v1",
+        "parameters": [
+          {
+            "name": "requestId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupContactDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "How to reach the group",
+        "tags": [
+          "groups"
+        ]
+      }
+    },
     "/api/v1/providers/search": {
       "get": {
         "description": "Ordered by distance from the search origin: the given lat/lng if there is one, otherwise the centroid of the area. Only approved, unsuspended coaches, and only in live areas — the area-wise launch gate is the database's, not this endpoint's. Declared before the :id route so /providers/search is not parsed as a coach whose id is the word search.",
@@ -4873,6 +5203,328 @@
           "kind",
           "threadId",
           "outcome"
+        ]
+      },
+      "GroupDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "serviceName": {
+            "type": "string",
+            "nullable": true
+          },
+          "areaName": {
+            "type": "string",
+            "nullable": true
+          },
+          "cityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "societyName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Identifying detail. Never shown to anybody outside the group."
+          },
+          "studentCount": {
+            "type": "number",
+            "description": "How many children the group is asking for."
+          },
+          "memberCount": {
+            "type": "number",
+            "description": "How many families have joined."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Time-boxed on purpose: stale demand costs a coach's trust faster than none."
+          },
+          "closedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "isCreator": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Open, unexpired, and with enough families to be worth pitching to."
+          },
+          "pendingRequests": {
+            "type": "number",
+            "description": "Coaches waiting on an answer. Zero to anybody but the creator."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "serviceName",
+          "areaName",
+          "cityName",
+          "societyName",
+          "studentCount",
+          "memberCount",
+          "expiresAt",
+          "closedAt",
+          "isCreator",
+          "isActive",
+          "pendingRequests",
+          "createdAt"
+        ]
+      },
+      "CreateGroupDto": {
+        "type": "object",
+        "properties": {
+          "serviceCategoryId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "What the group wants taught."
+          },
+          "areaId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Roughly where they are."
+          },
+          "societyName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 160,
+            "description": "The society or building. Identifying, so it is never shown outside the group — but it is the thing that makes neighbours recognise their own group."
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 1000
+          },
+          "studentCount": {
+            "type": "number",
+            "default": 1,
+            "minimum": 1,
+            "maximum": 100
+          },
+          "sharePhone": {
+            "type": "boolean",
+            "default": false,
+            "description": "Opt in, never a default. This is a parent's personal number."
+          }
+        },
+        "required": [
+          "serviceCategoryId",
+          "areaId",
+          "societyName"
+        ]
+      },
+      "GroupInviteDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "serviceName": {
+            "type": "string",
+            "nullable": true
+          },
+          "areaName": {
+            "type": "string",
+            "nullable": true
+          },
+          "cityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "societyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "studentCount": {
+            "type": "number"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "memberCount": {
+            "type": "number"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isOpen": {
+            "type": "boolean",
+            "description": "Whether it can still be joined."
+          },
+          "alreadyMember": {
+            "type": "boolean",
+            "description": "Whether the caller is already in it. False when signed out."
+          }
+        },
+        "required": [
+          "id",
+          "serviceName",
+          "areaName",
+          "cityName",
+          "societyName",
+          "studentCount",
+          "notes",
+          "memberCount",
+          "expiresAt",
+          "isOpen",
+          "alreadyMember"
+        ]
+      },
+      "UpdateGroupDto": {
+        "type": "object",
+        "properties": {
+          "societyName": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 1000
+          },
+          "studentCount": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "sharePhone": {
+            "type": "boolean",
+            "description": "Whether coaches may see the group's number."
+          },
+          "closed": {
+            "type": "boolean",
+            "description": "True stops coaches pitching. Reversible while the group has not expired."
+          }
+        }
+      },
+      "GroupPitchDto": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "providerPhotoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "pitch": {
+            "type": "string",
+            "nullable": true,
+            "description": "What they wrote to the group."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "declined"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastMessageAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "lastSenderId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "messageCount": {
+            "type": "number"
+          },
+          "unread": {
+            "type": "boolean"
+          },
+          "isCreator": {
+            "type": "boolean",
+            "description": "Whether the caller made the group this was pitched to."
+          }
+        },
+        "required": [
+          "requestId",
+          "providerId",
+          "providerName",
+          "providerPhotoUrl",
+          "pitch",
+          "status",
+          "createdAt",
+          "lastMessage",
+          "lastMessageAt",
+          "lastSenderId",
+          "messageCount",
+          "unread",
+          "isCreator"
+        ]
+      },
+      "RespondToPitchDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "declined"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "GroupContactDto": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "societyName": {
+            "type": "string",
+            "nullable": true
+          },
+          "shared": {
+            "type": "boolean",
+            "description": "Whether the group is sharing a number at all."
+          }
+        },
+        "required": [
+          "phone",
+          "name",
+          "societyName",
+          "shared"
         ]
       },
       "ProviderSearchResultDto": {

@@ -702,6 +702,170 @@ export interface paths {
         patch: operations["TrialsController_setOutcome_v1"];
         trace?: never;
     };
+    "/api/v1/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Groups you are in
+         * @description Made or joined, both. `pendingRequests` is zero to anybody but the creator — how many coaches have pitched is the creator's business.
+         */
+        get: operations["GroupsController_mine_v1"];
+        put?: never;
+        /**
+         * Start one
+         * @description The creator becomes its first member in the same call — a group of nobody is not a group.
+         */
+        post: operations["GroupsController_create_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/groups/{id}/invite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A group, as an invite link shows it
+         * @description Readable signed out, because the whole point is that a neighbour can be sent a link and decide. It carries nothing about who is in it, and `alreadyMember` is false for a guest.
+         */
+        get: operations["GroupsController_invite_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/groups/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Edit it, or close it
+         * @description `closed` is a field rather than its own endpoint: it is a creator saying they are done, and it is reversible while the group has not expired.
+         */
+        patch: operations["GroupsController_update_v1"];
+        trace?: never;
+    };
+    "/api/v1/groups/{id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Join it
+         * @description Idempotent — joining twice is joining once.
+         */
+        post: operations["GroupsController_join_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/groups/{id}/members/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Leave it
+         * @description The creator cannot: the pitches, the threads and the invite all hang off them, so they close the group instead.
+         */
+        delete: operations["GroupsController_leave_v1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/groups/{id}/pitches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Coaches who have pitched to it
+         * @description Each one is also a conversation — the messages are GET /threads/group/{id}/messages.
+         */
+        get: operations["GroupsController_pitches_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/groups/pitches/{requestId}/respond": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept or decline a coach
+         * @description The creator's decision, and the update policy is what says so.
+         */
+        post: operations["GroupsController_respondToPitch_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/groups/pitches/{requestId}/contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * How to reach the group
+         * @description `phone` is null unless the group shared one, and `shared` says which kind of null it is — withheld, or simply not on file.
+         */
+        get: operations["GroupsController_pitchContact_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/providers/search": {
         parameters: {
             query?: never;
@@ -1901,6 +2065,115 @@ export interface components {
             threadId: string;
             /** @enum {string} */
             outcome: "happened" | "no_show" | "cancelled";
+        };
+        GroupDto: {
+            /** Format: uuid */
+            id: string;
+            serviceName: string | null;
+            areaName: string | null;
+            cityName: string | null;
+            /** @description Identifying detail. Never shown to anybody outside the group. */
+            societyName: string | null;
+            /** @description How many children the group is asking for. */
+            studentCount: number;
+            /** @description How many families have joined. */
+            memberCount: number;
+            /**
+             * Format: date-time
+             * @description Time-boxed on purpose: stale demand costs a coach's trust faster than none.
+             */
+            expiresAt: string;
+            /** Format: date-time */
+            closedAt: string | null;
+            isCreator: boolean;
+            /** @description Open, unexpired, and with enough families to be worth pitching to. */
+            isActive: boolean;
+            /** @description Coaches waiting on an answer. Zero to anybody but the creator. */
+            pendingRequests: number;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        CreateGroupDto: {
+            /**
+             * Format: uuid
+             * @description What the group wants taught.
+             */
+            serviceCategoryId: string;
+            /**
+             * Format: uuid
+             * @description Roughly where they are.
+             */
+            areaId: string;
+            /** @description The society or building. Identifying, so it is never shown outside the group — but it is the thing that makes neighbours recognise their own group. */
+            societyName: string;
+            notes?: string | null;
+            /** @default 1 */
+            studentCount: number;
+            /**
+             * @description Opt in, never a default. This is a parent's personal number.
+             * @default false
+             */
+            sharePhone: boolean;
+        };
+        GroupInviteDto: {
+            /** Format: uuid */
+            id: string;
+            serviceName: string | null;
+            areaName: string | null;
+            cityName: string | null;
+            societyName: string | null;
+            studentCount: number;
+            notes: string | null;
+            memberCount: number;
+            /** Format: date-time */
+            expiresAt: string;
+            /** @description Whether it can still be joined. */
+            isOpen: boolean;
+            /** @description Whether the caller is already in it. False when signed out. */
+            alreadyMember: boolean;
+        };
+        UpdateGroupDto: {
+            societyName?: string;
+            notes?: string | null;
+            studentCount?: number;
+            /** @description Whether coaches may see the group's number. */
+            sharePhone?: boolean;
+            /** @description True stops coaches pitching. Reversible while the group has not expired. */
+            closed?: boolean;
+        };
+        GroupPitchDto: {
+            /** Format: uuid */
+            requestId: string;
+            /** Format: uuid */
+            providerId: string;
+            providerName: string | null;
+            providerPhotoUrl: string | null;
+            /** @description What they wrote to the group. */
+            pitch: string | null;
+            /** @enum {string} */
+            status: "pending" | "accepted" | "declined";
+            /** Format: date-time */
+            createdAt: string;
+            lastMessage: string | null;
+            /** Format: date-time */
+            lastMessageAt: string | null;
+            /** Format: uuid */
+            lastSenderId: string | null;
+            messageCount: number;
+            unread: boolean;
+            /** @description Whether the caller made the group this was pitched to. */
+            isCreator: boolean;
+        };
+        RespondToPitchDto: {
+            /** @enum {string} */
+            status: "accepted" | "declined";
+        };
+        GroupContactDto: {
+            phone: string | null;
+            name: string | null;
+            societyName: string | null;
+            /** @description Whether the group is sharing a number at all. */
+            shared: boolean;
         };
         ProviderSearchResultDto: {
             /** Format: uuid */
@@ -3329,6 +3602,199 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TrialDto"];
+                };
+            };
+        };
+    };
+    GroupsController_mine_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupDto"][];
+                };
+            };
+        };
+    };
+    GroupsController_create_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateGroupDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupDto"];
+                };
+            };
+        };
+    };
+    GroupsController_invite_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupInviteDto"];
+                };
+            };
+        };
+    };
+    GroupsController_update_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateGroupDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupDto"];
+                };
+            };
+        };
+    };
+    GroupsController_join_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupDto"];
+                };
+            };
+        };
+    };
+    GroupsController_leave_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GroupsController_pitches_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupPitchDto"][];
+                };
+            };
+        };
+    };
+    GroupsController_respondToPitch_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RespondToPitchDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GroupsController_pitchContact_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupContactDto"];
                 };
             };
         };
