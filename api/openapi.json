@@ -5305,14 +5305,21 @@
           },
           "studentCount": {
             "type": "number",
-            "default": 1,
-            "minimum": 1,
+            "default": 2,
+            "minimum": 2,
             "maximum": 100
           },
           "sharePhone": {
             "type": "boolean",
             "default": false,
             "description": "Opt in, never a default. This is a parent's personal number."
+          },
+          "validityDays": {
+            "type": "number",
+            "default": 10,
+            "minimum": 1,
+            "maximum": 30,
+            "description": "How long it runs for. Groups are time-boxed because stale demand costs a coach's trust faster than no demand does, and the creator picks the window rather than taking the column default."
           }
         },
         "required": [
@@ -5395,7 +5402,7 @@
           },
           "studentCount": {
             "type": "number",
-            "minimum": 1,
+            "minimum": 2,
             "maximum": 100
           },
           "sharePhone": {

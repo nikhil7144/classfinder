@@ -18,6 +18,28 @@ export const PITCH_STATUSES = ["pending", "accepted", "declined"] as const;
 export const GROUP_EXTEND_DAYS = 10;
 
 /**
+ * How long a group may run for, chosen at creation. Matches VALIDITY_OPTIONS
+ * in lib/groups.ts — 1 week, 10 days, 3 weeks, 1 month.
+ *
+ * A range rather than the four exact values: the web offers four sensible
+ * choices, and refusing 14 because it is not on that list would be the API
+ * enforcing a picker's opinion rather than a rule.
+ */
+export const GROUP_MIN_VALIDITY_DAYS = 1;
+export const GROUP_MAX_VALIDITY_DAYS = 30;
+
+/**
+ * The fewest children a group may ask for.
+ *
+ * Two, not one. A group of one family is an enquiry, and the whole argument
+ * for groups is that neighbours asking together are worth travelling for. The
+ * database allows one because the column predates that rule; the web's form
+ * has said two since MIN_STUDENTS was written, and this makes the contract
+ * agree with the product rather than with the column.
+ */
+export const GROUP_MIN_STUDENTS = 2;
+
+/**
  * A group of neighbours asking for the same thing.
  *
  * The idea the product is built on: one family asking for a Kathak teacher is
@@ -207,11 +229,13 @@ export class CreateGroupDto {
   @Length(0, 1000)
   notes?: string | null;
 
-  @ApiPropertyOptional({ default: 1, minimum: 1, maximum: 100 })
+  @ApiPropertyOptional({ default: GROUP_MIN_STUDENTS, minimum: GROUP_MIN_STUDENTS, maximum: 100 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(1)
+  @Min(GROUP_MIN_STUDENTS, {
+    message: "A group is at least two families — one on its own is an enquiry.",
+  })
   @Max(100)
   studentCount?: number;
 
@@ -222,6 +246,22 @@ export class CreateGroupDto {
   @IsOptional()
   @IsBoolean()
   sharePhone?: boolean;
+
+  @ApiPropertyOptional({
+    default: GROUP_EXTEND_DAYS,
+    minimum: GROUP_MIN_VALIDITY_DAYS,
+    maximum: GROUP_MAX_VALIDITY_DAYS,
+    description:
+      "How long it runs for. Groups are time-boxed because stale demand costs a coach's trust " +
+      "faster than no demand does, and the creator picks the window rather than taking the " +
+      "column default.",
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(GROUP_MIN_VALIDITY_DAYS)
+  @Max(GROUP_MAX_VALIDITY_DAYS)
+  validityDays?: number;
 }
 
 /**
@@ -244,11 +284,13 @@ export class UpdateGroupDto {
   @Length(0, 1000)
   notes?: string | null;
 
-  @ApiPropertyOptional({ minimum: 1, maximum: 100 })
+  @ApiPropertyOptional({ minimum: GROUP_MIN_STUDENTS, maximum: 100 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(1)
+  @Min(GROUP_MIN_STUDENTS, {
+    message: "A group is at least two families — one on its own is an enquiry.",
+  })
   @Max(100)
   studentCount?: number;
 

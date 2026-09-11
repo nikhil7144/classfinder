@@ -10,6 +10,7 @@ import { SupabaseService } from "../supabase/supabase.service";
 import {
   CreateGroupDto,
   GROUP_EXTEND_DAYS,
+  GROUP_MIN_STUDENTS,
   GroupContactDto,
   GroupDto,
   GroupInviteDto,
@@ -163,8 +164,11 @@ export class GroupsService {
         area_id: body.areaId,
         society_name: body.societyName.trim(),
         notes: body.notes?.trim() || null,
-        student_count: body.studentCount ?? 1,
+        student_count: body.studentCount ?? GROUP_MIN_STUDENTS,
         show_phone: body.sharePhone ?? false,
+        // The creator picks the window. Without this the column default
+        // decides, and the four choices the form offers would mean nothing.
+        expires_at: this.daysFromNow(body.validityDays ?? GROUP_EXTEND_DAYS),
       })
       .select("id")
       .single();
@@ -326,9 +330,13 @@ export class GroupsService {
     };
   }
 
+  private daysFromNow(days: number): string {
+    return new Date(Date.now() + days * 86_400_000).toISOString();
+  }
+
   /** Ten days from now, matching what the web offers. */
   private extendedTo(): string {
-    return new Date(Date.now() + GROUP_EXTEND_DAYS * 86_400_000).toISOString();
+    return this.daysFromNow(GROUP_EXTEND_DAYS);
   }
 
   /**

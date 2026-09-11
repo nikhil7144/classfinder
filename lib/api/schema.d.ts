@@ -2107,13 +2107,18 @@ export interface components {
             /** @description The society or building. Identifying, so it is never shown outside the group — but it is the thing that makes neighbours recognise their own group. */
             societyName: string;
             notes?: string | null;
-            /** @default 1 */
+            /** @default 2 */
             studentCount: number;
             /**
              * @description Opt in, never a default. This is a parent's personal number.
              * @default false
              */
             sharePhone: boolean;
+            /**
+             * @description How long it runs for. Groups are time-boxed because stale demand costs a coach's trust faster than no demand does, and the creator picks the window rather than taking the column default.
+             * @default 10
+             */
+            validityDays: number;
         };
         GroupInviteDto: {
             /** Format: uuid */

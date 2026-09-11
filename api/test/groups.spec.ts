@@ -203,6 +203,37 @@ describe("/api/v1/groups", () => {
       expect(insert.mock.calls[0][0].show_phone).toBe(false);
     });
 
+    it("lets the creator pick how long it runs", async () => {
+      // Without this the column default decides and the four choices the form
+      // offers would mean nothing.
+      wireTables();
+      wireMyGroups([groupRow()]);
+
+      await auth(
+        request(app.getHttpServer()).post("/api/v1/groups").send({
+          serviceCategoryId: SERVICE,
+          areaId: AREA,
+          societyName: "Shipra",
+          validityDays: 30,
+        }),
+      ).expect(201);
+
+      const at = new Date(insert.mock.calls[0][0].expires_at as string).getTime();
+      expect(at).toBeGreaterThan(Date.now() + 29 * 86_400_000);
+      expect(at).toBeLessThan(Date.now() + 31 * 86_400_000);
+    });
+
+    it("refuses a group of one, because that is an enquiry", async () => {
+      const res = await auth(
+        request(app.getHttpServer())
+          .post("/api/v1/groups")
+          .send({ serviceCategoryId: SERVICE, areaId: AREA, societyName: "Shipra", studentCount: 1 }),
+      ).expect(400);
+
+      expect(res.body.message[0]).toContain("at least two families");
+      expect(from).not.toHaveBeenCalled();
+    });
+
     it("requires the society, which is how neighbours recognise their group", async () => {
       await auth(
         request(app.getHttpServer())
@@ -213,7 +244,7 @@ describe("/api/v1/groups", () => {
     });
 
     it("refuses a student count nobody would ask for", async () => {
-      for (const studentCount of [0, 500]) {
+      for (const studentCount of [1, 500]) {
         await auth(
           request(app.getHttpServer())
             .post("/api/v1/groups")
