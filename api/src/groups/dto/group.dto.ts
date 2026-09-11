@@ -14,6 +14,9 @@ import {
 
 export const PITCH_STATUSES = ["pending", "accepted", "declined"] as const;
 
+/** How far an extension pushes the expiry out. Matches EXTEND_DAYS in lib/groups.ts. */
+export const GROUP_EXTEND_DAYS = 10;
+
 /**
  * A group of neighbours asking for the same thing.
  *
@@ -255,11 +258,24 @@ export class UpdateGroupDto {
   sharePhone?: boolean;
 
   @ApiPropertyOptional({
-    description: "True stops coaches pitching. Reversible while the group has not expired.",
+    description:
+      "True stops coaches pitching. Setting it false reopens the group — and pushes the " +
+      "expiry out if it had already lapsed, because clearing closed_at alone would leave a " +
+      "group that says it is open and that nobody can pitch to.",
   })
   @IsOptional()
   @IsBoolean()
   closed?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      `True pushes the expiry ${GROUP_EXTEND_DAYS} days out from now. Groups are time-boxed ` +
+      "because stale demand costs a coach's trust faster than no demand does, so this is the " +
+      "creator saying it is still wanted rather than a date they pick.",
+  })
+  @IsOptional()
+  @IsBoolean()
+  extend?: boolean;
 }
 
 /** Accepting or declining a coach who pitched. */

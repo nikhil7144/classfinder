@@ -251,6 +251,52 @@ describe("/api/v1/groups", () => {
       expect(update).toHaveBeenCalledWith({ student_count: 6 });
     });
 
+    it("gives it another ten days on request", async () => {
+      wireTables();
+      wireMyGroups([groupRow()]);
+
+      await auth(
+        request(app.getHttpServer()).patch(`/api/v1/groups/${GROUP}`).send({ extend: true }),
+      ).expect(200);
+
+      const at = new Date(update.mock.calls[0][0].expires_at as string).getTime();
+      // Ten days out, give or take the time the test took to run.
+      expect(at).toBeGreaterThan(Date.now() + 9 * 86_400_000);
+      expect(at).toBeLessThan(Date.now() + 11 * 86_400_000);
+    });
+
+    it("reopening an expired group also revives it", async () => {
+      // Clearing closed_at alone would leave something that says it is open
+      // and that no coach can pitch to — the mirror of the dead end
+      // GroupOverview's comment records.
+      wireTables({
+        maybeResult: { data: { expires_at: "2020-01-01T00:00:00.000Z" }, error: null },
+      });
+      wireMyGroups([groupRow()]);
+
+      await auth(
+        request(app.getHttpServer()).patch(`/api/v1/groups/${GROUP}`).send({ closed: false }),
+      ).expect(200);
+
+      expect(update.mock.calls[0][0].closed_at).toBeNull();
+      expect(update.mock.calls[0][0].expires_at).toEqual(expect.any(String));
+    });
+
+    it("reopening one that still has time left leaves the date alone", async () => {
+      // A creator reopening something with a week left has not asked for
+      // another ten days.
+      const future = new Date(Date.now() + 7 * 86_400_000).toISOString();
+      wireTables({ maybeResult: { data: { expires_at: future }, error: null } });
+      wireMyGroups([groupRow()]);
+
+      await auth(
+        request(app.getHttpServer()).patch(`/api/v1/groups/${GROUP}`).send({ closed: false }),
+      ).expect(200);
+
+      expect(update.mock.calls[0][0].closed_at).toBeNull();
+      expect(update.mock.calls[0][0]).not.toHaveProperty("expires_at");
+    });
+
     it("refuses an empty patch rather than writing nothing", async () => {
       await auth(
         request(app.getHttpServer()).patch(`/api/v1/groups/${GROUP}`).send({}),

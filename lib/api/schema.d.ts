@@ -2138,8 +2138,10 @@ export interface components {
             studentCount?: number;
             /** @description Whether coaches may see the group's number. */
             sharePhone?: boolean;
-            /** @description True stops coaches pitching. Reversible while the group has not expired. */
+            /** @description True stops coaches pitching. Setting it false reopens the group — and pushes the expiry out if it had already lapsed, because clearing closed_at alone would leave a group that says it is open and that nobody can pitch to. */
             closed?: boolean;
+            /** @description True pushes the expiry 10 days out from now. Groups are time-boxed because stale demand costs a coach's trust faster than no demand does, so this is the creator saying it is still wanted rather than a date they pick. */
+            extend?: boolean;
         };
         GroupPitchDto: {
             /** Format: uuid */

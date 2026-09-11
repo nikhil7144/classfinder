@@ -9,6 +9,7 @@ import { Caller } from "../auth/current-user.decorator";
 import { SupabaseService } from "../supabase/supabase.service";
 import {
   CreateGroupDto,
+  GROUP_EXTEND_DAYS,
   GroupContactDto,
   GroupDto,
   GroupInviteDto,
@@ -182,13 +183,22 @@ export class GroupsService {
   }
 
   /**
-   * Edit one, or close it.
+   * Edit one, close it, reopen it, or give it longer.
    *
    * Closing is a field rather than its own endpoint: it is a creator saying
-   * they are done, not a state machine, and it is reversible while the group
-   * has not expired. `closed_at` carries that as a timestamp or a null.
+   * they are done, not a state machine. `closed_at` carries that as a
+   * timestamp or a null.
+   *
+   * Reopening also pushes the expiry out when the group has already lapsed.
+   * GroupOverview carries a comment about exactly this: "Closing used to be a
+   * dead end: Extend only moved expires_at and never cleared closed_at, so the
+   * button was still offered and did nothing." The mirror of that bug is
+   * clearing closed_at on an expired group, which would leave something that
+   * says it is open and that no coach can pitch to. Both halves move together
+   * here so neither can be forgotten.
    */
   async update(caller: Caller, id: string, body: UpdateGroupDto): Promise<GroupDto> {
+    const db = this.supabase.asUser(caller.accessToken);
     const patch: Record<string, unknown> = {};
 
     if (body.societyName !== undefined) patch.society_name = body.societyName.trim();
@@ -199,12 +209,28 @@ export class GroupsService {
       patch.closed_at = body.closed ? new Date().toISOString() : null;
     }
 
+    // An extension always moves it; reopening moves it only if it had lapsed,
+    // because a creator reopening something with a week left has not asked for
+    // another ten days.
+    let extend = body.extend === true;
+    if (body.closed === false && !extend) {
+      const { data } = await db
+        .from("groups")
+        .select("expires_at")
+        .eq("id", id)
+        .maybeSingle();
+
+      const expiresAt = (data as { expires_at: string } | null)?.expires_at;
+      extend = Boolean(expiresAt) && new Date(expiresAt as string).getTime() <= Date.now();
+    }
+
+    if (extend) patch.expires_at = this.extendedTo();
+
     if (Object.keys(patch).length === 0) {
       throw new BadRequestException("Nothing to change.");
     }
 
-    const { error } = await this.supabase
-      .asUser(caller.accessToken)
+    const { error } = await db
       .from("groups")
       .update(patch)
       .eq("id", id);
@@ -298,6 +324,11 @@ export class GroupsService {
       societyName: (row.society_name as string) ?? null,
       shared: Boolean(row.shared),
     };
+  }
+
+  /** Ten days from now, matching what the web offers. */
+  private extendedTo(): string {
+    return new Date(Date.now() + GROUP_EXTEND_DAYS * 86_400_000).toISOString();
   }
 
   /**
