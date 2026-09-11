@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers.dart';
 import '../../theme/theme.dart';
-import '../listing/listing_screen.dart';
 import '../queries/queries_screen.dart';
+import 'more_screen.dart';
 import '../space/space_screen.dart';
 import '../students/students_screen.dart';
 import '../threads/threads_screen.dart';
 
-/// The five places a coach lives, behind one bar.
+/// The four places a coach lives daily, plus everything else.
 ///
 /// An IndexedStack rather than swapping the body, so the demand feed keeps its
 /// scroll position while somebody reads a message and comes back. Detail
@@ -46,7 +46,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           QueriesScreen(),
           ThreadsScreen(),
           SpaceScreen(),
-          ListingScreen(),
+          MoreScreen(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -102,15 +102,17 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             label: 'Space',
           ),
           NavigationDestination(
-            // A listing waiting on approval is the one thing a coach is most
-            // likely to be checking for, so the tab says so.
+            // The listing and events live behind here — a NavigationBar takes
+            // five destinations and the app has six things. A listing waiting
+            // on approval is the one a coach is most likely to be checking
+            // for, so the dot follows it up to the bar.
             icon: Badge(
               isLabelVisible: needsAttention,
               backgroundColor: A91.warn,
-              child: const Icon(Icons.badge_outlined),
+              child: const Icon(Icons.more_horiz),
             ),
-            selectedIcon: const Icon(Icons.badge),
-            label: 'Listing',
+            selectedIcon: const Icon(Icons.more_horiz),
+            label: 'More',
           ),
         ],
       ),

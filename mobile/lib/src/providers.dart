@@ -7,6 +7,8 @@ import 'data/models/demand.dart';
 import 'data/repositories/me_repository.dart';
 import 'data/models/alerts.dart';
 import 'data/models/listing.dart';
+import 'data/models/entry.dart';
+import 'data/models/event.dart';
 import 'data/models/query.dart';
 import 'data/models/reference.dart';
 import 'data/models/space.dart';
@@ -14,6 +16,7 @@ import 'data/models/thread.dart';
 import 'data/repositories/alerts_repository.dart';
 import 'data/repositories/listing_repository.dart';
 import 'data/repositories/reference_repository.dart';
+import 'data/repositories/events_repository.dart';
 import 'data/repositories/queries_repository.dart';
 import 'data/repositories/spaces_repository.dart';
 import 'data/repositories/students_repository.dart';
@@ -74,6 +77,20 @@ final myListingProvider = FutureProvider<Listing?>((ref) async {
   ref.watch(authStateProvider);
   return ref.watch(listingRepositoryProvider).mine();
 });
+
+final eventsRepositoryProvider = Provider<EventsRepository>(
+  (ref) => EventsRepository(ref.watch(apiClientProvider)),
+);
+
+/// The caller's own events, whichever state they are in.
+final myEventsProvider = FutureProvider<List<Event>>(
+  (ref) => ref.watch(eventsRepositoryProvider).mine(),
+);
+
+/// The register for one event.
+final entriesProvider = FutureProvider.family<List<Entry>, String>(
+  (ref, eventId) => ref.watch(eventsRepositoryProvider).entries(eventId),
+);
 
 final queriesRepositoryProvider = Provider<QueriesRepository>(
   (ref) => QueriesRepository(ref.watch(apiClientProvider)),

@@ -25,9 +25,10 @@ What runs today, on the provider flavor:
 | Listing — the whole coach profile | `screens/listing/` | built |
 | Space — posts, photos, video, reactions | `screens/space/` | built |
 | Queries — leads, call booking, dialling | `screens/queries/` | built |
-| Events | — | not started |
+| Events — create, publish, categories | `screens/events/` | built |
+| Register — entries, payments, withdrawals | `screens/events/` | built |
 
-`flutter analyze` is clean and `flutter test` passes (55 tests). It has **never
+`flutter analyze` is clean and `flutter test` passes (73 tests). It has **never
 been built into an APK** — the machine it was written on has no Android SDK, so
 `flutter build` could not run. `test/smoke_test.dart` imports both entry points
 specifically so the whole tree is compiled by `flutter test`; that is as close
@@ -161,7 +162,7 @@ mobile/
         repositories/         one per surface; pure Dart, no Riverpod
       screens/                one folder per screen
       widgets/                shared: PrimaryButton, states, branding
-  test/                       55 tests, no device needed
+  test/                       73 tests, no device needed
 ```
 
 `lib/src/providers.dart` is the seam. Below it — `lib/src/data` — is pure Dart
@@ -242,7 +243,7 @@ partial-save or autosave path to `ListingScreen`.
 ## 6. Tests
 
 ```bash
-flutter test          # 55 tests, no device or SDK needed
+flutter test          # 73 tests, no device or SDK needed
 ```
 
 - `test/listing_rules_test.dart` pins the completeness rules against the web's
@@ -254,6 +255,10 @@ flutter test          # 55 tests, no device or SDK needed
   server is asked.
 - `test/query_test.dart` pins which statuses are still on the worklist, and
   the thread origin line.
+- `test/event_test.dart` pins the two rules the database would otherwise
+  report as a constraint violation: team size belongs only to a team, and a
+  booking URL only to an event that sends entries elsewhere. Also the age
+  calculation, which is about the day of the event and not today.
 - `test/smoke_test.dart` imports both entry points so `flutter test` compiles
   the whole tree.
 
@@ -304,11 +309,14 @@ Supabase custom domain — and nothing the app can fix.
 
 In order, for the provider app:
 
-1. **Events** — create, edit, entries. API is built.
-2. **Groups** — `/dashboard/groups`. **Blocked**: groups is migration M6 and
-   has not happened, so there is no API to build against.
+**The provider app is feature-complete against what the API exposes.** What is
+left is either blocked or a different app:
 
-Then the seeker flavor, which needs nothing new from the API that the provider
-side has not already forced.
+1. **Groups** — `/dashboard/groups`. **Blocked**: groups is migration M6 and
+   has not happened, so there is no API to build against.
+2. **The seeker flavor** — search, coach profiles, groups, enquiries. Blocked
+   on M1, M2 and M6; threads and Spaces it can reuse as they are.
+
+So the next real work is backend, not Flutter.
 
 Twelve `/admin/*` routes stay on the web permanently and are out of scope.

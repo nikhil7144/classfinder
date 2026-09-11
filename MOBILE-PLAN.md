@@ -327,6 +327,10 @@ would encode a shape that does not fit:
 
 - **`/dashboard`** renders SeekerHome, ProviderHome or OrganiserHome by role.
   The flavor does that job on mobile, so there is no dashboard screen.
+- **`screens/shell/more_screen.dart`** has no web equivalent at all. A
+  NavigationBar takes five destinations and the coach app has six things, so
+  the listing and events — opened a handful of times a season, not daily —
+  live one tap deeper. Signing out is there too.
 - **`/dashboard/messages` and `/account/messages`** are one inbox at two paths
   for two roles. Mobile has one.
 - **`/students`** is one file on the web and several here: screen, card, and
@@ -341,7 +345,7 @@ would encode a shape that does not fit:
 | `/dashboard/messages`, `/account/messages` | `screens/threads/` |
 | `/account/profile` | `screens/listing/` |
 | `/dashboard/space` | `screens/space/` |
-| `/events`, `/events/new`, `/events/[id]/edit` | `screens/events/` *(not built)* |
+| `/events`, `/events/new`, `/events/[id]/edit`, `/events/[id]/entries` | `screens/events/` |
 | `/dashboard/queries` | `screens/queries/` |
 | `/admin/*` | never — web only |
 
