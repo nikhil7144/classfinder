@@ -4,10 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers.dart';
 import '../../theme/theme.dart';
 import '../listing/listing_screen.dart';
+import '../space/space_screen.dart';
 import '../students/students_screen.dart';
 import '../threads/threads_screen.dart';
 
-/// The three places a coach lives, behind one bar.
+/// The four places a coach lives, behind one bar.
 ///
 /// An IndexedStack rather than swapping the body, so the demand feed keeps its
 /// scroll position while somebody reads a message and comes back. Detail
@@ -37,7 +38,12 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     return Scaffold(
       body: IndexedStack(
         index: _tab,
-        children: const [StudentsScreen(), ThreadsScreen(), ListingScreen()],
+        children: const [
+          StudentsScreen(),
+          ThreadsScreen(),
+          SpaceScreen(),
+          ListingScreen(),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
@@ -67,6 +73,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             ),
             selectedIcon: const Icon(Icons.chat_bubble),
             label: 'Messages',
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.grid_view_outlined),
+            selectedIcon: Icon(Icons.grid_view),
+            label: 'Space',
           ),
           NavigationDestination(
             // A listing waiting on approval is the one thing a coach is most

@@ -8,10 +8,12 @@ import 'data/repositories/me_repository.dart';
 import 'data/models/alerts.dart';
 import 'data/models/listing.dart';
 import 'data/models/reference.dart';
+import 'data/models/space.dart';
 import 'data/models/thread.dart';
 import 'data/repositories/alerts_repository.dart';
 import 'data/repositories/listing_repository.dart';
 import 'data/repositories/reference_repository.dart';
+import 'data/repositories/spaces_repository.dart';
 import 'data/repositories/students_repository.dart';
 import 'data/repositories/threads_repository.dart';
 
@@ -69,6 +71,29 @@ final referenceProvider = FutureProvider<Reference>(
 final myListingProvider = FutureProvider<Listing?>((ref) async {
   ref.watch(authStateProvider);
   return ref.watch(listingRepositoryProvider).mine();
+});
+
+final spacesRepositoryProvider = Provider<SpacesRepository>(
+  (ref) => SpacesRepository(ref.watch(apiClientProvider)),
+);
+
+/// The caller's own Space.
+///
+/// Depends on meProvider for the provider id for the same reason the demand
+/// feed does: a coach should not have to carry an identifier their account
+/// already knows, and one with no listing has no Space to ask for.
+final mySpaceProvider = FutureProvider<Space?>((ref) async {
+  final me = await ref.watch(meProvider.future);
+  final providerId = me.provider?.id;
+  if (providerId == null) return null;
+  return ref.watch(spacesRepositoryProvider).one(providerId);
+});
+
+/// The posts on the caller's own Space. Newest first.
+final mySpacePostsProvider = FutureProvider<List<SpacePost>>((ref) async {
+  final space = await ref.watch(mySpaceProvider.future);
+  if (space == null) return const [];
+  return ref.watch(spacesRepositoryProvider).posts(space.providerId);
 });
 
 final studentsRepositoryProvider = Provider<StudentsRepository>(

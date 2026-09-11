@@ -171,8 +171,8 @@ void main() {
     test('want a four-digit year', () {
       final l = complete()
         ..certifications = [Certification(name: 'Visharad', year: '19')];
-      expect(
-          messages(l), contains('Certification year should be a 4-digit year.'));
+      expect(messages(l),
+          contains('Certification year should be a 4-digit year.'));
     });
   });
 
@@ -226,7 +226,8 @@ void main() {
       expect(json['feeMin'], 1500);
     });
 
-    test('an empty optional is omitted rather than sent as an empty string', () {
+    test('an empty optional is omitted rather than sent as an empty string',
+        () {
       final json = (complete()..feesNote = '   ').toSaveJson();
       expect(json.containsKey('feesNote'), isFalse);
     });

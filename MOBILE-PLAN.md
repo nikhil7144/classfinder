@@ -340,7 +340,7 @@ would encode a shape that does not fit:
 | `/students` | `screens/students/` |
 | `/dashboard/messages`, `/account/messages` | `screens/threads/` |
 | `/account/profile` | `screens/listing/` |
-| `/dashboard/space` | `screens/space/` *(not built)* |
+| `/dashboard/space` | `screens/space/` |
 | `/events`, `/events/new`, `/events/[id]/edit` | `screens/events/` *(not built)* |
 | `/dashboard/queries` | `screens/queries/` *(not built)* |
 | `/admin/*` | never — web only |
