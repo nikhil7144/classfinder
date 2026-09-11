@@ -985,6 +985,8 @@ export interface components {
             unreadThreads: number;
             /** @description Enquiries a coach has not answered. */
             unansweredEnquiries: number;
+            /** @description Parents who asked to be rung and have not been looked at. Zero for a parent: their own request producing an answer arrives as a thread, which unreadThreads already counts. Clears when the tab is opened, or when the lead moves off 'new' — a coach who has rung somebody has plainly seen it. */
+            unreadQueries: number;
             /** @description Unread notifications of the kinds that want an action. The bell number, and not the sum of the counters above. */
             needsYou: number;
         };
@@ -1710,6 +1712,8 @@ export interface components {
              * @description The conversation this query produced, once one exists.
              */
             enquiryId: string | null;
+            /** @description Whether the caller has looked at this one. mark_query_read() has existed since phase3h and nothing ever called it, because no field here said there was anything to mark — so a coach had a read column that never went true and no badge that could have used it. */
+            unread: boolean;
         };
         RaiseQueryDto: {
             /**
@@ -2003,6 +2007,17 @@ export interface components {
              */
             reason?: "not_a_provider" | "no_demand";
         };
+        QueryOriginDto: {
+            /** Format: uuid */
+            queryId: string;
+            /** @description What they asked about. */
+            serviceName: string | null;
+            /**
+             * Format: date-time
+             * @description When they asked, not when the coach replied.
+             */
+            askedAt: string;
+        };
         ThreadDto: {
             /**
              * @description Which surface the conversation belongs to. It decides where the messages live and which actions the thread offers, so a client must branch on it.
@@ -2046,6 +2061,8 @@ export interface components {
             unread: boolean;
             /** @description Which side of this conversation the caller is on. */
             iAmSeeker: boolean;
+            /** @description Set when this conversation began with a request for a call. A message from somebody you never wrote to is what makes contact feel unsolicited, so the parent is told which of their own requests produced it. Null for every other thread. */
+            origin: components["schemas"]["QueryOriginDto"] | null;
         };
         MessageDto: {
             /** Format: uuid */

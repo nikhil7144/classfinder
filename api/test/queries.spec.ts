@@ -99,6 +99,58 @@ describe("/api/v1/queries", () => {
     expect(res.body[0].enquiryId).toBe("enq-1");
   });
 
+  describe("unread, which is the only field that depends on who asked", () => {
+    // The two sides have their own read column and one read serves both, so
+    // getting this backwards would show a coach their own read state on the
+    // parent's column — and the badge phase3q adds would never clear.
+    const get = () => auth(request(app.getHttpServer()).get("/api/v1/queries"));
+
+    it("reads the seeker's column when the caller is the seeker", async () => {
+      result.mockReturnValue({
+        data: [{ ...ROW, seeker_read_at: null, provider_read_at: "2026-09-07T11:00:00.000Z" }],
+        error: null,
+      });
+
+      const res = await get().expect(200);
+      expect(res.body[0].unread).toBe(true);
+    });
+
+    it("reads the provider's column when the caller is not the seeker", async () => {
+      result.mockReturnValue({
+        data: [
+          {
+            ...ROW,
+            seeker_id: "somebody-else",
+            seeker_read_at: null,
+            provider_read_at: "2026-09-07T11:00:00.000Z",
+          },
+        ],
+        error: null,
+      });
+
+      const res = await get().expect(200);
+      expect(res.body[0].unread).toBe(false);
+    });
+
+    it("treats a row that has never been read as unread", async () => {
+      result.mockReturnValue({ data: [ROW], error: null });
+
+      const res = await get().expect(200);
+      expect(res.body[0].unread).toBe(true);
+    });
+  });
+
+  it("marks one read, which is what opening the tab means", async () => {
+    rpc.mockResolvedValue({ error: null });
+
+    const res = await auth(
+      request(app.getHttpServer()).post(`/api/v1/queries/${QUERY_ID}/read`),
+    ).expect(201);
+
+    expect(res.body).toEqual({ ok: true });
+    expect(rpc).toHaveBeenCalledWith("mark_query_read", { p_query_id: QUERY_ID });
+  });
+
   it("raises one, stamping the caller as the seeker", async () => {
     result.mockReturnValue({ data: ROW, error: null });
 

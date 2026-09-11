@@ -10,6 +10,7 @@ class Alerts {
     required this.pendingApproaches,
     required this.unreadThreads,
     required this.unansweredEnquiries,
+    required this.unreadQueries,
     required this.needsYou,
   });
 
@@ -19,6 +20,12 @@ class Alerts {
   final int pendingApproaches;
   final int unreadThreads;
   final int unansweredEnquiries;
+
+  /// Parents who asked to be rung and have not been looked at. Zero for a
+  /// parent — their own request producing an answer arrives as a thread, which
+  /// unreadThreads already counts.
+  final int unreadQueries;
+
   final int needsYou;
 
   static const none = Alerts(
@@ -28,6 +35,7 @@ class Alerts {
     pendingApproaches: 0,
     unreadThreads: 0,
     unansweredEnquiries: 0,
+    unreadQueries: 0,
     needsYou: 0,
   );
 
@@ -41,6 +49,7 @@ class Alerts {
         pendingApproaches: _n(json['pendingApproaches']),
         unreadThreads: _n(json['unreadThreads']),
         unansweredEnquiries: _n(json['unansweredEnquiries']),
+        unreadQueries: _n(json['unreadQueries']),
         needsYou: _n(json['needsYou']),
       );
 }

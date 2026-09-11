@@ -24,6 +24,7 @@ class Thread {
     required this.messageCount,
     required this.unread,
     required this.iAmSeeker,
+    required this.origin,
   });
 
   /// 'group' or 'enquiry'. It decides which table the messages live in, which
@@ -49,6 +50,11 @@ class Thread {
   final int messageCount;
   final bool unread;
   final bool iAmSeeker;
+
+  /// Set when this conversation began with a request for a call. A message
+  /// from somebody you never wrote to is what makes contact feel unsolicited,
+  /// so the thread says which request produced it.
+  final QueryOrigin? origin;
 
   /// A coach's approach that the family has not answered. While it is pending
   /// the coach cannot write again — the composer is closed, and says so.
@@ -78,6 +84,31 @@ class Thread {
         messageCount: (json['messageCount'] as num?)?.toInt() ?? 0,
         unread: json['unread'] as bool? ?? false,
         iAmSeeker: json['iAmSeeker'] as bool? ?? false,
+        origin: json['origin'] == null
+            ? null
+            : QueryOrigin.fromJson(json['origin'] as Map<String, dynamic>),
+      );
+}
+
+/// Where a conversation came from, when it came from a request for a call.
+class QueryOrigin {
+  const QueryOrigin({
+    required this.queryId,
+    required this.serviceName,
+    required this.askedAt,
+  });
+
+  final String queryId;
+  final String? serviceName;
+
+  /// When they asked, not when the coach replied.
+  final DateTime askedAt;
+
+  factory QueryOrigin.fromJson(Map<String, dynamic> json) => QueryOrigin(
+        queryId: json['queryId'] as String,
+        serviceName: json['serviceName'] as String?,
+        askedAt: DateTime.tryParse(json['askedAt'] as String? ?? '') ??
+            DateTime.now(),
       );
 }
 

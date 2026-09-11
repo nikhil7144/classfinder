@@ -164,6 +164,13 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
                     controller: _scroll,
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                     children: [
+                      if (widget.thread.origin != null) ...[
+                        _Origin(
+                          origin: widget.thread.origin!,
+                          iAmSeeker: widget.thread.iAmSeeker,
+                        ),
+                        const SizedBox(height: 14),
+                      ],
                       if (widget.thread.opening != null) ...[
                         _Opening(text: widget.thread.opening!),
                         const SizedBox(height: 14),
@@ -196,6 +203,63 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Where this conversation came from, when it came from a request for a call.
+///
+/// A message from somebody you never wrote to is what makes contact feel
+/// unsolicited, so the parent is told which of their own requests produced it
+/// — and the coach is reminded why they are allowed to be writing.
+///
+/// A rule rather than a card: it is not part of the conversation, it is the
+/// reason there is one.
+class _Origin extends StatelessWidget {
+  const _Origin({required this.origin, required this.iAmSeeker});
+
+  final QueryOrigin origin;
+  final bool iAmSeeker;
+
+  /// "3 Sept" — the web's wording, which this deliberately matches.
+  static String _onDate(DateTime at) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sept',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${at.day} ${months[at.month - 1]}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final who = iAmSeeker ? 'You asked' : 'They asked';
+    final about =
+        origin.serviceName == null ? '' : ' about ${origin.serviceName}';
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Expanded(child: Divider(color: A91.border)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            '$who for a call$about on ${_onDate(origin.askedAt)}',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: A91.faint, fontSize: 11.5),
+          ),
+        ),
+        const Expanded(child: Divider(color: A91.border)),
+      ],
     );
   }
 }

@@ -7,12 +7,14 @@ import 'data/models/demand.dart';
 import 'data/repositories/me_repository.dart';
 import 'data/models/alerts.dart';
 import 'data/models/listing.dart';
+import 'data/models/query.dart';
 import 'data/models/reference.dart';
 import 'data/models/space.dart';
 import 'data/models/thread.dart';
 import 'data/repositories/alerts_repository.dart';
 import 'data/repositories/listing_repository.dart';
 import 'data/repositories/reference_repository.dart';
+import 'data/repositories/queries_repository.dart';
 import 'data/repositories/spaces_repository.dart';
 import 'data/repositories/students_repository.dart';
 import 'data/repositories/threads_repository.dart';
@@ -72,6 +74,15 @@ final myListingProvider = FutureProvider<Listing?>((ref) async {
   ref.watch(authStateProvider);
   return ref.watch(listingRepositoryProvider).mine();
 });
+
+final queriesRepositoryProvider = Provider<QueriesRepository>(
+  (ref) => QueriesRepository(ref.watch(apiClientProvider)),
+);
+
+/// Every lead the caller is party to, newest first.
+final queriesProvider = FutureProvider<List<Query>>(
+  (ref) => ref.watch(queriesRepositoryProvider).mine(),
+);
 
 final spacesRepositoryProvider = Provider<SpacesRepository>(
   (ref) => SpacesRepository(ref.watch(apiClientProvider)),

@@ -73,6 +73,14 @@ export class QueryDto {
     description: "The conversation this query produced, once one exists.",
   })
   enquiryId!: string | null;
+
+  @ApiProperty({
+    description:
+      "Whether the caller has looked at this one. mark_query_read() has existed since phase3h " +
+      "and nothing ever called it, because no field here said there was anything to mark — so " +
+      "a coach had a read column that never went true and no badge that could have used it.",
+  })
+  unread!: boolean;
 }
 
 export class RaiseQueryDto {

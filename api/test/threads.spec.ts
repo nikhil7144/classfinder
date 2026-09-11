@@ -104,7 +104,7 @@ describe("/api/v1/threads", () => {
   /** A chainable PostgREST query stub that resolves to `result`. */
   const query = (result: unknown) => {
     const chain: Record<string, unknown> = {};
-    for (const method of ["select", "eq", "order", "limit", "lt", "insert"]) {
+    for (const method of ["select", "eq", "order", "limit", "lt", "insert", "in", "not"]) {
       chain[method] = jest.fn(() => chain);
     }
     chain.single = jest.fn(async () => result);
@@ -121,6 +121,86 @@ describe("/api/v1/threads", () => {
     expect(res.body[0].messageCount).toBe(4);
     // No arguments: the function resolves auth.uid() itself.
     expect(rpc).toHaveBeenCalledWith("my_threads");
+  });
+
+  describe("where a conversation came from", () => {
+    // ThreadPane reads enquiries.query_id from the table, per thread, to say
+    // "They asked for a call about Cricket on 7 Sep". A mobile client cannot
+    // read tables, so the service does it — once for the whole inbox.
+    const enquiryRow = { ...threadRow, kind: "enquiry", thread_id: THREAD };
+
+    it("attaches the origin to a thread that began as a request for a call", async () => {
+      rpc.mockResolvedValue({ data: [enquiryRow], error: null });
+      from.mockReturnValue(
+        query({
+          data: [
+            {
+              id: THREAD,
+              query_id: "99999999-9999-4999-8999-999999999999",
+              queries: {
+                created_at: "2026-09-07T10:00:00.000Z",
+                service_category_master: { name: "Cricket" },
+              },
+            },
+          ],
+          error: null,
+        }),
+      );
+
+      const res = await auth(request(app.getHttpServer()).get("/api/v1/threads")).expect(200);
+
+      expect(res.body[0].origin).toEqual({
+        queryId: "99999999-9999-4999-8999-999999999999",
+        serviceName: "Cricket",
+        askedAt: "2026-09-07T10:00:00.000Z",
+      });
+    });
+
+    it("is null on a thread that did not", async () => {
+      rpc.mockResolvedValue({ data: [enquiryRow], error: null });
+      from.mockReturnValue(query({ data: [], error: null }));
+
+      const res = await auth(request(app.getHttpServer()).get("/api/v1/threads")).expect(200);
+      expect(res.body[0].origin).toBeNull();
+    });
+
+    it("does not ask at all when every thread is a group", async () => {
+      // A group pitch cannot come from a query, so the extra round trip is
+      // skipped rather than made and discarded.
+      rpc.mockResolvedValue({ data: [threadRow], error: null });
+
+      const res = await auth(request(app.getHttpServer()).get("/api/v1/threads")).expect(200);
+
+      expect(res.body[0].origin).toBeNull();
+      expect(from).not.toHaveBeenCalled();
+    });
+
+    it("still renders the inbox when the origin lookup fails", async () => {
+      // One missing context line is worth less than the whole inbox.
+      rpc.mockResolvedValue({ data: [enquiryRow], error: null });
+      from.mockReturnValue(query({ data: null, error: { message: "boom" } }));
+
+      const res = await auth(request(app.getHttpServer()).get("/api/v1/threads")).expect(200);
+
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].origin).toBeNull();
+    });
+
+    it("asks once for an inbox full of enquiries, not once each", async () => {
+      rpc.mockResolvedValue({
+        data: [
+          enquiryRow,
+          { ...enquiryRow, thread_id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee" },
+          { ...enquiryRow, thread_id: "ffffffff-ffff-4fff-8fff-ffffffffffff" },
+        ],
+        error: null,
+      });
+      from.mockReturnValue(query({ data: [], error: null }));
+
+      await auth(request(app.getHttpServer()).get("/api/v1/threads")).expect(200);
+
+      expect(from).toHaveBeenCalledTimes(1);
+    });
   });
 
   it("refuses the inbox without a token", async () => {

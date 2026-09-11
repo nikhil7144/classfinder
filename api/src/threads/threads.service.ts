@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { Caller } from "../auth/current-user.decorator";
 import { SupabaseService } from "../supabase/supabase.service";
 import { MessageDto, MessagesQueryDto } from "./dto/message.dto";
-import { ThreadDto } from "./dto/thread.dto";
+import { QueryOriginDto, ThreadDto } from "./dto/thread.dto";
 
 /** A row exactly as my_threads() returns it. */
 export type ThreadRow = {
@@ -65,7 +65,20 @@ export type ThreadKind = keyof typeof SURFACE;
 
 const count = (value: unknown): number => Number(value ?? 0);
 
-export const toThread = (row: ThreadRow): ThreadDto => ({
+/** enquiries joined to the query that produced them, as PostgREST returns it. */
+type OriginRow = {
+  id: string;
+  query_id: string | null;
+  queries: {
+    created_at: string;
+    service_category_master: { name: string | null } | null;
+  } | null;
+};
+
+export const toThread = (
+  row: ThreadRow,
+  origins: Map<string, QueryOriginDto> = new Map(),
+): ThreadDto => ({
   kind: row.kind,
   threadId: row.thread_id,
   groupId: row.group_id,
@@ -83,6 +96,7 @@ export const toThread = (row: ThreadRow): ThreadDto => ({
   messageCount: count(row.message_count),
   unread: Boolean(row.unread),
   iAmSeeker: Boolean(row.i_am_seeker),
+  origin: origins.get(row.thread_id) ?? null,
 });
 
 export const toMessage = (row: MessageRow, kind: ThreadKind): MessageDto => ({
@@ -111,7 +125,52 @@ export class ThreadsService {
     const { data, error } = await this.supabase.asUser(caller.accessToken).rpc("my_threads");
 
     if (error) throw new InternalServerErrorException(error.message);
-    return ((data as ThreadRow[]) ?? []).map(toThread);
+
+    const rows = (data as ThreadRow[]) ?? [];
+    const origins = await this.origins(caller, rows);
+    return rows.map((row) => toThread(row, origins));
+  }
+
+  /**
+   * Which of these conversations began as a request for a call.
+   *
+   * One query for the whole inbox rather than one per thread. ThreadPane does
+   * this read itself, per thread, straight from the table — which a mobile
+   * client is not allowed to do, and which is why it lands here.
+   *
+   * It is deliberately not part of my_threads(). Changing that function's
+   * return columns needs a drop and recreate, and that is a live error window
+   * for every inbox open at the time. See phase3q.
+   *
+   * Failure is swallowed: an inbox that renders without one context line is
+   * worth more than an inbox that does not render.
+   */
+  private async origins(
+    caller: Caller,
+    rows: ThreadRow[],
+  ): Promise<Map<string, QueryOriginDto>> {
+    const ids = rows.filter((r) => r.kind === "enquiry").map((r) => r.thread_id);
+    if (ids.length === 0) return new Map();
+
+    const { data, error } = await this.supabase
+      .asUser(caller.accessToken)
+      .from("enquiries")
+      .select("id, query_id, queries(created_at, service_category_master(name))")
+      .in("id", ids)
+      .not("query_id", "is", null);
+
+    if (error) return new Map();
+
+    const origins = new Map<string, QueryOriginDto>();
+    for (const row of (data as unknown as OriginRow[]) ?? []) {
+      if (!row.query_id || !row.queries) continue;
+      origins.set(row.id, {
+        queryId: row.query_id,
+        serviceName: row.queries.service_category_master?.name ?? null,
+        askedAt: row.queries.created_at,
+      });
+    }
+    return origins;
   }
 
   /**

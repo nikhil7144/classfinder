@@ -342,7 +342,7 @@ would encode a shape that does not fit:
 | `/account/profile` | `screens/listing/` |
 | `/dashboard/space` | `screens/space/` |
 | `/events`, `/events/new`, `/events/[id]/edit` | `screens/events/` *(not built)* |
-| `/dashboard/queries` | `screens/queries/` *(not built)* |
+| `/dashboard/queries` | `screens/queries/` |
 | `/admin/*` | never — web only |
 
 Keep this table current. It is the answer to "where is the Flutter version of

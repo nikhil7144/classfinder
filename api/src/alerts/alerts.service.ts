@@ -15,6 +15,7 @@ export const toAlerts = (row: AlertsJson): AlertsDto => ({
   pendingApproaches: count(row.pending_approaches),
   unreadThreads: count(row.unread_threads),
   unansweredEnquiries: count(row.unanswered_enquiries),
+  unreadQueries: count(row.unread_queries),
   needsYou: count(row.needs_you),
 });
 

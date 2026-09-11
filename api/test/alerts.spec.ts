@@ -18,6 +18,7 @@ const alertsJson = {
   pending_approaches: "3",
   unread_threads: "4",
   unanswered_enquiries: "1",
+  unread_queries: "2",
   needs_you: "5",
 };
 
@@ -29,6 +30,7 @@ describe("alerts mapping", () => {
     expect(a.pendingApproaches).toBe(3);
     expect(a.unreadThreads).toBe(4);
     expect(a.unansweredEnquiries).toBe(1);
+    expect(a.unreadQueries).toBe(2);
     expect(a.needsYou).toBe(5);
     expect(typeof a.needsYou).toBe("number");
   });
@@ -44,6 +46,7 @@ describe("alerts mapping", () => {
       pendingApproaches: 0,
       unreadThreads: 0,
       unansweredEnquiries: 0,
+      unreadQueries: 0,
       needsYou: 0,
     });
   });

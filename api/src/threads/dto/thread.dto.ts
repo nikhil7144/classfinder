@@ -15,6 +15,18 @@ export const THREAD_KINDS = ["group", "enquiry"] as const;
  * count; opening a thread is a separate read, and new messages arrive over
  * Realtime rather than by polling this.
  */
+/** Where a conversation came from, when it came from a request for a call. */
+export class QueryOriginDto {
+  @ApiProperty({ format: "uuid" })
+  queryId!: string;
+
+  @ApiProperty({ type: String, nullable: true, description: "What they asked about." })
+  serviceName!: string | null;
+
+  @ApiProperty({ format: "date-time", description: "When they asked, not when the coach replied." })
+  askedAt!: string;
+}
+
 export class ThreadDto {
   @ApiProperty({
     enum: THREAD_KINDS,
@@ -83,4 +95,14 @@ export class ThreadDto {
 
   @ApiProperty({ description: "Which side of this conversation the caller is on." })
   iAmSeeker!: boolean;
+
+  @ApiProperty({
+    type: () => QueryOriginDto,
+    nullable: true,
+    description:
+      "Set when this conversation began with a request for a call. A message from somebody you " +
+      "never wrote to is what makes contact feel unsolicited, so the parent is told which of " +
+      "their own requests produced it. Null for every other thread.",
+  })
+  origin!: QueryOriginDto | null;
 }

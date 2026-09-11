@@ -2312,6 +2312,10 @@
             "type": "number",
             "description": "Enquiries a coach has not answered."
           },
+          "unreadQueries": {
+            "type": "number",
+            "description": "Parents who asked to be rung and have not been looked at. Zero for a parent: their own request producing an answer arrives as a thread, which unreadThreads already counts. Clears when the tab is opened, or when the lead moves off 'new' — a coach who has rung somebody has plainly seen it."
+          },
           "needsYou": {
             "type": "number",
             "description": "Unread notifications of the kinds that want an action. The bell number, and not the sum of the counters above."
@@ -2324,6 +2328,7 @@
           "pendingApproaches",
           "unreadThreads",
           "unansweredEnquiries",
+          "unreadQueries",
           "needsYou"
         ]
       },
@@ -4569,6 +4574,10 @@
             "nullable": true,
             "format": "uuid",
             "description": "The conversation this query produced, once one exists."
+          },
+          "unread": {
+            "type": "boolean",
+            "description": "Whether the caller has looked at this one. mark_query_read() has existed since phase3h and nothing ever called it, because no field here said there was anything to mark — so a coach had a read column that never went true and no badge that could have used it."
           }
         },
         "required": [
@@ -4585,7 +4594,8 @@
           "callbackAt",
           "createdAt",
           "respondedAt",
-          "enquiryId"
+          "enquiryId",
+          "unread"
         ]
       },
       "RaiseQueryDto": {
@@ -5410,6 +5420,30 @@
           "suggestions"
         ]
       },
+      "QueryOriginDto": {
+        "type": "object",
+        "properties": {
+          "queryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "serviceName": {
+            "type": "string",
+            "nullable": true,
+            "description": "What they asked about."
+          },
+          "askedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When they asked, not when the coach replied."
+          }
+        },
+        "required": [
+          "queryId",
+          "serviceName",
+          "askedAt"
+        ]
+      },
       "ThreadDto": {
         "type": "object",
         "properties": {
@@ -5496,6 +5530,16 @@
           "iAmSeeker": {
             "type": "boolean",
             "description": "Which side of this conversation the caller is on."
+          },
+          "origin": {
+            "nullable": true,
+            "description": "Set when this conversation began with a request for a call. A message from somebody you never wrote to is what makes contact feel unsolicited, so the parent is told which of their own requests produced it. Null for every other thread.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QueryOriginDto"
+              }
+            ]
           }
         },
         "required": [
@@ -5515,7 +5559,8 @@
           "lastSenderId",
           "messageCount",
           "unread",
-          "iAmSeeker"
+          "iAmSeeker",
+          "origin"
         ]
       },
       "MessageDto": {

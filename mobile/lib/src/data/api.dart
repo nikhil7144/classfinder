@@ -39,6 +39,9 @@ class ApiClient {
   Future<dynamic> put(String path, {Object? body}) =>
       _send(() => _dio.put(path, data: body, options: _auth()));
 
+  Future<dynamic> patch(String path, {Object? body}) =>
+      _send(() => _dio.patch(path, data: body, options: _auth()));
+
   Future<dynamic> delete(String path) =>
       _send(() => _dio.delete(path, options: _auth()));
 

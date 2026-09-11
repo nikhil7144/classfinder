@@ -21,6 +21,8 @@ type Row = {
   callback_at: string | null;
   created_at: string;
   responded_at: string | null;
+  seeker_read_at: string | null;
+  provider_read_at: string | null;
   providers?: { display_name: string | null } | null;
   service_category_master?: { name: string | null } | null;
   enquiries?: { id: string }[] | null;
@@ -34,10 +36,18 @@ type Row = {
 // above is the hand-written truth, and the tests exercise the mapping.
 const COLUMNS =
   "id, provider_id, seeker_id, contact_name, contact_phone, service_category_id, details, " +
-  "status, callback_at, created_at, responded_at, " +
+  "status, callback_at, created_at, responded_at, seeker_read_at, provider_read_at, " +
   "providers(display_name), service_category_master(name), enquiries(id)";
 
-const toDto = (r: Row): QueryDto => ({
+/**
+ * The row as it reads to whoever asked.
+ *
+ * `unread` is the only field that depends on the caller: the two sides have
+ * their own read column, and one read serves both. Deriving it from seeker_id
+ * rather than asking who is calling keeps this a pure function of the row plus
+ * an id.
+ */
+const toDto = (r: Row, callerId: string): QueryDto => ({
   id: r.id,
   providerId: r.provider_id,
   providerName: r.providers?.display_name ?? null,
@@ -52,6 +62,7 @@ const toDto = (r: Row): QueryDto => ({
   createdAt: r.created_at,
   respondedAt: r.responded_at,
   enquiryId: r.enquiries?.[0]?.id ?? null,
+  unread: r.seeker_id === callerId ? !r.seeker_read_at : !r.provider_read_at,
 });
 
 @Injectable()
@@ -76,7 +87,7 @@ export class QueriesService {
 
     const { data, error } = await q;
     if (error) throw new InternalServerErrorException(error.message);
-    return ((data as unknown as Row[]) ?? []).map(toDto);
+    return ((data as unknown as Row[]) ?? []).map((r) => toDto(r, caller.id));
   }
 
   /**
@@ -116,7 +127,7 @@ export class QueriesService {
       throw new InternalServerErrorException(error.message);
     }
 
-    return toDto(data as unknown as Row);
+    return toDto(data as unknown as Row, caller.id);
   }
 
   /** The coach moves the lead along. Ownership is checked inside the function. */
@@ -131,7 +142,7 @@ export class QueriesService {
     if (error) throw new ForbiddenException(error.message);
 
     const { data } = await db.from("queries").select(COLUMNS).eq("id", id).single();
-    return toDto(data as unknown as Row);
+    return toDto(data as unknown as Row, caller.id);
   }
 
   /**

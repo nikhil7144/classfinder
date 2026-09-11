@@ -36,6 +36,11 @@ dependencies:
   # bytes go straight to Storage from there — see ListingRepository.
   image_picker: ^1.1.2
 
+  # Dialling a parent who asked to be rung, and opening a Space post's video
+  # on YouTube. A "parents who want a call" screen that cannot place the call
+  # is not the feature.
+  url_launcher: ^6.3.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

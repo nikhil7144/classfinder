@@ -4,11 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers.dart';
 import '../../theme/theme.dart';
 import '../listing/listing_screen.dart';
+import '../queries/queries_screen.dart';
 import '../space/space_screen.dart';
 import '../students/students_screen.dart';
 import '../threads/threads_screen.dart';
 
-/// The four places a coach lives, behind one bar.
+/// The five places a coach lives, behind one bar.
 ///
 /// An IndexedStack rather than swapping the body, so the demand feed keeps its
 /// scroll position while somebody reads a message and comes back. Detail
@@ -28,7 +29,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   Widget build(BuildContext context) {
     // A badge is decoration on a number that may not have loaded. No count is
     // better than a wrong one, so a failure shows nothing rather than zero.
-    final unread = ref.watch(alertsProvider).value?.unreadThreads ?? 0;
+    final alerts = ref.watch(alertsProvider).value;
+    final unread = alerts?.unreadThreads ?? 0;
+    final waiting = alerts?.unreadQueries ?? 0;
 
     // A coach with no listing, or one still waiting, has something to do here.
     // A dot rather than a number: there is only ever one listing.
@@ -40,6 +43,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         index: _tab,
         children: const [
           StudentsScreen(),
+          QueriesScreen(),
           ThreadsScreen(),
           SpaceScreen(),
           ListingScreen(),
@@ -49,8 +53,12 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         selectedIndex: _tab,
         onDestinationSelected: (i) {
           setState(() => _tab = i);
-          // Opening the inbox is the moment its numbers are most likely stale.
+          // Opening a list is the moment its numbers are most likely stale.
           if (i == 1) {
+            ref.invalidate(queriesProvider);
+            ref.invalidate(alertsProvider);
+          }
+          if (i == 2) {
             ref.invalidate(inboxProvider);
             ref.invalidate(alertsProvider);
           }
@@ -62,6 +70,20 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             icon: Icon(Icons.people_outline),
             selectedIcon: Icon(Icons.people),
             label: 'Students',
+          ),
+          NavigationDestination(
+            // Before Messages on purpose, and the web says why: a parent who
+            // left a number is waiting on a call, not on a reply, and that is
+            // the more perishable of the two.
+            icon: Badge(
+              isLabelVisible: waiting > 0,
+              label: Text('$waiting'),
+              backgroundColor: A91.grad1,
+              textColor: A91.onAccent,
+              child: const Icon(Icons.call_outlined),
+            ),
+            selectedIcon: const Icon(Icons.call),
+            label: 'Queries',
           ),
           NavigationDestination(
             icon: Badge(

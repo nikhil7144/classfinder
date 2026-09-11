@@ -33,6 +33,15 @@ export class AlertsDto {
 
   @ApiProperty({
     description:
+      "Parents who asked to be rung and have not been looked at. Zero for a parent: their own " +
+      "request producing an answer arrives as a thread, which unreadThreads already counts. " +
+      "Clears when the tab is opened, or when the lead moves off 'new' — a coach who has rung " +
+      "somebody has plainly seen it.",
+  })
+  unreadQueries!: number;
+
+  @ApiProperty({
+    description:
       "Unread notifications of the kinds that want an action. The bell number, and not the sum " +
       "of the counters above.",
   })
