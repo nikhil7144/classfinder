@@ -77,6 +77,9 @@ export default function Footer() {
               <Link href="/signup/provider" className={footerLinkClass}>
                 List your classes
               </Link>
+              <Link href="/signup/organiser" className={footerLinkClass}>
+                Run events
+              </Link>
             </div>
           </div>
 

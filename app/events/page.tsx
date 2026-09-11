@@ -62,6 +62,17 @@ export default async function EventsPage({ searchParams }: Props) {
           you only need an account to enter one.
         </p>
 
+        {/* Always, not only when the city is empty. This used to live in the
+            no-events branch, so the single route into the organiser signup
+            disappeared the moment somebody published one. */}
+        <p className="mt-4 text-sm text-faint">
+          Run events?{" "}
+          <Link href="/signup/organiser" className="text-gold underline">
+            List your company
+          </Link>{" "}
+          and publish your own.
+        </p>
+
         {cities.length > 1 && (
           <nav className="mt-6 flex flex-wrap gap-2" aria-label="City">
             {cities.map((c) => (
@@ -96,8 +107,7 @@ export default async function EventsPage({ searchParams }: Props) {
               Nothing is on in {selected.name} yet.
             </p>
             <p className="mt-2 text-sm text-faint">
-              Run events? <Link href="/signup/organiser" className="text-gold underline">List your company</Link> and
-              publish your first one.
+              Be the first to put something on.
             </p>
           </div>
         ) : (

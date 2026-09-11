@@ -90,9 +90,32 @@ const FOR_COACHES: Capability[] = [
     title: "Run your own Space",
     body: "Post photos, videos and updates. Parents read it while they are deciding.",
   },
+];
+
+/**
+ * Event companies are a third audience, not a coach capability.
+ *
+ * "Run events" sat in the coaches list, and the only link to the organiser
+ * signup was in the events page's empty state — so it vanished as soon as a
+ * city had one event. An organiser has their own role, their own signup, their
+ * own profile and their own dashboard; they just had no way in.
+ */
+const FOR_ORGANISERS: Capability[] = [
   {
-    title: "Run events",
-    body: "Create tournaments and workshops. Families enter through Aspire91.",
+    title: "Put your event in front of families",
+    body: "Tournaments, workshops and showcases, listed in the cities you run them in.",
+  },
+  {
+    title: "Take entries here",
+    body: "Age bands, team sizes and fees per category. Families enter through Aspire91.",
+  },
+  {
+    title: "Work the register",
+    body: "Who has entered, who has paid, who withdrew — on your phone at the venue.",
+  },
+  {
+    title: "Or send them to your own site",
+    body: "Announce it here and take bookings wherever you already do.",
   },
 ];
 
@@ -114,6 +137,14 @@ export default function HomeAudiences() {
         intro="Reach parents near you who are already looking for what you teach."
         items={FOR_COACHES}
         cta={{ href: "/for-coaches", label: "See how it works for coaches" }}
+      />
+
+      <AudienceSection
+        eyebrow="For event companies"
+        heading="What you can run"
+        intro="You do not have to teach to use Aspire91. If you put on competitions, workshops or camps, families can find and enter them here."
+        items={FOR_ORGANISERS}
+        cta={{ href: "/signup/organiser", label: "List your company" }}
       />
     </>
   );

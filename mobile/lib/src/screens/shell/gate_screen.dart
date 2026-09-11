@@ -53,6 +53,15 @@ class GateScreen extends ConsumerWidget {
 }
 
 /// The wrong app for this account.
+///
+/// Three ways to be in the wrong place, and they are not the same message. A
+/// family in the coach app has another app to install; an organiser has a
+/// website, because running events is a desk job this app deliberately does
+/// not do; an admin has neither.
+///
+/// Naming the actual role matters. Telling an organiser they are "signed in as
+/// a family" is the kind of wrong that makes somebody think the account is
+/// broken rather than the app is the wrong one.
 class _WrongApp extends StatelessWidget {
   const _WrongApp({required this.role});
 
@@ -60,14 +69,33 @@ class _WrongApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final coachApp = appFlavor.isProvider;
+    if (role == Role.organiser) {
+      return const _Message(
+        eyebrow: 'Not in the app',
+        title: 'Events are run on the website',
+        body: 'You are signed in as an event organiser. Dates, venues, fee '
+            'tiers and the register are a desk job, so they live at '
+            'www.aspire91.com — sign in there with this same email.',
+      );
+    }
+
+    if (role == Role.admin) {
+      return const _Message(
+        eyebrow: 'Not in the app',
+        title: 'Admin is on the website',
+        body: 'Moderation and approvals want a big screen and a keyboard. '
+            'Sign in at www.aspire91.com.',
+      );
+    }
 
     return _Message(
       eyebrow: 'Wrong app',
-      title: coachApp ? 'This is the coaches app' : 'This is the families app',
-      body: coachApp
+      title: appFlavor.isProvider
+          ? 'This is the coaches app'
+          : 'This is the families app',
+      body: appFlavor.isProvider
           ? 'You are signed in as a family. Install Aspire91 to find classes — '
-              'this app is for coaches, academies and event organisers.'
+              'this app is for coaches and academies.'
           : 'You are signed in as a coach. Install Aspire91 for Coaches to see '
               'the families looking for you.',
     );

@@ -1,7 +1,10 @@
 # Aspire91 Mobile — developer handover
 
 Flutter, Android + iOS, **one codebase, two flavors**: `seeker` (parents) and
-`provider` (coaches, academies, event organisers).
+`provider` (coaches and academies).
+
+Event organisers are deliberately **not** in either app — they work on the
+website. See `../MOBILE-PLAN.md` §1.
 
 Read `../MOBILE-PLAN.md` first — it explains why two flavors, what every one of
 the 50 web screens becomes, and which backend work has to land before the rest
@@ -28,7 +31,7 @@ What runs today, on the provider flavor:
 | Events — create, publish, categories | `screens/events/` | built |
 | Register — entries, payments, withdrawals | `screens/events/` | built |
 
-`flutter analyze` is clean and `flutter test` passes (73 tests). It has **never
+`flutter analyze` is clean and `flutter test` passes (74 tests). It has **never
 been built into an APK** — the machine it was written on has no Android SDK, so
 `flutter build` could not run. `test/smoke_test.dart` imports both entry points
 specifically so the whole tree is compiled by `flutter test`; that is as close
@@ -162,7 +165,7 @@ mobile/
         repositories/         one per surface; pure Dart, no Riverpod
       screens/                one folder per screen
       widgets/                shared: PrimaryButton, states, branding
-  test/                       73 tests, no device needed
+  test/                       74 tests, no device needed
 ```
 
 `lib/src/providers.dart` is the seam. Below it — `lib/src/data` — is pure Dart
@@ -243,7 +246,7 @@ partial-save or autosave path to `ListingScreen`.
 ## 6. Tests
 
 ```bash
-flutter test          # 73 tests, no device or SDK needed
+flutter test          # 74 tests, no device or SDK needed
 ```
 
 - `test/listing_rules_test.dart` pins the completeness rules against the web's

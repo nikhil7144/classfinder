@@ -45,11 +45,11 @@ class _ChooseRoleScreenState extends ConsumerState<ChooseRoleScreen> {
             body:
                 'A coach, a tutor, or an academy. Families near you will be able to find you.',
           ),
-          _Option(
-            role: 'organiser',
-            title: 'I run events',
-            body: 'Tournaments, workshops and showcases. No teaching listing.',
-          ),
+          // 'I run events' used to be here. Choosing a role is one way —
+          // switch_role() refuses once a profile is complete — so offering
+          // organiser in an app that does not serve organisers handed somebody
+          // an account they could not undo and could not use. Organisers sign
+          // up on the website.
         ]
       : const [
           _Option(

@@ -27,8 +27,19 @@ void main() {
     // The rule the whole packaging rests on: one account is one role, so an
     // account in the wrong app is told plainly rather than offered a switch.
     expect(Flavor.seeker.roles, {'seeker'});
-    expect(Flavor.provider.roles, containsAll({'provider', 'organiser'}));
+    expect(Flavor.provider.roles, {'provider'});
     expect(Flavor.seeker.roles.intersection(Flavor.provider.roles), isEmpty);
+  });
+
+  test('no flavor admits an organiser or an admin', () {
+    // Organiser was in the provider flavor and was taken out: it shares none
+    // of what the coach app does, so four of five tabs were empty and the
+    // fifth offered a coach listing an organiser must not create. Both roles
+    // work on the website.
+    for (final flavor in Flavor.values) {
+      expect(flavor.roles, isNot(contains('organiser')), reason: flavor.name);
+      expect(flavor.roles, isNot(contains('admin')), reason: flavor.name);
+    }
   });
 
   testWidgets('the design system widgets render under the app theme',

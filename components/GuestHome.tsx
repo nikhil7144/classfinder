@@ -65,6 +65,12 @@ export default function GuestHome({ cities, selectedCity, posts }: Props) {
           <Link href="/signup/provider" className="cf-btn-ghost w-full sm:w-auto">
             I teach or coach
           </Link>
+          {/* Organisers were reachable from one link, in the events page's
+              empty state — so it disappeared the moment a city had an event.
+              A third audience needs a third door. */}
+          <Link href="/signup/organiser" className="cf-btn-ghost w-full sm:w-auto">
+            I run events
+          </Link>
         </div>
 
         <p className="mt-5 text-sm text-faint">

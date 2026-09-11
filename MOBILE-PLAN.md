@@ -64,13 +64,27 @@ daily use that a dedicated listing earns its keep.
 and Uber all split their partner apps too. All of them did so *after* supply
 density, not before.
 
-### The organiser is not a third app
+### The organiser is not in the app at all
 
-Organiser is a fourth role in `profiles`, but its job — create an event,
-manage categories, read the register, record payments — is a subset of what a
-provider does with events. It rides inside the **provider** flavor as a role,
-gated on `me.role`. A third flavor would be three release trains for a role
-with no users yet.
+**Revised.** This section originally said organiser rides inside the provider
+flavor as a role, on the grounds that its job is a subset of what a coach does
+with events. Building the coach app showed that to be wrong.
+
+An organiser shares none of what the app actually does. They have no listing,
+no demand feed, no queries and no Space — four of the five tabs are empty for
+them, and the fifth would offer them a coach listing they must not create
+(`save_provider_profile()` does not check the caller's role, so it would
+write a `providers` row for an organiser account).
+
+Worse, the role chooser offered "I run events", and choosing a role is one
+way: `switch_role()` refuses once a profile is complete. Somebody picking it in
+the app got an account they could not undo and could not use.
+
+So `Flavor.provider.roles` is `{'provider'}` and the gate points an organiser
+at the website, naming their actual role rather than calling them a family.
+Running events is a desk job — dates, venues, fee tiers, a register — and it
+already works on the web. A third flavor remains the wrong answer for the same
+reason it always was.
 
 ---
 
