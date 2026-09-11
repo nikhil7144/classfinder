@@ -41,6 +41,11 @@ dependencies:
   # is not the feature.
   url_launcher: ^6.3.1
 
+  # "Use my location", on the profile and on search. Optional in both places —
+  # the area's centroid is the fallback and the web says so in as many words —
+  # so nothing breaks if a parent refuses the permission.
+  geolocator: ^13.0.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

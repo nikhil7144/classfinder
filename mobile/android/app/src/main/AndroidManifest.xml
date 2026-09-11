@@ -4,6 +4,12 @@
          it fails on every screen at once. -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
+    <!-- "Use my location" on the profile and on search. Coarse only: results
+         are sorted from a neighbourhood, not a doorstep, so fine location
+         would be precision nobody needs and a permission prompt that asks for
+         more than the feature does. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
     <application
         android:label="@string/app_name"
         android:name="${applicationName}"

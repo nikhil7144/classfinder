@@ -6,7 +6,9 @@ import 'screens/auth/sign_in_screen.dart';
 import 'data/models/demand.dart';
 import 'screens/students/demand_detail_screen.dart';
 import 'data/models/thread.dart';
+import 'flavor.dart';
 import 'screens/shell/home_shell.dart';
+import 'screens/shell/seeker_shell.dart';
 import 'screens/threads/thread_screen.dart';
 import 'screens/shell/gate_screen.dart';
 import 'providers.dart';
@@ -41,7 +43,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // belongs to this flavor.
       GoRoute(
         path: '/',
-        builder: (_, __) => const GateScreen(child: HomeShell()),
+        builder: (_, __) => GateScreen(child: _shell()),
         routes: [
           // The row travels as extra rather than being refetched by id: the
           // list already holds it, and there is no deep link into this screen
@@ -54,7 +56,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) {
               final demand = state.extra;
               if (demand is! Demand) {
-                return const GateScreen(child: HomeShell());
+                return GateScreen(child: _shell());
               }
               return DemandDetailScreen(demand: demand);
             },
@@ -64,7 +66,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) {
               final thread = state.extra;
               if (thread is! Thread) {
-                return const GateScreen(child: HomeShell());
+                return GateScreen(child: _shell());
               }
               return ThreadScreen(thread: thread);
             },
@@ -74,6 +76,15 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+/// Which app this is.
+///
+/// The two flavors share auth, the gate and the router, and diverge here. A
+/// seeker in the coach shell would see five tabs built for somebody else — the
+/// same mistake organisers were getting until the flavor stopped admitting
+/// them.
+Widget _shell() =>
+    appFlavor.isProvider ? const HomeShell() : const SeekerShell();
 
 /// Turns the auth stream into something GoRouter will listen to.
 class _AuthRefresh extends ChangeNotifier {

@@ -33,11 +33,10 @@ named beside them.
 |---|---|---|---|
 | G1 | ~~`CreateGroupDto` has no `validityDays`~~ | — | **Closed.** The creator picks the window, 1–30 days |
 | G2 | ~~`studentCount` allowed 1~~ | — | **Closed.** Floor is two: a group of one family is an enquiry |
-| G3 | Geolocation. `SeekerProfileForm` and `/search` both use `navigator.geolocation` for a lat/lng | Profile, Search | Needs a Flutter location plugin and the two platform permission strings |
+| G3 | ~~Geolocation~~ | — | **Closed.** `geolocator`, coarse only, with `data/location.dart` turning every refusal into a sentence |
 | G4 | ~~`/account/settings` unread~~ | — | **Closed.** Inventoried in §9 |
 
-`lat`/`lng` are already on `SaveSeekerProfileDto` and `search`, so G3 is a
-client-side gap only.
+Every gap found while writing this is now closed.
 
 ---
 
@@ -48,7 +47,7 @@ client-side gap only.
 | `/login`, `/signup/seeker` | `screens/auth/sign_in_screen.dart` | Supabase auth | **Built.** Email OTP. Google is not wired on mobile — README §7 |
 | `/choose-role` | `screens/auth/choose_role_screen.dart` | `PUT /me/role` | **Built.** The seeker flavor offers one option, correctly |
 | `/auth/callback` | — | — | Deep links, not a screen. README §7 |
-| `/complete-profile/seeker` | `screens/profile/` | `PUT /seekers/me` | **Not built.** See §2 |
+| `/complete-profile/seeker` | `screens/profile/` | `PUT /seekers/me` | **Built.** See §2 |
 
 ## 2. The profile — `/complete-profile/seeker`, `/account/profile`
 
@@ -218,7 +217,7 @@ Extends `MOBILE-PLAN.md` §9 for the seeker flavor. Keep both current.
 | Web route | Dart |
 |---|---|
 | `/login`, `/signup/seeker` | `screens/auth/sign_in_screen.dart` *(shared)* |
-| `/complete-profile/seeker`, `/account/profile` | `screens/profile/` *(not built)* |
+| `/complete-profile/seeker`, `/account/profile` | `screens/profile/` |
 | `/home` | `screens/home/` *(not built)* |
 | `/search` | `screens/search/` *(not built)* |
 | `/provider/[id]`, `/provider/[id]/space` | `screens/coach/` *(not built)* |
@@ -231,7 +230,9 @@ Extends `MOBILE-PLAN.md` §9 for the seeker flavor. Keep both current.
 
 Each slice is usable on its own, and each depends only on what is above it.
 
-1. **Profile** — nothing works until a parent can finish onboarding.
+1. ~~**Profile**~~ — **done.** `screens/profile/`, `seeker_rules.dart`,
+   `screens/shell/seeker_shell.dart`, and the router now picks a shell by
+   flavor.
 2. **Search + coach profile** — the first five minutes, and the reason to install.
 3. **Messages** — including the three things the coach app's version lacks.
 4. **Home** — it is mostly links to 1–3, so it is worth the least first.

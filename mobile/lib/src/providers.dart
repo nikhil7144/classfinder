@@ -11,6 +11,7 @@ import 'data/models/entry.dart';
 import 'data/models/event.dart';
 import 'data/models/query.dart';
 import 'data/models/reference.dart';
+import 'data/models/seeker.dart';
 import 'data/models/space.dart';
 import 'data/models/thread.dart';
 import 'data/repositories/alerts_repository.dart';
@@ -18,6 +19,7 @@ import 'data/repositories/listing_repository.dart';
 import 'data/repositories/reference_repository.dart';
 import 'data/repositories/events_repository.dart';
 import 'data/repositories/queries_repository.dart';
+import 'data/repositories/seeker_repository.dart';
 import 'data/repositories/spaces_repository.dart';
 import 'data/repositories/students_repository.dart';
 import 'data/repositories/threads_repository.dart';
@@ -100,6 +102,19 @@ final queriesRepositoryProvider = Provider<QueriesRepository>(
 final queriesProvider = FutureProvider<List<Query>>(
   (ref) => ref.watch(queriesRepositoryProvider).mine(),
 );
+
+final seekerRepositoryProvider = Provider<SeekerRepository>(
+  (ref) => SeekerRepository(ref.watch(apiClientProvider)),
+);
+
+/// The caller's own profile, or null if they have not started one.
+///
+/// Null is a state, not a failure — the same shape myListingProvider has on
+/// the coach side.
+final myProfileProvider = FutureProvider<SeekerProfile?>((ref) async {
+  ref.watch(authStateProvider);
+  return ref.watch(seekerRepositoryProvider).mine();
+});
 
 final spacesRepositoryProvider = Provider<SpacesRepository>(
   (ref) => SpacesRepository(ref.watch(apiClientProvider)),

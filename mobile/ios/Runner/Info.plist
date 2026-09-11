@@ -7,6 +7,8 @@
 	<!-- image_picker. iOS terminates the app rather than refusing the
 	     picker when these are missing, so they are not optional. The wording is
 	     what the system shows in the permission dialog. -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Used once, to sort coaches by how far they are from you. Skip it and we sort from the centre of your area instead.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Take a photo for your listing, so families can see who they are writing to.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
