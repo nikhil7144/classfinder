@@ -1,6 +1,17 @@
-import { Controller, Get, Query, UnauthorizedException } from "@nestjs/common";
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseEnumPipe,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger";
 import { Caller, CurrentUser } from "../auth/current-user.decorator";
+import { APPROACH_KINDS, ApproachDto, ApproachResultDto } from "./dto/approach.dto";
 import { DemandRowDto, StudentsQueryDto } from "./dto/student.dto";
 import { StudentsService } from "./students.service";
 
@@ -16,6 +27,28 @@ import { StudentsService } from "./students.service";
 @Controller({ path: "students", version: "1" })
 export class StudentsController {
   constructor(private readonly students: StudentsService) {}
+
+  @Post(":kind/:id/approach")
+  @ApiBearerAuth()
+  @ApiParam({ name: "kind", enum: APPROACH_KINDS })
+  @ApiOperation({
+    summary: "Write to a family, or to a group",
+    description:
+      "One message. A coach's first approach is always pending, by check constraint, and stays " +
+      "that way until the family answers — while it does, no second message, no name, no phone " +
+      "number. Writing to the same group twice is refused rather than duplicated.",
+  })
+  @ApiOkResponse({ type: ApproachResultDto })
+  approach(
+    @CurrentUser() caller: Caller | null,
+    @Param("kind", new ParseEnumPipe({ student: "student", group: "group" }))
+    kind: "student" | "group",
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() body: ApproachDto,
+  ): Promise<ApproachResultDto> {
+    if (!caller) throw new UnauthorizedException("Sign in first.");
+    return this.students.approach(caller, kind, id, body);
+  }
 
   @Get()
   @ApiBearerAuth()

@@ -1811,6 +1811,65 @@
         ]
       }
     },
+    "/api/v1/students/{kind}/{id}/approach": {
+      "post": {
+        "description": "One message. A coach's first approach is always pending, by check constraint, and stays that way until the family answers — while it does, no second message, no name, no phone number. Writing to the same group twice is refused rather than duplicated.",
+        "operationId": "StudentsController_approach_v1",
+        "parameters": [
+          {
+            "name": "kind",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "student",
+                "group"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproachDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApproachResultDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Write to a family, or to a group",
+        "tags": [
+          "students"
+        ]
+      }
+    },
     "/api/v1/students": {
       "get": {
         "description": "Parents who have written down a requirement, and groups of neighbours who agreed on one together, filtered to what this coach teaches and where they teach it. Untouched rows first, then nearest, then newest. Carries no name, email or phone number: a coach answers through Aspire91 and contact details arrive only if the family shares them.",
@@ -4970,6 +5029,58 @@
         },
         "required": [
           "kind"
+        ]
+      },
+      "ApproachDto": {
+        "type": "object",
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The coach's own listing. Must belong to them."
+          },
+          "message": {
+            "type": "string",
+            "minLength": 20,
+            "maxLength": 1000,
+            "description": "The pitch. Twenty characters is the database's own floor for a group request and the web's for both — a family judges a stranger on this, and three words is not enough to judge on."
+          },
+          "serviceCategoryId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Which service this is about. Ignored for a group, which already names one."
+          }
+        },
+        "required": [
+          "providerId",
+          "message"
+        ]
+      },
+      "ApproachResultDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The enquiry or the group request."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "student",
+              "group"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "Always 'pending' for a coach's first message. The family decides what follows."
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status"
         ]
       },
       "DemandRowDto": {

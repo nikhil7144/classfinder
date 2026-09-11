@@ -804,6 +804,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/students/{kind}/{id}/approach": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Write to a family, or to a group
+         * @description One message. A coach's first approach is always pending, by check constraint, and stays that way until the family answers — while it does, no second message, no name, no phone number. Writing to the same group twice is refused rather than duplicated.
+         */
+        post: operations["StudentsController_approach_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/students": {
         parameters: {
             query?: never;
@@ -1828,6 +1848,31 @@ export interface components {
             imageUrl?: string | null;
             /** @description The 11-character id only. */
             youtubeId?: string | null;
+        };
+        ApproachDto: {
+            /**
+             * Format: uuid
+             * @description The coach's own listing. Must belong to them.
+             */
+            providerId: string;
+            /** @description The pitch. Twenty characters is the database's own floor for a group request and the web's for both — a family judges a stranger on this, and three words is not enough to judge on. */
+            message: string;
+            /**
+             * Format: uuid
+             * @description Which service this is about. Ignored for a group, which already names one.
+             */
+            serviceCategoryId?: string | null;
+        };
+        ApproachResultDto: {
+            /**
+             * Format: uuid
+             * @description The enquiry or the group request.
+             */
+            id: string;
+            /** @enum {string} */
+            kind: "student" | "group";
+            /** @description Always 'pending' for a coach's first message. The family decides what follows. */
+            status: string;
         };
         DemandRowDto: {
             /** @enum {string} */
@@ -3033,6 +3078,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SpaceDto"];
+                };
+            };
+        };
+    };
+    StudentsController_approach_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "student" | "group";
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApproachDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApproachResultDto"];
                 };
             };
         };

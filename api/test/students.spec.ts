@@ -94,12 +94,14 @@ describe("GET /api/v1/students", () => {
   let app: INestApplication;
   const rpc = jest.fn();
 
+  const from = jest.fn();
   const auth = (req: request.Test) => req.set("Authorization", "Bearer good");
 
   beforeAll(async () => {
+    const client = { rpc, from };
     const supabase: Partial<SupabaseService> = {
-      anon: () => ({ rpc }) as never,
-      asUser: () => ({ rpc }) as never,
+      anon: () => client as never,
+      asUser: () => client as never,
       userFromToken: async (token: string) => (token === "good" ? { id: "user-1" } : null),
     };
 
@@ -118,7 +120,18 @@ describe("GET /api/v1/students", () => {
   });
 
   afterAll(async () => app.close());
-  beforeEach(() => rpc.mockReset());
+  beforeEach(() => {
+    rpc.mockReset();
+    from.mockReset();
+  });
+
+  const insertResult = (result: unknown) => {
+    const chain: Record<string, unknown> = {};
+    chain.insert = jest.fn(() => chain);
+    chain.select = jest.fn(() => chain);
+    chain.single = jest.fn(async () => result);
+    return chain;
+  };
 
   it("returns the coach's demand feed", async () => {
     rpc.mockResolvedValue({ data: [demandRow], error: null });
@@ -195,5 +208,81 @@ describe("GET /api/v1/students", () => {
     ).expect(200);
 
     expect(res.body).toEqual([]);
+  });
+
+  describe("POST /:kind/:id/approach", () => {
+    const TARGET = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const pitch = { providerId: PROVIDER, message: "I coach cricket in Indirapuram on Saturdays." };
+
+    it("writes a group pitch to group_requests", async () => {
+      const chain = insertResult({ data: { id: "r1", status: "pending" }, error: null });
+      from.mockReturnValue(chain);
+
+      const res = await auth(
+        request(app.getHttpServer()).post(`/api/v1/students/group/${TARGET}/approach`).send(pitch),
+      ).expect(201);
+
+      expect(from).toHaveBeenCalledWith("group_requests");
+      expect(chain.insert).toHaveBeenCalledWith({
+        group_id: TARGET,
+        provider_id: PROVIDER,
+        message: "I coach cricket in Indirapuram on Saturdays.",
+      });
+      expect(res.body.status).toBe("pending");
+    });
+
+    it("writes a cold approach to enquiries, pending and never open", async () => {
+      // The consent rule. A check constraint refuses 'open' from a provider,
+      // and this is the client-side half of the same decision.
+      const chain = insertResult({ data: { id: "e1", status: "pending" }, error: null });
+      from.mockReturnValue(chain);
+
+      await auth(
+        request(app.getHttpServer())
+          .post(`/api/v1/students/student/${TARGET}/approach`)
+          .send(pitch),
+      ).expect(201);
+
+      expect(from).toHaveBeenCalledWith("enquiries");
+      expect(chain.insert).toHaveBeenCalledWith(
+        expect.objectContaining({ initiated_by: "provider", status: "pending" }),
+      );
+    });
+
+    it("refuses a pitch too short to judge anybody on", async () => {
+      await auth(
+        request(app.getHttpServer())
+          .post(`/api/v1/students/group/${TARGET}/approach`)
+          .send({ providerId: PROVIDER, message: "hi" }),
+      ).expect(400);
+      expect(from).not.toHaveBeenCalled();
+    });
+
+    it("explains a second approach rather than reporting a unique index", async () => {
+      from.mockReturnValue(
+        insertResult({ data: null, error: { code: "23505", message: 'duplicate key value' } }),
+      );
+
+      const res = await auth(
+        request(app.getHttpServer()).post(`/api/v1/students/group/${TARGET}/approach`).send(pitch),
+      ).expect(400);
+
+      expect(res.body.message).toBe("You have already written to them.");
+    });
+
+    it("rejects a kind that is neither", async () => {
+      await auth(
+        request(app.getHttpServer()).post(`/api/v1/students/dm/${TARGET}/approach`).send(pitch),
+      ).expect(400);
+      expect(from).not.toHaveBeenCalled();
+    });
+
+    it("refuses without a token", async () => {
+      await request(app.getHttpServer())
+        .post(`/api/v1/students/group/${TARGET}/approach`)
+        .send(pitch)
+        .expect(401);
+      expect(from).not.toHaveBeenCalled();
+    });
   });
 });

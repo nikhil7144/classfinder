@@ -1,6 +1,7 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { Caller } from "../auth/current-user.decorator";
 import { SupabaseService } from "../supabase/supabase.service";
+import { ApproachDto, ApproachResultDto } from "./dto/approach.dto";
 import { DemandRowDto, StudentsQueryDto } from "./dto/student.dto";
 
 /** A row exactly as students_for_provider() returns it. */
@@ -68,6 +69,64 @@ export const toDemandRow = (row: DemandRow): DemandRowDto => ({
 @Injectable()
 export class StudentsService {
   constructor(private readonly supabase: SupabaseService) {}
+
+  /**
+   * Write to a family, or to a group of them.
+   *
+   * Two tables under one contract, as with threads: a group pitch is a
+   * group_request and a cold approach to one parent is an enquiry. A client
+   * says which kind the row was and stops caring.
+   *
+   * Nothing here enforces consent — the database does, and more reliably. An
+   * enquiry opened by a provider may only be 'pending', by check constraint,
+   * and enquiry_messages has always required an open one. So a coach gets a
+   * single message until the family answers, and this endpoint could not grant
+   * more if it tried.
+   *
+   * A second approach to the same group is refused by a unique index rather
+   * than by a lookup here, which is what makes a double tap safe.
+   */
+  async approach(
+    caller: Caller,
+    kind: "student" | "group",
+    targetId: string,
+    body: ApproachDto,
+  ): Promise<ApproachResultDto> {
+    const db = this.supabase.asUser(caller.accessToken);
+
+    const insert =
+      kind === "group"
+        ? db.from("group_requests").insert({
+            group_id: targetId,
+            provider_id: body.providerId,
+            message: body.message.trim(),
+          })
+        : db.from("enquiries").insert({
+            seeker_id: targetId,
+            provider_id: body.providerId,
+            service_category_id: body.serviceCategoryId ?? null,
+            message: body.message.trim(),
+            initiated_by: "provider",
+            status: "pending",
+          });
+
+    const { data, error } = await insert.select("id, status").single();
+
+    if (error) {
+      if (error.code === "23505") {
+        throw new BadRequestException("You have already written to them.");
+      }
+      // A policy that matched no row, or a check constraint. Both carry a
+      // message worth showing rather than a 500.
+      if (error.code?.startsWith("23") || error.code === "P0001" || error.code === "42501") {
+        throw new BadRequestException(error.message);
+      }
+      throw new InternalServerErrorException(error.message);
+    }
+
+    const row = data as { id: string; status: string };
+    return { id: row.id, kind, status: row.status };
+  }
 
   /**
    * Families and groups near this coach who want something they teach.
