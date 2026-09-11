@@ -159,12 +159,16 @@ screen. Ordered by what the seeker journey needs first.
 | M4 | Threads — `my_threads`, `group_threads`, `mark_thread_read` | Chat list, read state | Message *delivery* stays Realtime; only the list and read-state move |
 | M5 | `students_for_provider` | Provider demand feed | Provider critical path; pairs with the already-migrated `suggestions/students` |
 | M6 | Groups — `my_groups`, invites, requests, contact | Group screens | Largest surface; several definer writes stay in `db/` and get thin API wrappers |
-| M7 | Trials + enquiries | Trial flow, approaches | Definer writes stay; API exposes them |
-| M8 | Profile writes — seeker, provider, organiser | Onboarding | Write path; validate in DTOs, keep RLS underneath |
+| M7 | Trials + enquiries | Trial flow, approaches | **Done.** /enquiries (4) and /trials (4). Definer writes stayed; the API exposes them |
+| M8 | Profile writes — seeker, provider, organiser | Onboarding | **Done.** /providers/me, /organisers/me, /seekers/me. phase3r guards which role may own which row |
 | M9 | `my_alerts`, `mark_notifications_read` | Badges | Small, do it with whatever surface needs it first |
 
 M1–M4 are the minimum for a useful seeker app. M1, M2, M5 and M4 are the
 minimum for a useful provider app.
+
+**As of 2026-09-12, M6 is the only one left.** Everything else is on the API,
+and the provider app is built against it. Groups is what remains, for both
+sides.
 
 **Do not build Flutter screens against `supabase_flutter` for M1–M9 as a
 shortcut.** It would work, and it would produce exactly the second client

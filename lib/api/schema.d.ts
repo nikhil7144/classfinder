@@ -638,6 +638,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/trials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Trials arranged in one conversation
+         * @description `iProposed` and `myOutcome` are answers about the caller, so the same trial reads differently to the two people in it. A thread the caller is not in answers empty.
+         */
+        get: operations["TrialsController_forThread_v1"];
+        put?: never;
+        /**
+         * Suggest a time
+         * @description Either side may. The function decides whether they are in the thread and whether it is still live.
+         */
+        post: operations["TrialsController_propose_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/trials/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Say yes or no to a time
+         * @description The other side answers; the one who proposed it cannot confirm their own.
+         */
+        patch: operations["TrialsController_respond_v1"];
+        trace?: never;
+    };
+    "/api/v1/trials/{id}/outcome": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Record what happened
+         * @description Per side. Both parties answer separately and neither answer overwrites the other — a coach marking a no-show does not put that on the family's record.
+         */
+        patch: operations["TrialsController_setOutcome_v1"];
+        trace?: never;
+    };
     "/api/v1/providers/search": {
         parameters: {
             query?: never;
@@ -1771,6 +1835,72 @@ export interface components {
         SetPhoneSharingDto: {
             /** @description Revocable on purpose. A parent who shared a number and then thought better of it can take it back, and the contact endpoints stop answering immediately. */
             share: boolean;
+        };
+        TrialDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            scheduledAt: string;
+            durationMinutes: number;
+            /** @description A teaching place id, not a uuid. */
+            place: string | null;
+            /** @description What that place is called. */
+            placeLabel: string | null;
+            placeNote: string | null;
+            /** @description For a group, how many are coming. */
+            studentCount: number | null;
+            /** @enum {string} */
+            status: "proposed" | "confirmed" | "declined";
+            /** Format: uuid */
+            proposedBy: string;
+            /** @description Whether the caller is the one who suggested it. */
+            iProposed: boolean;
+            /** @enum {string|null} */
+            seekerOutcome: "happened" | "no_show" | "cancelled" | null;
+            /** @enum {string|null} */
+            providerOutcome: "happened" | "no_show" | "cancelled" | null;
+            /**
+             * @description Whichever of the two above belongs to the caller. Both sides record what happened separately, so neither is asked to accept the other's account of it.
+             * @enum {string|null}
+             */
+            myOutcome: "happened" | "no_show" | "cancelled" | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        ProposeTrialDto: {
+            /** @enum {string} */
+            kind: "group" | "enquiry";
+            /**
+             * Format: uuid
+             * @description The conversation this is being arranged in.
+             */
+            threadId: string;
+            /** Format: date-time */
+            scheduledAt: string;
+            /** @default 60 */
+            durationMinutes: number;
+            /** @description A teaching place id — 'own_centre', 'student_home', 'online'. */
+            place?: string | null;
+            /** @description Directions, a landmark, a gate number. */
+            placeNote?: string | null;
+            /** @description For a group thread: how many children are coming. */
+            studentCount?: number | null;
+        };
+        RespondToTrialDto: {
+            /** @enum {string} */
+            kind: "group" | "enquiry";
+            /** Format: uuid */
+            threadId: string;
+            /** @enum {string} */
+            status: "confirmed" | "declined";
+        };
+        SetTrialOutcomeDto: {
+            /** @enum {string} */
+            kind: "group" | "enquiry";
+            /** Format: uuid */
+            threadId: string;
+            /** @enum {string} */
+            outcome: "happened" | "no_show" | "cancelled";
         };
         ProviderSearchResultDto: {
             /** Format: uuid */
@@ -3104,6 +3234,101 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ThreadDto"];
+                };
+            };
+        };
+    };
+    TrialsController_forThread_v1: {
+        parameters: {
+            query: {
+                kind: "group" | "enquiry";
+                threadId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrialDto"][];
+                };
+            };
+        };
+    };
+    TrialsController_propose_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposeTrialDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrialDto"];
+                };
+            };
+        };
+    };
+    TrialsController_respond_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RespondToTrialDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrialDto"];
+                };
+            };
+        };
+    };
+    TrialsController_setOutcome_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetTrialOutcomeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrialDto"];
                 };
             };
         };

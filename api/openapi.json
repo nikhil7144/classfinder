@@ -1340,6 +1340,189 @@
         ]
       }
     },
+    "/api/v1/trials": {
+      "get": {
+        "description": "`iProposed` and `myOutcome` are answers about the caller, so the same trial reads differently to the two people in it. A thread the caller is not in answers empty.",
+        "operationId": "TrialsController_forThread_v1",
+        "parameters": [
+          {
+            "name": "kind",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "group",
+                "enquiry"
+              ]
+            }
+          },
+          {
+            "name": "threadId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TrialDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Trials arranged in one conversation",
+        "tags": [
+          "trials"
+        ]
+      },
+      "post": {
+        "description": "Either side may. The function decides whether they are in the thread and whether it is still live.",
+        "operationId": "TrialsController_propose_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposeTrialDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrialDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Suggest a time",
+        "tags": [
+          "trials"
+        ]
+      }
+    },
+    "/api/v1/trials/{id}": {
+      "patch": {
+        "description": "The other side answers; the one who proposed it cannot confirm their own.",
+        "operationId": "TrialsController_respond_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespondToTrialDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrialDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Say yes or no to a time",
+        "tags": [
+          "trials"
+        ]
+      }
+    },
+    "/api/v1/trials/{id}/outcome": {
+      "patch": {
+        "description": "Per side. Both parties answer separately and neither answer overwrites the other — a coach marking a no-show does not put that on the family's record.",
+        "operationId": "TrialsController_setOutcome_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetTrialOutcomeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrialDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record what happened",
+        "tags": [
+          "trials"
+        ]
+      }
+    },
     "/api/v1/providers/search": {
       "get": {
         "description": "Ordered by distance from the search origin: the given lat/lng if there is one, otherwise the centroid of the area. Only approved, unsuspended coaches, and only in live areas — the area-wise launch gate is the database's, not this endpoint's. Declared before the :id route so /providers/search is not parsed as a coach whose id is the word search.",
@@ -4487,6 +4670,209 @@
         },
         "required": [
           "share"
+        ]
+      },
+      "TrialDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "durationMinutes": {
+            "type": "number"
+          },
+          "place": {
+            "type": "string",
+            "nullable": true,
+            "description": "A teaching place id, not a uuid."
+          },
+          "placeLabel": {
+            "type": "string",
+            "nullable": true,
+            "description": "What that place is called."
+          },
+          "placeNote": {
+            "type": "string",
+            "nullable": true
+          },
+          "studentCount": {
+            "type": "number",
+            "nullable": true,
+            "description": "For a group, how many are coming."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "proposed",
+              "confirmed",
+              "declined"
+            ]
+          },
+          "proposedBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "iProposed": {
+            "type": "boolean",
+            "description": "Whether the caller is the one who suggested it."
+          },
+          "seekerOutcome": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "happened",
+              "no_show",
+              "cancelled"
+            ]
+          },
+          "providerOutcome": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "happened",
+              "no_show",
+              "cancelled"
+            ]
+          },
+          "myOutcome": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "happened",
+              "no_show",
+              "cancelled"
+            ],
+            "description": "Whichever of the two above belongs to the caller. Both sides record what happened separately, so neither is asked to accept the other's account of it."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "scheduledAt",
+          "durationMinutes",
+          "place",
+          "placeLabel",
+          "placeNote",
+          "studentCount",
+          "status",
+          "proposedBy",
+          "iProposed",
+          "seekerOutcome",
+          "providerOutcome",
+          "myOutcome",
+          "createdAt"
+        ]
+      },
+      "ProposeTrialDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "group",
+              "enquiry"
+            ]
+          },
+          "threadId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The conversation this is being arranged in."
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "durationMinutes": {
+            "type": "number",
+            "default": 60,
+            "minimum": 15,
+            "maximum": 480
+          },
+          "place": {
+            "type": "string",
+            "nullable": true,
+            "description": "A teaching place id — 'own_centre', 'student_home', 'online'."
+          },
+          "placeNote": {
+            "type": "string",
+            "nullable": true,
+            "description": "Directions, a landmark, a gate number."
+          },
+          "studentCount": {
+            "type": "number",
+            "nullable": true,
+            "description": "For a group thread: how many children are coming."
+          }
+        },
+        "required": [
+          "kind",
+          "threadId",
+          "scheduledAt"
+        ]
+      },
+      "RespondToTrialDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "group",
+              "enquiry"
+            ]
+          },
+          "threadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "declined"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "threadId",
+          "status"
+        ]
+      },
+      "SetTrialOutcomeDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "group",
+              "enquiry"
+            ]
+          },
+          "threadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "happened",
+              "no_show",
+              "cancelled"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "threadId",
+          "outcome"
         ]
       },
       "ProviderSearchResultDto": {
