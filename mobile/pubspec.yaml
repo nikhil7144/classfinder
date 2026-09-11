@@ -39,3 +39,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    # Copied from the web build rather than re-exported, so the two clients
+    # cannot drift apart on the mark. The wordmark is the cropped one — the
+    # full lockup carries the tagline, which is illegible below about 200px.
+    - assets/brand/

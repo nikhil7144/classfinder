@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'src/app.dart';
 import 'src/config/env.dart';
@@ -13,5 +14,7 @@ Future<void> main() async {
   appFlavor = Flavor.seeker;
   Env.assertConfigured();
   await initSupabase();
-  runApp(const Aspire91App());
+  // ProviderScope is the root of everything Riverpod hands out. Nothing above
+  // it, so a test can wrap the app and override any provider it likes.
+  runApp(const ProviderScope(child: Aspire91App()));
 }
