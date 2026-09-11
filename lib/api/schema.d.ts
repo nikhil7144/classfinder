@@ -450,6 +450,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/role": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Choose a side, once
+         * @description What /choose-role does on the web, reachable by a client that does not write tables — without it a mobile app can create a session and then has nowhere to go. Settable only while the account has no role; asking for the role you already have returns it. Changing one is a different action and is not always allowed.
+         */
+        put: operations["MeController_chooseRole_v1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -1343,6 +1363,13 @@ export interface components {
              * @enum {string}
              */
             reason?: "following" | "interest";
+        };
+        ChooseRoleDto: {
+            /**
+             * @description Only settable while the account has no role. Changing an existing one is switch_role's job, which refuses once a profile is complete and clears up what is left behind.
+             * @enum {string}
+             */
+            role: "seeker" | "provider" | "organiser";
         };
         MeSeekerDto: {
             name: string | null;
@@ -2523,6 +2550,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FeedPostDto"][];
+                };
+            };
+        };
+    };
+    MeController_chooseRole_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChooseRoleDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeDto"];
                 };
             };
         };

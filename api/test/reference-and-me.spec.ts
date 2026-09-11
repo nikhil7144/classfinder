@@ -189,3 +189,97 @@ describe("GET /api/v1/me", () => {
     expect(res.body.seeker).toBeNull();
   });
 });
+
+describe("PUT /api/v1/me/role", () => {
+  let app: INestApplication;
+  const rpc = jest.fn();
+  const from = jest.fn();
+
+  const auth = (req: request.Test) => req.set("Authorization", "Bearer good");
+
+  beforeAll(async () => {
+    const client = { rpc, from };
+    const supabase: Partial<SupabaseService> = {
+      anon: () => client as never,
+      asUser: () => client as never,
+      userFromToken: async (token: string) => (token === "good" ? { id: "user-1" } : null),
+    };
+
+    const moduleRef = await Test.createTestingModule({
+      controllers: [MeController],
+      providers: [MeService, Reflector, { provide: SupabaseService, useValue: supabase }],
+    })
+      .overrideProvider(SupabaseService)
+      .useValue(supabase)
+      .compile();
+
+    app = moduleRef.createNestApplication();
+    configureApp(app);
+    app.useGlobalGuards(new AuthGuard(app.get(Reflector), app.get(SupabaseService)));
+    await app.init();
+  });
+
+  afterAll(async () => app.close());
+  beforeEach(() => {
+    rpc.mockReset();
+    from.mockReset();
+  });
+
+  const profileQuery = (row: unknown) => {
+    const chain: Record<string, unknown> = {};
+    for (const m of ["select", "eq"]) chain[m] = jest.fn(() => chain);
+    chain.maybeSingle = jest.fn(async () => ({ data: row, error: null }));
+    return chain;
+  };
+
+  it("sets the role and answers with the whole of /me", async () => {
+    rpc.mockResolvedValue({ data: "provider", error: null });
+    from.mockImplementation(() =>
+      profileQuery({ role: "provider", profile_complete: false, phone: null }),
+    );
+
+    const res = await auth(
+      request(app.getHttpServer()).put("/api/v1/me/role").send({ role: "provider" }),
+    ).expect(200);
+
+    expect(rpc).toHaveBeenCalledWith("choose_role", { p_role: "provider" });
+    expect(res.body.role).toBe("provider");
+  });
+
+  it("refuses admin, which is not in the contract at all", async () => {
+    // Not a check in the service: 'admin' is absent from the enum, so the
+    // request never gets far enough to be refused by the database.
+    await auth(
+      request(app.getHttpServer()).put("/api/v1/me/role").send({ role: "admin" }),
+    ).expect(400);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("refuses a role nobody has heard of", async () => {
+    await auth(
+      request(app.getHttpServer()).put("/api/v1/me/role").send({ role: "wizard" }),
+    ).expect(400);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("turns the function's refusal into a 400 carrying its sentence", async () => {
+    rpc.mockResolvedValue({
+      data: null,
+      error: { code: "P0001", message: "Your account type is already set." },
+    });
+
+    const res = await auth(
+      request(app.getHttpServer()).put("/api/v1/me/role").send({ role: "seeker" }),
+    ).expect(400);
+
+    expect(res.body.message).toBe("Your account type is already set.");
+  });
+
+  it("refuses without a token", async () => {
+    await request(app.getHttpServer())
+      .put("/api/v1/me/role")
+      .send({ role: "provider" })
+      .expect(401);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+});

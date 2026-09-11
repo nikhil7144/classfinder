@@ -953,6 +953,44 @@
         ]
       }
     },
+    "/api/v1/me/role": {
+      "put": {
+        "description": "What /choose-role does on the web, reachable by a client that does not write tables — without it a mobile app can create a session and then has nowhere to go. Settable only while the account has no role; asking for the role you already have returns it. Changing one is a different action and is not always allowed.",
+        "operationId": "MeController_chooseRole_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChooseRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Choose a side, once",
+        "tags": [
+          "me"
+        ]
+      }
+    },
     "/api/v1/me": {
       "get": {
         "description": "The first call after signing in. `role: null` means a verified account that has not chosen a role yet — send them to pick one; it is not an error. The seeker or provider block is present only for that role.",
@@ -3378,6 +3416,23 @@
           "likes",
           "wows",
           "surprises"
+        ]
+      },
+      "ChooseRoleDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "seeker",
+              "provider",
+              "organiser"
+            ],
+            "description": "Only settable while the account has no role. Changing an existing one is switch_role's job, which refuses once a profile is complete and clears up what is left behind."
+          }
+        },
+        "required": [
+          "role"
         ]
       },
       "MeSeekerDto": {

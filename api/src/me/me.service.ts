@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { Caller } from "../auth/current-user.decorator";
 import { SupabaseService } from "../supabase/supabase.service";
 import { MeDto } from "./dto/me.dto";
@@ -19,6 +19,34 @@ export class MeService {
    * read own provider row" each cover their part exactly, so there is no
    * privilege here that the browser did not already have.
    */
+  /**
+   * Set the role, for an account that has not got one.
+   *
+   * choose_role() is where the rule lives: it writes only when role is null,
+   * in a single statement so two taps on a slow connection cannot both find
+   * nothing and both write. Changing an existing role stays switch_role's job,
+   * which refuses once a profile is complete and clears up the row being left.
+   *
+   * Asking for the role you already have returns it rather than failing — a
+   * retry after a dropped response should not read as a refusal.
+   */
+  async chooseRole(caller: Caller, role: string): Promise<MeDto> {
+    const { error } = await this.supabase
+      .asUser(caller.accessToken)
+      .rpc("choose_role", { p_role: role });
+
+    if (error) {
+      // The function raises sentences worth showing: "Your account type is
+      // already set.", "Choose seeker, provider or organiser."
+      if (error.code === "P0001") throw new BadRequestException(error.message);
+      throw new InternalServerErrorException(error.message);
+    }
+
+    // Read it back through the same call every client uses, so what comes back
+    // is the whole picture rather than the one field that changed.
+    return this.get(caller);
+  }
+
   async get(caller: Caller): Promise<MeDto> {
     const db = this.supabase.asUser(caller.accessToken);
 
