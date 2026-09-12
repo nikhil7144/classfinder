@@ -14,26 +14,45 @@ can be built. This file is the setup guide.
 
 ## State of play
 
-**The provider (coach) app is built. The seeker app has started** — see
-`../SEEKER-SCREENS.md`, which inventories all twenty of its web routes and
+**The provider (coach) app is built. The seeker app is about half built** —
+see `../SEEKER-SCREENS.md`, which inventories all twenty of its web routes and
 carries the build order.
 
-What runs today, on the provider flavor:
+Both flavors run. Both are worth putting on a device.
 
-| Screen | Files | Status |
+**Shared by both flavors**
+
+| Screen | Files |
+|---|---|
+| Sign in — email OTP | `screens/auth/sign_in_screen.dart` |
+| Choose a role | `screens/auth/choose_role_screen.dart` |
+| Role gate — wrong-app and wrong-role dead ends | `screens/shell/gate_screen.dart` |
+| Messages — inbox, conversation, live delivery, trials, approach answers, phone sharing | `screens/threads/` |
+
+**`provider` — the coach app.** Five tabs: Students, Queries, Messages, Space,
+More (listing, events, sign out).
+
+| Screen | Files |
+|---|---|
+| Students — the demand feed, and the one message | `screens/students/` |
+| Queries — leads, call booking, dialling | `screens/queries/` |
+| Space — posts, photos, video, reactions | `screens/space/` |
+| Listing — the whole coach profile | `screens/listing/` |
+| Events — create, publish, categories | `screens/events/` |
+| Register — entries, payments, withdrawals | `screens/events/` |
+
+**`seeker` — the families app.** Three tabs: Find, Messages, You.
+
+| Screen | Files | |
 |---|---|---|
-| Sign in — email OTP | `screens/auth/sign_in_screen.dart` | built |
-| Choose a role | `screens/auth/choose_role_screen.dart` | built |
-| Role gate | `screens/shell/gate_screen.dart` | built |
-| Students — the demand feed, and the one message | `screens/students/` | built |
-| Messages — inbox and conversation, live | `screens/threads/` | built |
-| Listing — the whole coach profile | `screens/listing/` | built |
-| Space — posts, photos, video, reactions | `screens/space/` | built |
-| Queries — leads, call booking, dialling | `screens/queries/` | built |
-| Events — create, publish, categories | `screens/events/` | built |
-| Register — entries, payments, withdrawals | `screens/events/` | built |
+| Profile — who you are, and what you want | `screens/profile/` | built |
+| Search — area, subject, radius, distance | `screens/search/` | built |
+| Coach page — profile and Space, two tabs | `screens/coach/` | built |
+| Home, groups, events, settings | — | **not built** |
 
-`flutter analyze` is clean and `flutter test` passes (121 tests). It has **never
+`../SEEKER-SCREENS.md` has the rest, in order.
+
+`flutter analyze` is clean and `flutter test` passes (135 tests). It has **never
 been built into an APK** — the machine it was written on has no Android SDK, so
 `flutter build` could not run. `test/smoke_test.dart` imports both entry points
 specifically so the whole tree is compiled by `flutter test`; that is as close
@@ -87,8 +106,25 @@ flutter run --flavor provider -t lib/main_provider.dart \
 ```
 
 Swap `provider` → `seeker` and `main_provider.dart` → `main_seeker.dart` for
-the other app. The seeker flavor builds, signs in, and has its profile screen;
-the rest is in `../SEEKER-SCREENS.md`.
+the other app.
+
+### Both APKs, for testing
+
+```bash
+D=" --dart-define=SUPABASE_URL=https://wpegcnmqygdaqrjhryit.supabase.co     --dart-define=SUPABASE_ANON_KEY=<anon key>     --dart-define=API_BASE_URL=https://api.aspire91.com"
+
+flutter build apk --debug --flavor provider -t lib/main_provider.dart $D
+flutter build apk --debug --flavor seeker   -t lib/main_seeker.dart   $D
+```
+
+They land in `build/app/outputs/flutter-apk/`, one per flavor, with different
+application ids — so **both install side by side on one phone**, which is the
+point: a coach account and a family account talking to each other is the only
+way to test half of this.
+
+`--debug` because release builds are still signed with the debug keystore (see
+§3). For anything going to a tester outside the team, sort the signing config
+first.
 
 ### Android Studio
 
@@ -167,7 +203,7 @@ mobile/
         repositories/         one per surface; pure Dart, no Riverpod
       screens/                one folder per screen
       widgets/                shared: PrimaryButton, states, skeleton, branding
-  test/                       121 tests, no device needed
+  test/                       135 tests, no device needed
 ```
 
 `lib/src/providers.dart` is the seam. Below it — `lib/src/data` — is pure Dart
@@ -248,7 +284,7 @@ partial-save or autosave path to `ListingScreen`.
 ## 6. Tests
 
 ```bash
-flutter test          # 121 tests, no device or SDK needed
+flutter test          # 135 tests, no device or SDK needed
 ```
 
 - `test/listing_rules_test.dart` pins the completeness rules against the web's
@@ -267,7 +303,7 @@ flutter test          # 121 tests, no device or SDK needed
 - `test/smoke_test.dart` imports both entry points so `flutter test` compiles
   the whole tree.
 
-The API has its own suite: `cd api && npm test` (211 tests, 56 endpoints).
+The API has its own suite: `cd api && npm test` (299 tests, 63 endpoints).
 
 ---
 

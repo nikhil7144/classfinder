@@ -8,11 +8,12 @@ import '../../widgets/primary_button.dart';
 import '../../widgets/skeleton.dart';
 import '../profile/profile_screen.dart';
 import '../search/search_screen.dart';
+import '../threads/threads_screen.dart';
 
 /// Where a family lands.
 ///
-/// Two tabs so far. SEEKER-SCREENS.md has the build order — messages, then
-/// home, groups and events — and the bar grows a destination per slice.
+/// Three tabs so far. SEEKER-SCREENS.md has the build order — home, groups
+/// and events remain — and the bar grows a destination per slice.
 ///
 /// A brand new account gets the welcome instead: the profile asks for a
 /// child's age and a neighbourhood, and a blank form is a poor way to open
@@ -50,7 +51,7 @@ class _SeekerShellState extends ConsumerState<SeekerShell> {
       // a subtree at zero, so the cost is what IndexedStack's already was.
       body: Stack(
         children: [
-          for (var i = 0; i < 2; i++)
+          for (var i = 0; i < 3; i++)
             AnimatedOpacity(
               opacity: _tab == i ? 1 : 0,
               duration: A91.tabFade,
@@ -60,7 +61,11 @@ class _SeekerShellState extends ConsumerState<SeekerShell> {
                 // Stops animations and timers on the tabs nobody is looking at.
                 child: TickerMode(
                   enabled: _tab == i,
-                  child: const [SearchScreen(), ProfileScreen()][i],
+                  child: const [
+                    SearchScreen(),
+                    ThreadsScreen(),
+                    ProfileScreen()
+                  ][i],
                 ),
               ),
             ),
@@ -76,6 +81,11 @@ class _SeekerShellState extends ConsumerState<SeekerShell> {
             icon: Icon(Icons.search),
             selectedIcon: Icon(Icons.search),
             label: 'Find',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.chat_bubble_outline),
+            selectedIcon: Icon(Icons.chat_bubble),
+            label: 'Messages',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),

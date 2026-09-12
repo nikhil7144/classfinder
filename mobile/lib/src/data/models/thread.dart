@@ -24,6 +24,7 @@ class Thread {
     required this.messageCount,
     required this.unread,
     required this.iAmSeeker,
+    required this.showPhone,
     required this.origin,
   });
 
@@ -50,6 +51,11 @@ class Thread {
   final int messageCount;
   final bool unread;
   final bool iAmSeeker;
+
+  /// Whether this family's number is shared with the coach. Null on a group
+  /// thread, which has no such switch — false would read as "not shared" on
+  /// something that cannot be.
+  final bool? showPhone;
 
   /// Set when this conversation began with a request for a call. A message
   /// from somebody you never wrote to is what makes contact feel unsolicited,
@@ -84,6 +90,7 @@ class Thread {
         messageCount: (json['messageCount'] as num?)?.toInt() ?? 0,
         unread: json['unread'] as bool? ?? false,
         iAmSeeker: json['iAmSeeker'] as bool? ?? false,
+        showPhone: json['showPhone'] as bool?,
         origin: json['origin'] == null
             ? null
             : QueryOrigin.fromJson(json['origin'] as Map<String, dynamic>),

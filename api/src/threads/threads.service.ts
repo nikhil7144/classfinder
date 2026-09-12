@@ -68,6 +68,7 @@ const count = (value: unknown): number => Number(value ?? 0);
 /** enquiries joined to the query that produced them, as PostgREST returns it. */
 type OriginRow = {
   id: string;
+  show_phone: boolean | null;
   query_id: string | null;
   queries: {
     created_at: string;
@@ -78,6 +79,7 @@ type OriginRow = {
 export const toThread = (
   row: ThreadRow,
   origins: Map<string, QueryOriginDto> = new Map(),
+  phones: Map<string, boolean> = new Map(),
 ): ThreadDto => ({
   kind: row.kind,
   threadId: row.thread_id,
@@ -96,6 +98,9 @@ export const toThread = (
   messageCount: count(row.message_count),
   unread: Boolean(row.unread),
   iAmSeeker: Boolean(row.i_am_seeker),
+  // Null rather than false for a group thread: it has no such switch, and
+  // false would read as "not shared" on something that cannot be.
+  showPhone: row.kind === "enquiry" ? (phones.get(row.thread_id) ?? false) : null,
   origin: origins.get(row.thread_id) ?? null,
 });
 
@@ -127,42 +132,48 @@ export class ThreadsService {
     if (error) throw new InternalServerErrorException(error.message);
 
     const rows = (data as ThreadRow[]) ?? [];
-    const origins = await this.origins(caller, rows);
-    return rows.map((row) => toThread(row, origins));
+    const { origins, phones } = await this.enquiryExtras(caller, rows);
+    return rows.map((row) => toThread(row, origins, phones));
   }
 
   /**
-   * Which of these conversations began as a request for a call.
+   * The two things about an enquiry thread that my_threads() does not carry:
+   * whether the number is shared, and whether it began as a request for a call.
    *
    * One query for the whole inbox rather than one per thread. ThreadPane does
-   * this read itself, per thread, straight from the table — which a mobile
-   * client is not allowed to do, and which is why it lands here.
+   * both reads itself, per thread, straight from the table — which a mobile
+   * client is not allowed to do, and which is why they land here.
    *
-   * It is deliberately not part of my_threads(). Changing that function's
-   * return columns needs a drop and recreate, and that is a live error window
-   * for every inbox open at the time. See phase3q.
+   * Deliberately not part of my_threads(). Changing that function's return
+   * columns needs a drop and recreate, and that is a live error window for
+   * every inbox open at the time. See phase3q.
    *
-   * Failure is swallowed: an inbox that renders without one context line is
-   * worth more than an inbox that does not render.
+   * Failure is swallowed: an inbox that renders without a context line is
+   * worth more than an inbox that does not render. The phone then reads as not
+   * shared, which is the safe direction to be wrong in — it understates what a
+   * coach can see rather than overstating it.
    */
-  private async origins(
+  private async enquiryExtras(
     caller: Caller,
     rows: ThreadRow[],
-  ): Promise<Map<string, QueryOriginDto>> {
+  ): Promise<{ origins: Map<string, QueryOriginDto>; phones: Map<string, boolean> }> {
+    const origins = new Map<string, QueryOriginDto>();
+    const phones = new Map<string, boolean>();
+
     const ids = rows.filter((r) => r.kind === "enquiry").map((r) => r.thread_id);
-    if (ids.length === 0) return new Map();
+    if (ids.length === 0) return { origins, phones };
 
     const { data, error } = await this.supabase
       .asUser(caller.accessToken)
       .from("enquiries")
-      .select("id, query_id, queries(created_at, service_category_master(name))")
-      .in("id", ids)
-      .not("query_id", "is", null);
+      .select("id, show_phone, query_id, queries(created_at, service_category_master(name))")
+      .in("id", ids);
 
-    if (error) return new Map();
+    if (error) return { origins, phones };
 
-    const origins = new Map<string, QueryOriginDto>();
     for (const row of (data as unknown as OriginRow[]) ?? []) {
+      phones.set(row.id, Boolean(row.show_phone));
+
       if (!row.query_id || !row.queries) continue;
       origins.set(row.id, {
         queryId: row.query_id,
@@ -170,7 +181,8 @@ export class ThreadsService {
         askedAt: row.queries.created_at,
       });
     }
-    return origins;
+
+    return { origins, phones };
   }
 
   /**

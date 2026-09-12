@@ -136,6 +136,7 @@ describe("/api/v1/threads", () => {
           data: [
             {
               id: THREAD,
+              show_phone: false,
               query_id: "99999999-9999-4999-8999-999999999999",
               queries: {
                 created_at: "2026-09-07T10:00:00.000Z",
@@ -184,6 +185,37 @@ describe("/api/v1/threads", () => {
 
       expect(res.body).toHaveLength(1);
       expect(res.body[0].origin).toBeNull();
+    });
+
+    it("reports whether the number is shared", async () => {
+      rpc.mockResolvedValue({ data: [enquiryRow], error: null });
+      from.mockReturnValue(
+        query({
+          data: [{ id: THREAD, show_phone: true, query_id: null, queries: null }],
+          error: null,
+        }),
+      );
+
+      const res = await auth(request(app.getHttpServer()).get("/api/v1/threads")).expect(200);
+      expect(res.body[0].showPhone).toBe(true);
+    });
+
+    it("says null on a group thread, which has no such switch", async () => {
+      // False would read as "not shared" on something that cannot be.
+      rpc.mockResolvedValue({ data: [threadRow], error: null });
+
+      const res = await auth(request(app.getHttpServer()).get("/api/v1/threads")).expect(200);
+      expect(res.body[0].showPhone).toBeNull();
+    });
+
+    it("understates sharing when the lookup fails, rather than overstating it", async () => {
+      // The safe direction to be wrong in: it can only ever say a coach sees
+      // less than they do.
+      rpc.mockResolvedValue({ data: [enquiryRow], error: null });
+      from.mockReturnValue(query({ data: null, error: { message: "boom" } }));
+
+      const res = await auth(request(app.getHttpServer()).get("/api/v1/threads")).expect(200);
+      expect(res.body[0].showPhone).toBe(false);
     });
 
     it("asks once for an inbox full of enquiries, not once each", async () => {

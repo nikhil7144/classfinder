@@ -7,6 +7,8 @@ import '../../data/supabase.dart';
 import '../../providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/states.dart';
+import 'approach_banner.dart';
+import 'trial_card.dart';
 
 /// One conversation.
 ///
@@ -164,6 +166,23 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
                     controller: _scroll,
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                     children: [
+                      // A coach's approach the family has not answered. It is
+                      // a decision, not a notification, so it sits above the
+                      // conversation rather than inside it — and until it is
+                      // made the coach cannot write again.
+                      if (widget.thread.awaitingReply &&
+                          widget.thread.iAmSeeker)
+                        ApproachBanner(thread: widget.thread),
+                      // Only on a live enquiry, and only for the side whose
+                      // number it is.
+                      if (widget.thread.kind == 'enquiry' &&
+                          widget.thread.iAmSeeker &&
+                          !widget.thread.awaitingReply)
+                        PhoneSharingRow(thread: widget.thread),
+                      // Both kinds and both sides: a group pitch ends in a
+                      // first class as surely as an enquiry does.
+                      if (!widget.thread.awaitingReply)
+                        TrialCard(thread: widget.thread),
                       if (widget.thread.origin != null) ...[
                         _Origin(
                           origin: widget.thread.origin!,

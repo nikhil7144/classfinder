@@ -1993,6 +1993,8 @@ export interface components {
             unread: boolean;
             /** @description Which side of this conversation the caller is on. */
             iAmSeeker: boolean;
+            /** @description Whether this family's number is shared with the coach. Null on a group thread, which has no such switch. Opt in and revocable, per conversation rather than per account — sharing a number with one coach is not sharing it with every coach who writes. */
+            showPhone: boolean | null;
             /** @description Set when this conversation began with a request for a call. A message from somebody you never wrote to is what makes contact feel unsolicited, so the parent is told which of their own requests produced it. Null for every other thread. */
             origin: components["schemas"]["QueryOriginDto"] | null;
         };

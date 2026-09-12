@@ -232,7 +232,7 @@ Extends `MOBILE-PLAN.md` §9 for the seeker flavor. Keep both current.
 | `/home` | `screens/home/` *(not built)* |
 | `/search` | `screens/search/` |
 | `/provider/[id]`, `/provider/[id]/space` | `screens/coach/` |
-| `/account/messages` | `screens/threads/` *(shared, needs trials + approach + phone)* |
+| `/account/messages` | `screens/threads/` *(shared)* |
 | `/groups/*`, `/account/groups` | `screens/groups/` *(not built)* |
 | `/events`, `/events/[id]`, entry, `/account/entries` | `screens/events/` *(shared, needs the seeker half)* |
 | `/account/settings` | `screens/settings/` *(not built — change email, sign out)* |
@@ -263,7 +263,10 @@ Each slice is usable on its own, and each depends only on what is above it.
 2. ~~**Search + coach profile**~~ — **done.** `screens/search/`,
    `screens/coach/`, and the contact sheet that carries both ways of getting
    in touch.
-3. **Messages** — including the three things the coach app's version lacks.
+3. ~~**Messages**~~ — **done.** The shared thread screen gained the three
+   things the coach version lacked: `ApproachBanner`, `PhoneSharingRow` and
+   `TrialCard`. `ThreadDto` gained `showPhone`, which it did not carry — the
+   control would otherwise have read "not shared" whatever the truth was.
 4. **Home** — it is mostly links to 1–3, so it is worth the least first.
 5. **Groups**.
 6. **Events** — the seeker half; the coach half already exists.

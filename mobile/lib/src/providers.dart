@@ -15,6 +15,7 @@ import 'data/models/reference.dart';
 import 'data/models/seeker.dart';
 import 'data/models/space.dart';
 import 'data/models/thread.dart';
+import 'data/models/trial.dart';
 import 'data/repositories/alerts_repository.dart';
 import 'data/repositories/listing_repository.dart';
 import 'data/repositories/reference_repository.dart';
@@ -26,6 +27,7 @@ import 'data/repositories/seeker_repository.dart';
 import 'data/repositories/spaces_repository.dart';
 import 'data/repositories/students_repository.dart';
 import 'data/repositories/threads_repository.dart';
+import 'data/repositories/trials_repository.dart';
 
 /// Everything the app can be handed.
 ///
@@ -211,6 +213,15 @@ final demandFeedProvider = FutureProvider<List<Demand>>((ref) async {
 
 final threadsRepositoryProvider = Provider<ThreadsRepository>(
   (ref) => ThreadsRepository(ref.watch(apiClientProvider)),
+);
+
+final trialsRepositoryProvider = Provider<TrialsRepository>(
+  (ref) => TrialsRepository(ref.watch(apiClientProvider)),
+);
+
+/// The trials arranged in one conversation.
+final trialsProvider = FutureProvider.family<List<Trial>, ThreadKey>(
+  (ref, key) => ref.watch(trialsRepositoryProvider).forThread(key.kind, key.id),
 );
 
 final alertsRepositoryProvider = Provider<AlertsRepository>(

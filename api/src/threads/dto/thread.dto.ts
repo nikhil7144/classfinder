@@ -97,6 +97,16 @@ export class ThreadDto {
   iAmSeeker!: boolean;
 
   @ApiProperty({
+    type: Boolean,
+    nullable: true,
+    description:
+      "Whether this family's number is shared with the coach. Null on a group thread, which " +
+      "has no such switch. Opt in and revocable, per conversation rather than per account — " +
+      "sharing a number with one coach is not sharing it with every coach who writes.",
+  })
+  showPhone!: boolean | null;
+
+  @ApiProperty({
     type: () => QueryOriginDto,
     nullable: true,
     description:
