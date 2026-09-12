@@ -2,34 +2,58 @@
 -- Phase 3T — tell Slack when somebody verifies their email
 --
 -- The API is blind to signup. It only ever sees a person when a client makes
--- an authenticated call, so the two alerts it already sends fire at role
--- choice and at profile completion. Anybody who verifies an email and then
--- abandons onboarding is invisible — which is exactly the number worth
--- watching, and nothing anywhere records it.
+-- an authenticated call, so its own alert fires at profile completion — and
+-- anybody who verifies an email and then abandons onboarding is invisible.
+-- That is the number worth watching, and nothing anywhere recorded it.
 --
--- So this one has to live in the database, next to the only table that knows.
+-- So this one lives next to the only table that knows: a trigger on
+-- auth.users, posting through pg_net.
 --
 -- WHAT IT CAN SAY: an email address, and nothing else. The intended role is
 -- not sent to Supabase at signup — AuthForm carries it in the redirect URL and
 -- applies it client-side after verification — so raw_user_meta_data does not
--- have it. A coach and a family look identical at this moment. That is the
--- honest limit of an alert this early, and the reason the other two exist.
+-- have it, and a coach and a family look identical at this moment. That is the
+-- honest limit of an alert this early, and the reason the API's own alert
+-- exists as well.
 --
--- ---------------------------------------------------------------------
--- BEFORE RUNNING THIS, put the webhook in Vault. Once, in the SQL editor:
+-- WHERE THE SECRET LIVES: private.app_settings, created below. Supabase Vault
+-- would be the tidier home, but vault.decrypted_secrets read back empty on
+-- this project and a webhook that silently never fires is worse than a plain
+-- row in a locked-down schema. The URL is a webhook, not a credential to user
+-- data: the worst it permits is posting into one Slack channel.
 --
---   select vault.create_secret(
---     'https://hooks.slack.com/services/YOUR/WEBHOOK/URL',
---     'slack_webhook_url',
---     'Incoming webhook for #registrations'
---   );
---
--- The URL is a secret — anyone holding it can post into the channel — so it
--- goes there and never into this file. With no secret set, the trigger below
--- quietly does nothing, which is also how a branch database behaves.
+-- Nothing in this file contains the URL. See the runbook at the bottom.
 -- ---------------------------------------------------------------------
 
 create extension if not exists pg_net;
+
+-- ---------------------------------------------------------------------
+-- 1. somewhere to keep it
+--
+-- Its own schema, with no grants to anon or authenticated. Only a definer
+-- function and the service role can see it, and PostgREST does not expose
+-- schemas outside its search path — so this is not reachable over the API at
+-- all, with or without a policy.
+-- ---------------------------------------------------------------------
+
+create schema if not exists private;
+
+create table if not exists private.app_settings (
+  key text primary key,
+  value text not null,
+  updated_at timestamptz not null default now()
+);
+
+alter table private.app_settings enable row level security;
+
+-- No policies, deliberately. RLS with no policy denies everybody; the trigger
+-- below reads it as a definer, which bypasses RLS by design.
+revoke all on schema private from anon, authenticated;
+revoke all on private.app_settings from anon, authenticated;
+
+-- ---------------------------------------------------------------------
+-- 2. the trigger
+-- ---------------------------------------------------------------------
 
 create or replace function public.tg_notify_signup()
 returns trigger
@@ -58,9 +82,9 @@ begin
     end if;
   end if;
 
-  select decrypted_secret into v_url
-  from vault.decrypted_secrets
-  where name = 'slack_webhook_url';
+  select value into v_url
+  from private.app_settings
+  where key = 'slack_webhook_url';
 
   if v_url is null or length(trim(v_url)) = 0 then
     return null;
@@ -91,3 +115,15 @@ drop trigger if exists notify_signup on auth.users;
 create trigger notify_signup
   after insert or update of email_confirmed_at on auth.users
   for each row execute function public.tg_notify_signup();
+
+-- ---------------------------------------------------------------------
+-- 3. after running this, put the webhook in
+--
+--   insert into private.app_settings (key, value)
+--   values ('slack_webhook_url', 'https://hooks.slack.com/services/YOUR/URL')
+--   on conflict (key) do update
+--     set value = excluded.value, updated_at = now();
+--
+-- Until that row exists the trigger quietly does nothing, which is also how a
+-- branch database should behave.
+-- ---------------------------------------------------------------------

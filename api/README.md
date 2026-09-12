@@ -50,9 +50,14 @@ which is precisely the drop-off worth watching.
 
 That one lives in the database instead: `db/2026-09-19-phase3t-signup-alert.sql`
 puts a trigger on `auth.users` and posts through `pg_net`, reading the webhook
-from Supabase Vault rather than from this service's environment. It can only
-say an email address: the intended role is not sent to Supabase at signup, so a
-coach and a family look identical at that moment.
+from a `private.app_settings` row rather than from this service's environment.
+It can only say an email address: the intended role is not sent to Supabase at
+signup, so a coach and a family look identical at that moment.
+
+Supabase Vault would be the tidier home for that URL, and the first version
+used it — but `vault.decrypted_secrets` read back empty on this project, and a
+webhook that silently never fires is worse than a plain row in a schema nothing
+outside the database can reach.
 
 ## The rule
 
