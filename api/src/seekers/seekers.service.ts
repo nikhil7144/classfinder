@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { Caller } from "../auth/current-user.decorator";
+import { SlackService } from "../notify/slack.service";
 import { SupabaseService } from "../supabase/supabase.service";
 import { MySeekerDto, SaveSeekerProfileDto } from "./dto/seeker.dto";
 
@@ -64,7 +65,10 @@ const toDto = (r: Row, profileComplete: boolean): MySeekerDto => ({
 
 @Injectable()
 export class SeekersService {
-  constructor(private readonly supabase: SupabaseService) {}
+  constructor(
+    private readonly supabase: SupabaseService,
+    private readonly slack: SlackService,
+  ) {}
 
   /**
    * The caller's own profile.
@@ -108,6 +112,14 @@ export class SeekersService {
   async save(caller: Caller, body: SaveSeekerProfileDto): Promise<MySeekerDto> {
     const db = this.supabase.asUser(caller.accessToken);
 
+    // Read before the write. save_seeker_profile() sets profile_complete, so
+    // afterwards a registration and the fourth edit of a budget look the same.
+    // Wrapped, because this read exists only to decide whether to tell Slack.
+    // It must not be able to fail a save: unknown means no announcement, which
+    // is the right way round — a missed message costs the office a glance at
+    // the database, and a failed save costs somebody their afternoon's typing.
+    const isFirst = await this.isFirstCompletion(db, caller.id);
+
     const { error } = await db.rpc("save_seeker_profile", {
       p_profile: {
         name: body.name.trim(),
@@ -140,8 +152,69 @@ export class SeekersService {
       throw new InternalServerErrorException(error.message);
     }
 
+    // Deliberately not awaited — the family is waiting on a save.
+    if (isFirst) void this.announce(caller, body);
+
     // Read back through the same call every client uses, so what comes back is
     // the whole picture rather than the fields that happened to be sent.
     return this.mine(caller);
+  }
+
+  /**
+   * Whether this save is the one that completes the profile.
+   *
+   * save_seeker_profile() sets profile_complete, so after it runs there is no
+   * way to tell a registration from the fourth edit — and only the first is
+   * worth announcing. Read before, and never allowed to throw.
+   */
+  private async isFirstCompletion(
+    db: ReturnType<SupabaseService["asUser"]>,
+    userId: string,
+  ): Promise<boolean> {
+    try {
+      const { data } = await db
+        .from("profiles")
+        .select("profile_complete")
+        .eq("id", userId)
+        .maybeSingle();
+
+      return !(data as { profile_complete: boolean } | null)?.profile_complete;
+    } catch {
+      // Unknown. Say nothing rather than risk saying it twice.
+      return false;
+    }
+  }
+
+  /**
+   * Tell the team a family has joined.
+   *
+   * Nobody approves a family, so this is not a queue the way a listing is —
+   * but it is the number the business watches, and openToOffers says whether
+   * any coach will ever see them.
+   *
+   * Nothing here may reach the caller.
+   */
+  private async announce(caller: Caller, body: SaveSeekerProfileDto): Promise<void> {
+    try {
+      if (!this.slack.configured) return;
+
+      const { data: area } = await this.supabase
+        .asUser(caller.accessToken)
+        .from("areas")
+        .select("name, cities(name)")
+        .eq("id", body.areaId)
+        .maybeSingle();
+
+      const row = area as { name: string; cities?: { name: string } | null } | null;
+
+      this.slack.seekerRegistered({
+        name: body.name,
+        area: row ? [row.name, row.cities?.name].filter(Boolean).join(", ") : null,
+        lookingFor: body.lookingFor?.length ?? 0,
+        openToOffers: body.openToOffers ?? true,
+      });
+    } catch {
+      // Swallowed on purpose. See the note above.
+    }
   }
 }

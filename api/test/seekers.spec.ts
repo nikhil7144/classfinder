@@ -6,6 +6,7 @@ import { AuthGuard } from "../src/auth/auth.guard";
 import { configureApp } from "../src/configure";
 import { SeekersController } from "../src/seekers/seekers.controller";
 import { SeekersService } from "../src/seekers/seekers.service";
+import { SlackService } from "../src/notify/slack.service";
 import { SupabaseService } from "../src/supabase/supabase.service";
 
 const AREA = "11111111-1111-4111-8111-111111111111";
@@ -59,7 +60,7 @@ describe("/api/v1/seekers/me", () => {
 
     const moduleRef = await Test.createTestingModule({
       controllers: [SeekersController],
-      providers: [SeekersService, Reflector, { provide: SupabaseService, useValue: supabase }],
+      providers: [SeekersService, Reflector, SlackService, { provide: SupabaseService, useValue: supabase }],
     }).compile();
 
     app = moduleRef.createNestApplication();

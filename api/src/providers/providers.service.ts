@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { Caller } from "../auth/current-user.decorator";
+import { SlackService } from "../notify/slack.service";
 import { SupabaseService } from "../supabase/supabase.service";
 import {
   ProviderProfileDto,
@@ -104,7 +105,10 @@ export const toProfile = (row: ProfileJson): ProviderProfileDto => ({
 
 @Injectable()
 export class ProvidersService {
-  constructor(private readonly supabase: SupabaseService) {}
+  constructor(
+    private readonly supabase: SupabaseService,
+    private readonly slack: SlackService,
+  ) {}
 
   /**
    * The directory search.
@@ -212,6 +216,15 @@ export class ProvidersService {
   async saveProfile(caller: Caller, body: SaveProviderProfileDto): Promise<SavedProfileDto> {
     const db = this.supabase.asUser(caller.accessToken);
 
+    // Read before the write. save_provider_profile() sets profile_complete, so
+    // afterwards there is no way to tell a registration from the fourth edit
+    // of a fee — and only the first is worth telling anybody about.
+    // Wrapped, because this read exists only to decide whether to tell Slack.
+    // It must not be able to fail a save: unknown means no announcement, which
+    // is the right way round — a missed message costs the office a glance at
+    // the database, and a failed save costs somebody their afternoon's typing.
+    const isFirst = await this.isFirstCompletion(db, caller.id);
+
     const { data, error } = await db.rpc("save_provider_profile", {
       p_profile: {
         provider_type: body.providerType,
@@ -261,7 +274,77 @@ export class ProvidersService {
     if (readError) throw new InternalServerErrorException(readError.message);
 
     const saved = row as { id: string; approved: boolean; is_suspended: boolean };
+
+    // Deliberately not awaited. The coach is waiting on a save, and a webhook
+    // round trip is not theirs to pay for.
+    if (isFirst) void this.announce(caller, body);
+
     return { id: saved.id, approved: saved.approved, isSuspended: saved.is_suspended };
+  }
+
+  /**
+   * Whether this save is the one that completes the profile.
+   *
+   * save_provider_profile() sets profile_complete, so after it runs there is no
+   * way to tell a registration from the fourth edit — and only the first is
+   * worth announcing. Read before, and never allowed to throw.
+   */
+  private async isFirstCompletion(
+    db: ReturnType<SupabaseService["asUser"]>,
+    userId: string,
+  ): Promise<boolean> {
+    try {
+      const { data } = await db
+        .from("profiles")
+        .select("profile_complete")
+        .eq("id", userId)
+        .maybeSingle();
+
+      return !(data as { profile_complete: boolean } | null)?.profile_complete;
+    } catch {
+      // Unknown. Say nothing rather than risk saying it twice.
+      return false;
+    }
+  }
+
+  /**
+   * Tell the team a listing has arrived for review.
+   *
+   * Its own method because it does two reads of its own, and none of it may
+   * ever reach the caller: a coach finishing their listing must not see an
+   * error because Slack was down.
+   */
+  private async announce(caller: Caller, body: SaveProviderProfileDto): Promise<void> {
+    try {
+      if (!this.slack.configured) return;
+      const db = this.supabase.asUser(caller.accessToken);
+
+      // Where they are: an academy's first branch, an individual's first
+      // served area. The same rule save_provider_profile uses for the legacy
+      // city/area columns.
+      const areaId =
+        body.providerType === "institution"
+          ? body.branches?.[0]?.areaId
+          : body.serviceAreaIds?.[0];
+
+      const [{ data: area }, { data: profile }] = await Promise.all([
+        areaId
+          ? db.from("areas").select("name, cities(name)").eq("id", areaId).maybeSingle()
+          : Promise.resolve({ data: null }),
+        db.from("profiles").select("phone").eq("id", caller.id).maybeSingle(),
+      ]);
+
+      const row = area as { name: string; cities?: { name: string } | null } | null;
+
+      this.slack.providerRegistered({
+        name: body.displayName,
+        providerType: body.providerType,
+        area: row ? [row.name, row.cities?.name].filter(Boolean).join(", ") : null,
+        phone: (profile as { phone: string | null } | null)?.phone ?? null,
+      });
+    } catch {
+      // Swallowed on purpose. See the note above.
+    }
   }
 
   /**

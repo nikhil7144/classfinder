@@ -21,6 +21,27 @@ logic that is judgement rather than permission.
 
 This service adds those three things. **It does not replace RLS.**
 
+## Telling the team
+
+`SLACK_WEBHOOK_URL` turns on a message to Slack when a coach or a family
+**finishes registering** — the first save that completes a profile, not every
+later edit of a fee.
+
+Deliberately not part of the `notifications` table. That queue exists to reach
+*users* and is drained by a worker with retries, because a family missing an
+enquiry matters. This is the office finding out, and the office can read the
+database if a message goes astray.
+
+Three rules it holds to:
+
+- **It can never fail the request.** A coach finishing their listing must not
+  see an error because Slack was down, or because nobody set the webhook.
+- **Nobody waits on it.** `send()` is fire-and-forget; the save returns first.
+- **Unset means silent.** Development and the tests both run that way.
+
+The coach message is the more useful of the two: a listing is invisible to
+families until an admin approves it, so it is the review queue growing by one.
+
 ## The rule
 
 > Postgres decides **who may see what**. This API decides **what shape it

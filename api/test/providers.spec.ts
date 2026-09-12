@@ -6,6 +6,7 @@ import { AuthGuard } from "../src/auth/auth.guard";
 import { configureApp } from "../src/configure";
 import { ProvidersController } from "../src/providers/providers.controller";
 import { ProvidersService, toProfile, toSearchResult } from "../src/providers/providers.service";
+import { SlackService } from "../src/notify/slack.service";
 import { SupabaseService } from "../src/supabase/supabase.service";
 
 const AREA = "44444444-4444-4444-8444-444444444444";
@@ -144,6 +145,9 @@ describe("GET /api/v1/providers", () => {
       providers: [
         ProvidersService,
         Reflector,
+        // Real, and inert: with no SLACK_WEBHOOK_URL set it does nothing,
+        // which is what a test wants from an outbound webhook.
+        SlackService,
         { provide: SupabaseService, useValue: supabase },
       ],
     })

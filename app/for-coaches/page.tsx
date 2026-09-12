@@ -363,6 +363,24 @@ export default async function ForCoachesPage() {
             </div>
 
             <p className="text-sm text-faint">We check every listing before parents see it.</p>
+
+            {/* The coach app is built and is waiting on a store review, so this
+                says "coming" rather than linking anywhere. A badge that goes to
+                a dead Play listing is worse than no badge. */}
+            <div className="mt-4 flex items-center gap-3 rounded-2xl border border-line bg-surface-2 px-4 py-3">
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                className="h-5 w-5 shrink-0 fill-gold"
+              >
+                <path d="M17.6 9.48l1.84-3.18a.4.4 0 00-.69-.4l-1.86 3.22a11.4 11.4 0 00-9.78 0L5.25 5.9a.4.4 0 10-.69.4L6.4 9.48A10.8 10.8 0 001 18h22a10.8 10.8 0 00-5.4-8.52zM7 15.25a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5zm10 0a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5z" />
+              </svg>
+              <p className="text-sm leading-relaxed text-muted">
+                <span className="font-semibold text-ink">The Android app is coming.</span>{" "}
+                Your students, messages and Space, on your phone. Everything here works in a
+                browser in the meantime.
+              </p>
+            </div>
           </div>
 
           <RequestCard />
