@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import PostCard from "@/components/spaces/PostCard";
 import { Space, SpacePost, fetchFeed, fetchSpace, toggleFollow } from "@/lib/spaces";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 
 /**
  * A Space as a parent sees it.
@@ -56,7 +57,12 @@ export default function SpacePage() {
     load();
   };
 
-  if (loading) return <div className="min-h-screen bg-bg" />;
+  if (loading)
+    return (
+      <main className="min-h-screen bg-bg">
+        <PageSkeleton variant="detail" />
+      </main>
+    );
 
   if (!space) {
     return (

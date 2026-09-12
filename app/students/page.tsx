@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { fetchReference } from "@/lib/api/reference";
 import ProviderTabs from "@/components/provider/ProviderTabs";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 import { expiryLabel } from "@/lib/groups";
 import {
   DEFAULT_RADIUS_KM,
@@ -281,8 +282,16 @@ export default function FindStudentsPage() {
     reload();
   };
 
+  // A blank charcoal screen for the couple of seconds this takes reads as a
+  // page that failed rather than one that is coming. The skeleton was already
+  // written for exactly this and was only ever wired to the route-level
+  // loading.tsx files, which never fire for a fetch made in an effect.
   if (loading && demand.length === 0 && !blocked) {
-    return <div className="min-h-screen bg-bg" />;
+    return (
+      <main className="min-h-screen bg-bg">
+        <PageSkeleton variant="dashboard" />
+      </main>
+    );
   }
 
   return (

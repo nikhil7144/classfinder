@@ -17,6 +17,7 @@ import {
   parseYouTubeId,
   youTubeThumbnail,
 } from "@/lib/spaces";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 
 type Draft = "photo" | "video";
 
@@ -157,7 +158,12 @@ export default function MySpacePage() {
     load();
   };
 
-  if (loading) return <div className="min-h-screen bg-bg" />;
+  if (loading)
+    return (
+      <main className="min-h-screen bg-bg">
+        <PageSkeleton variant="list" />
+      </main>
+    );
 
   return (
     <main className="min-h-screen bg-bg">

@@ -83,6 +83,33 @@ export default function AuthForm({ eyebrow, heading, subheading, intendedRole }:
     };
   }, [router, intendedRole, next]);
 
+  // Coming back from Google's account chooser restores this page from the
+  // browser's back-forward cache with React state intact — so googleLoading is
+  // still true, and the button sits disabled on "Redirecting..." for good.
+  // Someone who changed their mind at Google, or picked the wrong account,
+  // then cannot sign in at all without knowing to hard-reload.
+  //
+  // pageshow with persisted is the signal that a restore happened; an ordinary
+  // load remounts the component and clears the flag by itself. visibilitychange
+  // covers the browsers that keep the page alive without firing it. Neither can
+  // fire mid-redirect: setting window.location does not hide the document.
+  useEffect(() => {
+    const clear = () => setGoogleLoading(false);
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) clear();
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") clear();
+    };
+
+    window.addEventListener("pageshow", onPageShow);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("pageshow", onPageShow);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
+
   const sendCode = async () => {
     const trimmedEmail = email.trim();
 

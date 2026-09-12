@@ -96,21 +96,6 @@ export default function OrganiserHome({ listing }: Props) {
       <PlanPanel />
 
       {listing && <MyEvents />}
-
-      <section className="cf-card p-7">
-        <h2 className="cf-display text-lg text-ink">Coming next</h2>
-        <p className="mt-2 text-sm text-muted">
-          Not built yet — listed so you know what&apos;s on the way.
-        </p>
-        <ul className="mt-4 space-y-3 text-sm">
-          <li className="flex gap-3">
-            <span className="cf-badge cf-badge-neutral shrink-0">Entries</span>
-            <span className="text-muted">
-              Individuals or teams register through the site, and you see who is coming.
-            </span>
-          </li>
-        </ul>
-      </section>
     </main>
   );
 }

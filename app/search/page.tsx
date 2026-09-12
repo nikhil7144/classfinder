@@ -22,6 +22,7 @@ import {
 import { ServiceOption, groupServices } from "@/lib/requirements";
 import SuggestedCoaches from "@/components/seeker/SuggestedCoaches";
 import { BRAND } from "@/lib/brand";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 
 
 // ServiceOption is structurally the generated ServiceCategory, so the two
@@ -47,6 +48,12 @@ function SearchPage() {
   const [locating, setLocating] = useState(false);
   const [locationNote, setLocationNote] = useState("");
 
+  // The cities, areas and taxonomy — separate from `loading` below, which is
+  // about results. Conflating the two is what made this page announce that no
+  // areas had opened while it was still finding out.
+  const [refLoading, setRefLoading] = useState(true);
+  const [refError, setRefError] = useState("");
+
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [searched, setSearched] = useState(false);
@@ -63,9 +70,14 @@ function SearchPage() {
       // One call for all five, shared with every other screen that needs
       // them. fetchSeekerLocations applies the area-wise launch gate: seekers
       // only ever see live areas.
-      const [{ cities: c, areas: a }, taxonomy] = await Promise.all([
+      //
+      // getUser goes in the same batch rather than after it. It used to wait
+      // for the taxonomy it has nothing to do with, which put a whole extra
+      // round trip on the wait before this page could show anything.
+      const [{ cities: c, areas: a }, taxonomy, { data: auth }] = await Promise.all([
         fetchSeekerLocations(),
         fetchTaxonomy(),
+        supabase.auth.getUser(),
       ]);
 
       setCities(c);
@@ -80,7 +92,6 @@ function SearchPage() {
       // with them or is their own back button, and either way it is a more
       // specific intent than a profile field. Guests and coaches have no
       // seekers row, so both reads come back empty and nothing changes.
-      const { data: auth } = await supabase.auth.getUser();
       if (!auth.user) return;
 
       const { data: me } = await supabase
@@ -114,7 +125,12 @@ function SearchPage() {
       }
     };
 
-    load();
+    // finally, not a trailing statement: if any of this throws, the page must
+    // still render. Left loading for ever, it would pulse at somebody until
+    // they gave up, with nothing on screen saying anything had gone wrong.
+    load()
+      .catch(() => setRefError("We couldn't load the areas just now."))
+      .finally(() => setRefLoading(false));
     // params is read once, as the opening state — a later URL rewrite by this
     // page's own shareable-link effect must not re-run any of this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -201,7 +217,18 @@ function SearchPage() {
     );
   };
 
-  const noAreasYet = areas.length === 0;
+  // Only once we know. "No areas have opened" is a statement about the
+  // business, and for the two or three seconds this took to load it was being
+  // made to every first-time visitor on the page that matters most.
+  const noAreasYet = !refLoading && !refError && areas.length === 0;
+
+  if (refLoading) {
+    return (
+      <main className="min-h-screen bg-bg">
+        <PageSkeleton variant="list" />
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-bg">
@@ -209,7 +236,14 @@ function SearchPage() {
         <p className="cf-eyebrow">Find classes</p>
         <h1 className="cf-display mt-3 text-3xl text-ink">Who&apos;s teaching near you</h1>
 
-        {noAreasYet ? (
+        {refError ? (
+          <div className="cf-card mt-8 p-8 text-center">
+            <p className="text-muted">{refError}</p>
+            <button type="button" onClick={() => window.location.reload()} className="cf-btn-ghost mt-5">
+              Try again
+            </button>
+          </div>
+        ) : noAreasYet ? (
           <div className="cf-card mt-8 p-8 text-center">
             <p className="text-muted">
               We haven&apos;t opened any areas yet. {BRAND.name} launches area by area — check back
@@ -390,7 +424,7 @@ function SearchPage() {
 
 export default function SearchPageWrapper() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-bg" />}>
+    <Suspense fallback={<main className="min-h-screen bg-bg"><PageSkeleton variant="list" /></main>}>
       <SearchPage />
     </Suspense>
   );

@@ -250,23 +250,6 @@ export default function SeekerHome({
             Start a group
           </Link>
         </section>
-
-        <section className="cf-card p-7">
-          <h2 className="cf-display text-lg text-ink">Coming next</h2>
-          <p className="mt-2 text-sm text-muted">
-            Not built yet — listed so you know what&apos;s on the way.
-          </p>
-          <ul className="mt-4 space-y-3 text-sm">
-            <li className="flex gap-3">
-              <span className="cf-badge cf-badge-neutral shrink-0">Messages</span>
-              <span className="text-muted">Ask questions before you commit.</span>
-            </li>
-            <li className="flex gap-3">
-              <span className="cf-badge cf-badge-neutral shrink-0">Bookings</span>
-              <span className="text-muted">Book a trial class.</span>
-            </li>
-          </ul>
-        </section>
       </div>
     </main>
   );

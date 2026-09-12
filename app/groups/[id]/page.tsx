@@ -13,6 +13,7 @@ import {
 import GroupTabs, { GroupTabKey } from "@/components/groups/GroupTabs";
 import GroupOverview from "@/components/groups/GroupOverview";
 import GroupMessages from "@/components/groups/GroupMessages";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 
 /**
  * A group is a place you come back to, so it is one page with tabs rather than
@@ -135,7 +136,12 @@ function GroupPage() {
     if (threads.length === 1) go({ t: threads[0].request_id });
   }, [tab, activeThread, isCreator, threads, go]);
 
-  if (loading) return <div className="min-h-screen bg-bg" />;
+  if (loading)
+    return (
+      <main className="min-h-screen bg-bg">
+        <PageSkeleton variant="detail" />
+      </main>
+    );
 
   if (!invite) {
     return (
@@ -230,7 +236,7 @@ function GroupPage() {
 
 export default function GroupPageWrapper() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-bg" />}>
+    <Suspense fallback={<main className="min-h-screen bg-bg"><PageSkeleton variant="detail" /></main>}>
       <GroupPage />
     </Suspense>
   );
