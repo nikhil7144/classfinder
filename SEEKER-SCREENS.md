@@ -124,6 +124,17 @@ prefilled from the profile (`subjectFromProfile`), and when nothing is found
 inside the radius it offers to widen to the maximum rather than showing an
 empty list.
 
+**How distance works, because it is not obvious.** `search_providers` measures
+**centroid to centroid**: the origin is the seeker's lat/lng if they shared one
+and otherwise the searched area's centroid, and the target is the nearest of
+the coach's `provider_discoverable_areas`. A coach's street address is never
+used, which is deliberate — it cannot leak through a distance.
+
+The consequence that bites: when an area is given, candidate areas are filtered
+to *that* area, so **without a lat/lng the origin and the target are the same
+point and every distance is exactly 0**. The web guards this with
+`showDistance={Boolean(coords)}`. Show it only when a real location was shared.
+
 **`ProviderCard` (121) must render all of:** photo or initial, name, Featured
 badge, nearest area, distance, experience, fees, `help_statement`, services,
 teaching places. The DTO carries all 18 columns — that was fixed once already

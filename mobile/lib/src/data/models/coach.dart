@@ -113,9 +113,14 @@ String? formatDistance(double? km) {
   return '${km.toStringAsFixed(1)} km away';
 }
 
+/// "New to teaching" / "11 yrs experience".
+///
+/// Zero is a fact rather than a blank, and the web says so — a coach starting
+/// out is different from a coach who did not answer.
 String? formatExperience(int? years) {
-  if (years == null || years <= 0) return null;
-  return years == 1 ? '1 year' : '$years years';
+  if (years == null || years < 0) return null;
+  if (years == 0) return 'New to teaching';
+  return years == 1 ? '1 yr experience' : '$years yrs experience';
 }
 
 class Certification {

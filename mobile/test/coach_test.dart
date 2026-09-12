@@ -60,14 +60,28 @@ void main() {
 
   group('experience', () {
     test('is singular at one year', () {
-      expect(formatExperience(1), '1 year');
-      expect(formatExperience(11), '11 years');
+      expect(formatExperience(1), '1 yr experience');
+      expect(formatExperience(11), '11 yrs experience');
+    });
+
+    test('says something for a coach starting out', () {
+      // Zero is a fact, not a blank: somebody new is different from somebody
+      // who did not answer, and the web draws that line too.
+      expect(formatExperience(0), 'New to teaching');
     });
 
     test('says nothing for none, or for nonsense', () {
       expect(formatExperience(null), isNull);
-      expect(formatExperience(0), isNull);
       expect(formatExperience(-2), isNull);
+    });
+  });
+
+  group('distance, and when not to show it', () {
+    test('zero is what an area-only search produces', () {
+      // search_providers filters candidates to the searched area, so with no
+      // lat/lng the origin and the target are the same centroid. The screen
+      // must not render this — "0 m away" on every card is worse than none.
+      expect(formatDistance(0), '0 m away');
     });
   });
 

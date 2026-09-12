@@ -201,8 +201,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           itemBuilder: (context, i) => CoachCard(
             coach: coaches[i],
             reference: reference,
-            // A distance is only meaningful when something was measured from.
-            showDistance: _query.areaId != null,
+            // Only when a real location was shared.
+            //
+            // search_providers filters candidate areas to the one being
+            // searched, so without a lat/lng the origin and the target are the
+            // same centroid and every distance comes back as exactly zero.
+            // "0 m away" on every card is worse than no distance at all.
+            showDistance: _query.lat != null && _query.lng != null,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => CoachScreen(coachId: coaches[i].id),

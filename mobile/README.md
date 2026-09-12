@@ -33,7 +33,7 @@ What runs today, on the provider flavor:
 | Events — create, publish, categories | `screens/events/` | built |
 | Register — entries, payments, withdrawals | `screens/events/` | built |
 
-`flutter analyze` is clean and `flutter test` passes (119 tests). It has **never
+`flutter analyze` is clean and `flutter test` passes (121 tests). It has **never
 been built into an APK** — the machine it was written on has no Android SDK, so
 `flutter build` could not run. `test/smoke_test.dart` imports both entry points
 specifically so the whole tree is compiled by `flutter test`; that is as close
@@ -167,7 +167,7 @@ mobile/
         repositories/         one per surface; pure Dart, no Riverpod
       screens/                one folder per screen
       widgets/                shared: PrimaryButton, states, skeleton, branding
-  test/                       119 tests, no device needed
+  test/                       121 tests, no device needed
 ```
 
 `lib/src/providers.dart` is the seam. Below it — `lib/src/data` — is pure Dart
@@ -248,7 +248,7 @@ partial-save or autosave path to `ListingScreen`.
 ## 6. Tests
 
 ```bash
-flutter test          # 119 tests, no device or SDK needed
+flutter test          # 121 tests, no device or SDK needed
 ```
 
 - `test/listing_rules_test.dart` pins the completeness rules against the web's
