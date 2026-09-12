@@ -41,14 +41,15 @@ More (listing, events, sign out).
 | Events — create, publish, categories | `screens/events/` |
 | Register — entries, payments, withdrawals | `screens/events/` |
 
-**`seeker` — the families app.** Three tabs: Find, Messages, You.
+**`seeker` — the families app.** Four tabs: Home, Find, Messages, You.
 
 | Screen | Files | |
 |---|---|---|
+| Home — what is waiting, and who to look at first | `screens/home/` | built |
 | Profile — who you are, and what you want | `screens/profile/` | built |
 | Search — area, subject, radius, distance | `screens/search/` | built |
 | Coach page — profile and Space, two tabs | `screens/coach/` | built |
-| Home, groups, events, settings | — | **not built** |
+| Groups, events, settings | — | **not built** |
 
 `../SEEKER-SCREENS.md` has the rest, in order.
 

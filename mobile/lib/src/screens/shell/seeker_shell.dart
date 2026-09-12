@@ -6,14 +6,15 @@ import '../../theme/theme.dart';
 import '../../widgets/branding.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/skeleton.dart';
+import '../home/home_screen.dart';
 import '../profile/profile_screen.dart';
 import '../search/search_screen.dart';
 import '../threads/threads_screen.dart';
 
 /// Where a family lands.
 ///
-/// Three tabs so far. SEEKER-SCREENS.md has the build order — home, groups
-/// and events remain — and the bar grows a destination per slice.
+/// Four tabs. SEEKER-SCREENS.md has what is left — groups, events and
+/// settings — and the bar grows a destination per slice.
 ///
 /// A brand new account gets the welcome instead: the profile asks for a
 /// child's age and a neighbourhood, and a blank form is a poor way to open
@@ -51,7 +52,7 @@ class _SeekerShellState extends ConsumerState<SeekerShell> {
       // a subtree at zero, so the cost is what IndexedStack's already was.
       body: Stack(
         children: [
-          for (var i = 0; i < 3; i++)
+          for (var i = 0; i < 4; i++)
             AnimatedOpacity(
               opacity: _tab == i ? 1 : 0,
               duration: A91.tabFade,
@@ -62,9 +63,10 @@ class _SeekerShellState extends ConsumerState<SeekerShell> {
                 child: TickerMode(
                   enabled: _tab == i,
                   child: const [
+                    HomeScreen(),
                     SearchScreen(),
                     ThreadsScreen(),
-                    ProfileScreen()
+                    ProfileScreen(),
                   ][i],
                 ),
               ),
@@ -77,6 +79,11 @@ class _SeekerShellState extends ConsumerState<SeekerShell> {
         backgroundColor: A91.surface,
         indicatorColor: A91.surface3,
         destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
           NavigationDestination(
             icon: Icon(Icons.search),
             selectedIcon: Icon(Icons.search),

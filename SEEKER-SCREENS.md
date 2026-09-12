@@ -98,7 +98,7 @@ browse and message owes us nothing." `listing_rules.dart` has no equivalent yet
 | "Your search" — what they asked for, edit link | `GET /seekers/me` | |
 | **Waiting on you** | `GET /alerts` | Pending pitches, coach approaches |
 | Profile-incomplete prompt | `GET /me` | |
-| `SuggestedCoaches` (173) | `POST /suggestions/coaches` | AI ranking. Only when the requirement is published |
+| `SuggestedCoaches` (173) | `POST /suggestions/coaches` | AI ranking. `ranked: false` means plain distance order — say so rather than implying a match |
 | `FollowedSpaces` (83) | `GET /spaces/following` | |
 | `InterestFeed` (96) | `GET /feeds/me` | |
 | Start a group | → `/groups/new` | |
@@ -229,7 +229,7 @@ Extends `MOBILE-PLAN.md` §9 for the seeker flavor. Keep both current.
 |---|---|
 | `/login`, `/signup/seeker` | `screens/auth/sign_in_screen.dart` *(shared)* |
 | `/complete-profile/seeker`, `/account/profile` | `screens/profile/` |
-| `/home` | `screens/home/` *(not built)* |
+| `/home` | `screens/home/` |
 | `/search` | `screens/search/` |
 | `/provider/[id]`, `/provider/[id]/space` | `screens/coach/` |
 | `/account/messages` | `screens/threads/` *(shared)* |
@@ -267,7 +267,9 @@ Each slice is usable on its own, and each depends only on what is above it.
    things the coach version lacked: `ApproachBanner`, `PhoneSharingRow` and
    `TrialCard`. `ThreadDto` gained `showPhone`, which it did not carry — the
    control would otherwise have read "not shared" whatever the truth was.
-4. **Home** — it is mostly links to 1–3, so it is worth the least first.
+4. ~~**Home**~~ — **done.** `screens/home/`. What it adds beyond links is the
+   two things no other screen says: what is waiting on them, and who to look
+   at first.
 5. **Groups**.
 6. **Events** — the seeker half; the coach half already exists.
 7. **Settings** — small: change email and sign out, both straight to

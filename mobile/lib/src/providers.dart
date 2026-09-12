@@ -14,6 +14,7 @@ import 'data/models/query.dart';
 import 'data/models/reference.dart';
 import 'data/models/seeker.dart';
 import 'data/models/space.dart';
+import 'data/models/suggestion.dart';
 import 'data/models/thread.dart';
 import 'data/models/trial.dart';
 import 'data/repositories/alerts_repository.dart';
@@ -25,6 +26,7 @@ import 'data/repositories/events_repository.dart';
 import 'data/repositories/queries_repository.dart';
 import 'data/repositories/seeker_repository.dart';
 import 'data/repositories/spaces_repository.dart';
+import 'data/repositories/suggestions_repository.dart';
 import 'data/repositories/students_repository.dart';
 import 'data/repositories/threads_repository.dart';
 import 'data/repositories/trials_repository.dart';
@@ -135,6 +137,16 @@ final spacePostsProvider = FutureProvider.family<List<SpacePost>, String>(
 /// The Spaces a family follows.
 final followedSpacesProvider = FutureProvider<List<FollowedSpace>>(
   (ref) => ref.watch(spacesRepositoryProvider).following(),
+);
+
+final suggestionsRepositoryProvider = Provider<SuggestionsRepository>(
+  (ref) => SuggestionsRepository(ref.watch(apiClientProvider)),
+);
+
+/// Coaches worth looking at first. Asks the model, so it is not cheap — read
+/// once per home screen rather than on every rebuild.
+final coachSuggestionsProvider = FutureProvider<CoachSuggestions>(
+  (ref) => ref.watch(suggestionsRepositoryProvider).coaches(),
 );
 
 final queriesRepositoryProvider = Provider<QueriesRepository>(
