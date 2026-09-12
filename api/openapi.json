@@ -7073,9 +7073,12 @@
         "type": "object",
         "properties": {
           "provider": {
-            "type": "object",
-            "additionalProperties": true,
-            "description": "A row as search_providers() returns it, passed through unchanged."
+            "description": "Exactly what GET /providers/search returns for a coach — same eighteen fields, same camelCase, and the same schema in the generated contract.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProviderSearchResultDto"
+              }
+            ]
           },
           "reason": {
             "type": "string",

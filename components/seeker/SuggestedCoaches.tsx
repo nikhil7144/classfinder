@@ -3,10 +3,20 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetchCoachSuggestions } from "@/lib/api/my-feed";
-import { SearchResult, formatDistance, formatExperience, formatFees } from "@/lib/search";
+import { formatDistance, formatExperience, formatFees } from "@/lib/search";
+import type { components } from "@/lib/api/schema";
 
+/**
+ * Straight off the generated contract rather than declared here.
+ *
+ * The provider used to be the raw search_providers() row — snake_case, the one
+ * endpoint in the API that did not speak the contract's own casing — and this
+ * component had its own type describing it. Now it is the same
+ * ProviderSearchResultDto the search endpoint returns, so there is nothing to
+ * describe twice.
+ */
 export type CoachSuggestion = {
-  provider: SearchResult;
+  provider: components["schemas"]["ProviderSearchResultDto"];
   /** Null when there were too few to be worth ranking — see the route. */
   reason: string | null;
 };
@@ -46,7 +56,7 @@ export default function SuggestedCoaches({ variant }: Props) {
       const result = await fetchCoachSuggestions();
       if (!active) return;
 
-      setSuggestions(result.suggestions as CoachSuggestion[]);
+      setSuggestions(result.suggestions);
       setEmptyReason(result.reason);
     };
 
@@ -89,7 +99,7 @@ export default function SuggestedCoaches({ variant }: Props) {
   if (!suggestions?.length) return null;
 
   const wantedIds = Array.from(
-    new Set(suggestions.flatMap((s) => s.provider.service_category_ids || []))
+    new Set(suggestions.flatMap((s) => s.provider.serviceCategoryIds || []))
   );
 
   return (
@@ -116,9 +126,9 @@ export default function SuggestedCoaches({ variant }: Props) {
           below the fold. */}
       <div className="no-scrollbar -mx-1 mt-4 flex gap-3 overflow-x-auto px-1 pb-2">
         {suggestions.map(({ provider, reason }) => {
-          const fees = formatFees(provider.fee_min, provider.fee_max, provider.fee_period);
-          const distance = formatDistance(provider.distance_km);
-          const experience = formatExperience(provider.experience_years);
+          const fees = formatFees(provider.feeMin, provider.feeMax, provider.feePeriod);
+          const distance = formatDistance(provider.distanceKm);
+          const experience = formatExperience(provider.experienceYears);
 
           return (
             <Link
@@ -127,23 +137,23 @@ export default function SuggestedCoaches({ variant }: Props) {
               className="cf-card w-64 shrink-0 p-4 transition hover:border-faint"
             >
               <div className="flex items-center gap-3">
-                {provider.photo_url ? (
+                {provider.photoUrl ? (
                   <img
-                    src={provider.photo_url}
+                    src={provider.photoUrl}
                     alt=""
                     className="h-11 w-11 shrink-0 rounded-xl border border-line object-cover"
                   />
                 ) : (
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-line bg-surface-2 font-semibold text-faint">
-                    {(provider.display_name || "?").charAt(0).toUpperCase()}
+                    {(provider.displayName || "?").charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div className="min-w-0">
                   <p className="cf-display truncate text-ink">
-                    {provider.display_name || "Unnamed"}
+                    {provider.displayName || "Unnamed"}
                   </p>
                   <p className="truncate text-xs text-muted">
-                    {provider.nearest_area_name}
+                    {provider.nearestAreaName}
                     {distance ? ` · ${distance}` : ""}
                   </p>
                 </div>
@@ -152,9 +162,9 @@ export default function SuggestedCoaches({ variant }: Props) {
               {reason ? (
                 <p className="mt-3 line-clamp-3 text-sm leading-6 text-accent-ink">{reason}</p>
               ) : (
-                provider.help_statement && (
+                provider.helpStatement && (
                   <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted">
-                    {provider.help_statement}
+                    {provider.helpStatement}
                   </p>
                 )
               )}

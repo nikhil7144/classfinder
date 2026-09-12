@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { Injectable, Logger } from "@nestjs/common";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { Caller } from "../auth/current-user.decorator";
+import { SearchRow, toSearchResult } from "../providers/providers.service";
 import { SupabaseService } from "../supabase/supabase.service";
 import {
   CoachContext,
@@ -51,20 +52,15 @@ type DemandRow = {
   contact_status: string | null;
 };
 
-type ProviderRow = {
-  id: string;
-  display_name: string | null;
-  bio: string | null;
-  help_statement: string | null;
-  service_category_ids: string[] | null;
-  experience_years: number | null;
-  fee_min: number | null;
-  fee_max: number | null;
-  fee_period: string | null;
-  teaching_places: string[] | null;
-  nearest_area_name: string | null;
-  distance_km: number | null;
-};
+/**
+ * These rows come straight from search_providers(), so they are the same rows
+ * the search endpoint maps — not a narrower shape that happens to overlap.
+ *
+ * It was declared separately here, with twelve of the eighteen columns, and
+ * that was how the raw row ended up being handed to clients: a local type that
+ * looked complete made passing it through look harmless.
+ */
+type ProviderRow = SearchRow;
 
 /**
  * What a ranking was computed for.
@@ -226,7 +222,7 @@ export class SuggestionsService {
     // search's own distance order.
     if (!fresh && shortlist.length < MIN_TO_RANK) {
       return {
-        suggestions: shortlist.map((p) => ({ provider: p, reason: null })),
+        suggestions: shortlist.map((p) => ({ provider: toSearchResult(p), reason: null })),
         ranked: false,
       };
     }
@@ -289,7 +285,7 @@ export class SuggestionsService {
     return {
       suggestions: picks
         .filter((p) => byId.has(p.provider_id))
-        .map((p) => ({ provider: byId.get(p.provider_id)!, reason: p.reason })),
+        .map((p) => ({ provider: toSearchResult(byId.get(p.provider_id)!), reason: p.reason })),
       ranked: true,
       cached: fresh,
     };

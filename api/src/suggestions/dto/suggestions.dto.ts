@@ -1,22 +1,28 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsInt, IsOptional, IsUUID, Max, Min } from "class-validator";
 import { Type } from "class-transformer";
+import { ProviderSearchResultDto } from "../../providers/dto/provider.dto";
 
 /**
- * The provider blob is passed through from search_providers() as-is.
+ * The provider is the same shape GET /providers/search returns.
  *
- * Not modelled column by column, deliberately: this is the same row the
- * search screen already renders, and re-declaring twenty optional fields here
- * would be two definitions of one shape, drifting apart. What the contract
- * promises is the envelope — what `reason` means, and when `ranked` is true.
+ * Not modelled column by column here, deliberately: re-declaring eighteen
+ * optional fields would be two definitions of one shape, drifting apart. What
+ * this contract promises is the envelope — what `reason` means, and when
+ * `ranked` is true.
+ *
+ * It used to be the raw search_providers() row, snake_case and all, which made
+ * this the one endpoint in the API that did not speak the contract's own
+ * casing. A client reading a suggestion had to know that; now it does not.
  */
 export class CoachSuggestionDto {
   @ApiProperty({
-    type: "object",
-    additionalProperties: true,
-    description: "A row as search_providers() returns it, passed through unchanged.",
+    type: () => ProviderSearchResultDto,
+    description:
+      "Exactly what GET /providers/search returns for a coach — same eighteen fields, same " +
+      "camelCase, and the same schema in the generated contract.",
   })
-  provider!: Record<string, unknown>;
+  provider!: ProviderSearchResultDto;
 
   @ApiProperty({
     nullable: true,

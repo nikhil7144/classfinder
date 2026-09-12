@@ -2652,10 +2652,8 @@ export interface components {
             threadId: string | null;
         };
         CoachSuggestionDto: {
-            /** @description A row as search_providers() returns it, passed through unchanged. */
-            provider: {
-                [key: string]: unknown;
-            };
+            /** @description Exactly what GET /providers/search returns for a coach — same eighteen fields, same camelCase, and the same schema in the generated contract. */
+            provider: components["schemas"]["ProviderSearchResultDto"];
             /** @description Why the model placed this coach here. Null when the list was not ranked. */
             reason: string | null;
         };
