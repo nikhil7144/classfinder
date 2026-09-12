@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
+
+import '../../config/env.dart';
 
 import '../../data/models/me.dart';
 import '../../providers.dart';
@@ -49,6 +52,21 @@ class MoreScreen extends ConsumerWidget {
                 MaterialPageRoute(builder: (_) => const ListingScreen()),
               ),
             ),
+            // Only once parents can actually reach the page. Before approval
+            // the profile answers notFound(), so sharing it any earlier hands
+            // a coach a link to a 404 and lets them send it to thirty people.
+            if (_listingIsLive(me))
+              _Item(
+                icon: Icons.ios_share,
+                title: 'Share your page',
+                subtitle: 'Send your listing to parents you already know.',
+                onTap: () => Share.share(
+                  '${me!.provider!.displayName ?? 'My classes'} on Aspire91 — '
+                  'classes, fees and timings: '
+                  '${Env.siteUrl}/provider/${me.provider!.id}',
+                  subject: 'My Aspire91 listing',
+                ),
+              ),
             _Item(
               icon: Icons.event_outlined,
               title: 'Your events',
@@ -71,6 +89,17 @@ class MoreScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  /// Approved, not taken down, and finished — the same three conditions the
+  /// web gates its share button on, because they are the conditions under
+  /// which the page exists at all.
+  static bool _listingIsLive(Me? me) {
+    final provider = me?.provider;
+    return me?.profileComplete == true &&
+        provider != null &&
+        provider.approved &&
+        !provider.isSuspended;
   }
 
   static String _listingState(Me? me) {

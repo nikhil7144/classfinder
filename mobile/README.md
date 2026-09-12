@@ -39,6 +39,7 @@ More (listing, events, settings, sign out).
 | Space — posts, photos, video, reactions | `screens/space/` |
 | Listing — the whole coach profile | `screens/listing/` |
 | Events — create, publish, categories | `screens/events/` |
+| Share your page — the listing link, once it is live | `screens/shell/more_screen.dart` |
 | Register — entries, payments, withdrawals | `screens/events/` |
 | Settings — the email you sign in with | `screens/settings/` *(shared)* |
 
@@ -56,7 +57,7 @@ More (listing, events, settings, sign out).
 
 `../SEEKER-SCREENS.md` has the rest, in order.
 
-`flutter analyze` is clean and `flutter test` passes (176 tests). It has **never
+`flutter analyze` is clean and `flutter test` passes (177 tests). It has **never
 been built into an APK** — the machine it was written on has no Android SDK, so
 `flutter build` could not run. `test/smoke_test.dart` imports both entry points
 specifically so the whole tree is compiled by `flutter test`; that is as close
@@ -207,7 +208,7 @@ mobile/
         repositories/         one per surface; pure Dart, no Riverpod
       screens/                one folder per screen
       widgets/                shared: PrimaryButton, states, skeleton, branding
-  test/                       176 tests, no device needed
+  test/                       177 tests, no device needed
 ```
 
 `lib/src/providers.dart` is the seam. Below it — `lib/src/data` — is pure Dart
@@ -288,7 +289,7 @@ partial-save or autosave path to `ListingScreen`.
 ## 6. Tests
 
 ```bash
-flutter test          # 176 tests, no device or SDK needed
+flutter test          # 177 tests, no device or SDK needed
 ```
 
 - `test/listing_rules_test.dart` pins the completeness rules against the web's

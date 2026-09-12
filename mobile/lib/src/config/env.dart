@@ -16,6 +16,15 @@ class Env {
   static const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
   static const apiBaseUrl = String.fromEnvironment('API_BASE_URL');
 
+  /// Where a link shared out of the app points.
+  ///
+  /// Defaulted rather than required, because unlike the two above it is the
+  /// same in every environment that matters — and a build that forgot it would
+  /// otherwise send a coach's listing link to an empty host, which is the one
+  /// failure nobody would notice until a parent tapped it.
+  static const siteUrl = String.fromEnvironment('SITE_URL',
+      defaultValue: 'https://www.aspire91.com');
+
   /// Fail at startup with a sentence, rather than on the first request with a
   /// null-ish URL and a confusing socket error.
   static void assertConfigured() {

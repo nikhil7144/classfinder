@@ -97,9 +97,15 @@ class Group {
   String get remaining {
     if (hasExpired) return 'Ended';
 
+    // Both dates read in the same timezone — the reader's. expiresAt arrives
+    // as UTC, and taking its calendar date without converting compared a UTC
+    // date against a local one: in India that is a different date between
+    // midnight and half past five, so for those five and a half hours every
+    // group in the country said it had a day less left than it did.
     final now = DateTime.now();
+    final expiry = expiresAt.toLocal();
     final today = DateTime(now.year, now.month, now.day);
-    final last = DateTime(expiresAt.year, expiresAt.month, expiresAt.day);
+    final last = DateTime(expiry.year, expiry.month, expiry.day);
     final days = last.difference(today).inDays;
 
     if (days < 1) return 'Ends today';

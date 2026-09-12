@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../config/env.dart';
+
 import '../../data/api_exception.dart';
 import '../../data/models/group.dart';
 import '../../data/models/thread.dart';
@@ -58,7 +60,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen> {
     await Share.share(
       'We are getting a group together for ${_g.serviceName ?? 'classes'} '
       'in ${_g.societyName ?? 'our building'}. '
-      'Join us: https://www.aspire91.com/groups/${_g.id}',
+      'Join us: ${Env.siteUrl}/groups/${_g.id}',
       subject: 'Join our Aspire91 group',
     );
   }

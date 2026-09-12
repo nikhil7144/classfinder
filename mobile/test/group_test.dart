@@ -87,6 +87,30 @@ void main() {
     test('says ended once it has', () {
       expect(aGroup(expiresIn: const Duration(days: -1)).remaining, 'Ended');
     });
+
+    test("counts in the reader's timezone, not UTC", () {
+      // Half past midnight tomorrow, local. East of Greenwich that instant is
+      // still *today* in UTC, so a group expiring then used to read "Ends
+      // today" — for every user in India, every night between midnight and
+      // half past five. The expiry has to be converted before its date is
+      // taken. West of Greenwich, and in UTC itself, this is simply one day
+      // out either way, which is what it should say.
+      final now = DateTime.now();
+      final tomorrow = DateTime(now.year, now.month, now.day)
+          .add(const Duration(days: 1, minutes: 30));
+
+      final g = Group.fromJson({
+        'id': 'g1',
+        'memberCount': '3',
+        'expiresAt': tomorrow.toUtc().toIso8601String(),
+        'isCreator': true,
+        'isActive': true,
+        'pendingRequests': '0',
+        'createdAt': '2026-09-12T10:00:00.000Z',
+      });
+
+      expect(g.remaining, '1 day left');
+    });
   });
 
   group('reading a group off the wire', () {
