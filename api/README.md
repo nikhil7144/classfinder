@@ -42,6 +42,18 @@ Three rules it holds to:
 The coach message is the more useful of the two: a listing is invisible to
 families until an admin approves it, so it is the review queue growing by one.
 
+### The third alert is not here
+
+Signup is invisible to this service. It only ever sees somebody once a client
+makes an authenticated call, so it cannot report an email being verified —
+which is precisely the drop-off worth watching.
+
+That one lives in the database instead: `db/2026-09-19-phase3t-signup-alert.sql`
+puts a trigger on `auth.users` and posts through `pg_net`, reading the webhook
+from Supabase Vault rather than from this service's environment. It can only
+say an email address: the intended role is not sent to Supabase at signup, so a
+coach and a family look identical at that moment.
+
 ## The rule
 
 > Postgres decides **who may see what**. This API decides **what shape it
