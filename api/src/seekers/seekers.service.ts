@@ -188,9 +188,18 @@ export class SeekersService {
   /**
    * Tell the team a family has joined.
    *
-   * Nobody approves a family, so this is not a queue the way a listing is —
-   * but it is the number the business watches, and openToOffers says whether
-   * any coach will ever see them.
+   * **In practice this does not fire yet, and that is known.** The web's
+   * SeekerProfileForm writes the `seekers` table directly rather than calling
+   * this endpoint — the coach half of the same job goes through
+   * PUT /providers/me, the family half never did — so a family registering in
+   * a browser never reaches this code. It works from the Flutter app, which is
+   * the only client that uses this endpoint today.
+   *
+   * Deliberately left rather than deleted: the endpoint is right, the caller
+   * is the thing that is behind. Two ways to close it, if it ever matters —
+   * point SeekerProfileForm at PUT /seekers/me, or move the announcement to a
+   * trigger on profiles.profile_complete, which would catch every client at
+   * once.
    *
    * Nothing here may reach the caller.
    */

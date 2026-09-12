@@ -42,6 +42,13 @@ Three rules it holds to:
 The coach message is the more useful of the two: a listing is invisible to
 families until an admin approves it, so it is the review queue growing by one.
 
+**Only the coach one fires today.** The web's `SeekerProfileForm` writes the
+`seekers` table directly instead of calling `PUT /seekers/me`, so a family
+registering in a browser never reaches this service. The family message works
+from the Flutter app and is left in place for it. Closing the gap means either
+pointing that form at the endpoint, or moving the announcement to a trigger on
+`profiles.profile_complete` — which would catch every client at once.
+
 ### The third alert is not here
 
 Signup is invisible to this service. It only ever sees somebody once a client
