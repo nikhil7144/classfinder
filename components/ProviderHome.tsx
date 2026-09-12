@@ -4,6 +4,7 @@ import Link from "next/link";
 import { formatFees } from "@/lib/search";
 import ProviderTabs from "@/components/provider/ProviderTabs";
 import MyEvents from "@/components/events/MyEvents";
+import ShareListing from "@/components/provider/ShareListing";
 import PlanPanel from "@/components/events/PlanPanel";
 import { useAlerts } from "@/components/AlertsBadge";
 
@@ -111,6 +112,12 @@ export default function ProviderHome({ profileComplete, provider }: Props) {
             </div>
           )}
         </header>
+
+        {/* Only once parents can actually reach the page. Before approval it
+            answers notFound(), so a share button here would be a trap. */}
+        {provider && profileComplete && provider.approved && !provider.is_suspended && (
+          <ShareListing providerId={provider.id} displayName={provider.display_name} />
+        )}
 
         {provider && profileComplete && (
           <section className="cf-card p-7">

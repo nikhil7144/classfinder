@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server-client";
@@ -6,6 +7,7 @@ import EnquiryForm from "@/components/provider/EnquiryForm";
 import RaiseQueryForm from "@/components/provider/RaiseQueryForm";
 import { formatExperience, formatFees } from "@/lib/search";
 import { WEEK_DAYS } from "@/lib/profile-rules";
+import { BRAND } from "@/lib/brand";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -40,6 +42,82 @@ type ProviderProfile = {
 
 const DAY_LABEL = Object.fromEntries(WEEK_DAYS.map((d) => [d.value, d.label]));
 const DAY_ORDER: string[] = WEEK_DAYS.map((d) => d.value);
+
+/**
+ * What this page is called, to a search engine and to WhatsApp.
+ *
+ * Every coach page used to inherit the root layout's title — the brand name
+ * and a slogan — so all of them were called the same thing and none of them
+ * said what anyone teaches or where. A page titled "Aspire91 — Discover.
+ * Participate. Achieve." cannot rank for "table tennis coach in Indiranagar"
+ * no matter how well the page itself is written.
+ *
+ * The title is built to be that phrase: what they teach, where they teach it.
+ * The description is their own sentence about who they help, because it is the
+ * one line on the page written to be read by a parent deciding.
+ *
+ * The same block does the WhatsApp card, which matters more on day one than
+ * Google does — a coach shares their own link long before a stranger searches
+ * for one, and a bare link with no photo is a link nobody taps.
+ */
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
+  const { id } = await params;
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase.rpc("get_provider_profile", { p_id: id });
+  const provider = data as ProviderProfile | null;
+
+  // notFound() in the page itself handles this; here it just means there is
+  // nothing to describe.
+  if (!provider) return {};
+
+  const name = provider.display_name?.trim() || "Coach";
+
+  // What they teach: their subjects, up to three, else the category they are
+  // listed under. More than three reads as keyword stuffing and Google cuts
+  // the title at roughly sixty characters anyway.
+  const subjects = (provider.services || []).map((s) => s.name).slice(0, 3);
+  const teaches = subjects.length > 0 ? subjects.join(", ") : provider.category_name;
+
+  // Where: the areas they actually serve, then their branches. One place only
+  // — a title listing five areas ranks for none of them well.
+  const where =
+    provider.service_areas?.[0]?.area_name ||
+    provider.branches?.[0]?.area_name ||
+    provider.branches?.[0]?.city_name ||
+    null;
+
+  const title = [name, teaches, where && `in ${where}`].filter(Boolean).join(" — ");
+
+  const description =
+    provider.help_statement?.trim() ||
+    provider.bio?.trim()?.slice(0, 200) ||
+    `${name} teaches ${teaches ?? "on Aspire91"}${where ? ` in ${where}` : ""}. ` +
+      `See fees, timings and get in touch on ${BRAND.name}.`;
+
+  const url = `${BRAND.siteUrl}/provider/${id}`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: "profile",
+      siteName: BRAND.name,
+      // Their own photo, which is the whole point of the card. Without it a
+      // shared listing is a grey rectangle with a domain name on it.
+      images: provider.photo_url ? [{ url: provider.photo_url }] : undefined,
+    },
+    twitter: {
+      card: provider.photo_url ? "summary_large_image" : "summary",
+      title,
+      description,
+      images: provider.photo_url ? [provider.photo_url] : undefined,
+    },
+  };
+}
 
 export default async function ProviderProfilePage({ params }: Params) {
   const { id } = await params;
