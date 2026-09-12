@@ -1,6 +1,14 @@
 import { MetadataRoute } from "next";
-import { createServerClient } from "@supabase/ssr";
 import { BRAND } from "@/lib/brand";
+import { createAnonServerClient } from "@/lib/supabase-anon";
+import {
+  areasWithCoaches,
+  countInArea,
+  publicCoverage,
+  seoReference,
+  slugify,
+  subjectsAcross,
+} from "@/lib/seo-pages";
 
 /**
  * Everything a stranger is allowed to read.
@@ -22,15 +30,6 @@ import { BRAND } from "@/lib/brand";
 // An hour. Long enough that crawls cost nothing, short enough that a coach
 // approved this morning is offered up today.
 export const revalidate = 3600;
-
-/** Anonymous on purpose — no cookies to read, and no session to inherit. */
-function anonClient() {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => [], setAll: () => {} } }
-  );
-}
 
 const STATIC_PAGES: Array<{
   path: string;
@@ -59,7 +58,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   try {
-    const supabase = anonClient();
+    const supabase = createAnonServerClient();
 
     const [providers, spaces, events] = await Promise.all([
       // Event planners are excluded here as they are everywhere else: they have
@@ -97,10 +96,85 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
 
-    return [...staticEntries, ...coachEntries, ...spaceEntries, ...eventEntries];
+    return [
+      ...staticEntries,
+      ...(await landingEntries(now)),
+      ...coachEntries,
+      ...spaceEntries,
+      ...eventEntries,
+    ];
   } catch {
     // A sitemap that 500s is worse than a short one: the pages that were
     // always listed stop being listed too.
     return staticEntries;
   }
+}
+
+
+/**
+ * The coach landing pages — city, area, subject, and area with subject.
+ *
+ * Only the combinations that have somebody on them. Every subject in every
+ * area would be the taxonomy multiplied by the area count, almost all of it
+ * empty, and a site that is mostly empty pages is crawled less rather than
+ * more. The pages themselves still render for anyone who lands on one; they
+ * simply carry noindex until there is somebody to show.
+ *
+ * Built from two queries regardless of how many pages come out, because the
+ * coverage map answers "how many coaches would this page list" without
+ * running that page's search.
+ */
+async function landingEntries(now: Date): Promise<MetadataRoute.Sitemap> {
+  const [{ cities, areas, services }, coverage] = await Promise.all([
+    seoReference(),
+    publicCoverage(),
+  ]);
+
+  const entries: MetadataRoute.Sitemap = [];
+
+  for (const city of cities) {
+    const citySlug = slugify(city.name);
+    const cityAreas = areasWithCoaches(coverage, areas, city.id);
+    if (cityAreas.length === 0) continue;
+
+    entries.push({
+      url: `${BRAND.siteUrl}/coaches/${citySlug}`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.7,
+    });
+
+    for (const service of subjectsAcross(coverage, services, cityAreas)) {
+      entries.push({
+        url: `${BRAND.siteUrl}/coaches/${citySlug}/${slugify(service.name)}`,
+        lastModified: now,
+        changeFrequency: "weekly",
+        priority: 0.7,
+      });
+    }
+
+    for (const area of cityAreas) {
+      const areaSlug = slugify(area.name);
+
+      entries.push({
+        url: `${BRAND.siteUrl}/coaches/${citySlug}/${areaSlug}`,
+        lastModified: now,
+        changeFrequency: "weekly",
+        priority: 0.8,
+      });
+
+      // The pages worth the most: the phrase a parent actually types.
+      for (const service of subjectsAcross(coverage, services, [area])) {
+        if (countInArea(coverage, area.id, service.id) === 0) continue;
+        entries.push({
+          url: `${BRAND.siteUrl}/coaches/${citySlug}/${areaSlug}/${slugify(service.name)}`,
+          lastModified: now,
+          changeFrequency: "weekly",
+          priority: 0.9,
+        });
+      }
+    }
+  }
+
+  return entries;
 }

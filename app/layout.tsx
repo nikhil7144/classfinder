@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Manrope, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import Footer from "@/components/Footer";
+import BrowseLinks from "@/components/seo/BrowseLinks";
 import Navbar from "@/components/Navbar";
 import { BRAND } from "@/lib/brand";
 import "./globals.css";
@@ -57,6 +58,7 @@ export default function RootLayout({
       >
         <Navbar />
         {children}
+        <BrowseLinks />
         <Footer />
       </body>
     </html>

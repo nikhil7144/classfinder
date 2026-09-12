@@ -8,6 +8,7 @@ import RaiseQueryForm from "@/components/provider/RaiseQueryForm";
 import { formatExperience, formatFees } from "@/lib/search";
 import { WEEK_DAYS } from "@/lib/profile-rules";
 import { BRAND } from "@/lib/brand";
+import { slugify } from "@/lib/seo-pages";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -156,6 +157,30 @@ export default async function ProviderProfilePage({ params }: Params) {
       (a, b) => DAY_ORDER.indexOf(a.day) - DAY_ORDER.indexOf(b.day) || a.start.localeCompare(b.start)
     );
   }
+
+  // Where this coach sits in the browsable tree.
+  //
+  // Links out as well as in: the landing pages are how a crawler reaches this
+  // profile, and these are how it leaves again to find the rest. A profile
+  // that only ever receives links is a dead end, and a dead end is a page a
+  // crawler stops coming back to.
+  const home = provider.service_areas?.[0] ?? null;
+  const homeCity = home?.city_name ?? provider.branches?.[0]?.city_name ?? null;
+  const homeArea = home?.area_name ?? provider.branches?.[0]?.area_name ?? null;
+
+  const nearby =
+    homeCity && homeArea
+      ? [
+          {
+            label: `Coaches in ${homeArea}`,
+            href: `/coaches/${slugify(homeCity)}/${slugify(homeArea)}`,
+          },
+          ...provider.services.slice(0, 4).map((s) => ({
+            label: `${s.name} in ${homeArea}`,
+            href: `/coaches/${slugify(homeCity)}/${slugify(homeArea)}/${slugify(s.name)}`,
+          })),
+        ]
+      : [];
 
   const isInstitution = provider.provider_type === "institution";
 
@@ -345,6 +370,23 @@ export default async function ProviderProfilePage({ params }: Params) {
           providerName={provider.display_name || "this coach"}
           services={provider.services || []}
         />
+
+        {nearby.length > 0 && (
+          <section className="cf-card p-7">
+            <h2 className="cf-display text-lg text-ink">Nearby</h2>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {nearby.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="rounded-full border border-line bg-surface-2 px-4 py-2 text-sm text-muted transition hover:border-faint hover:text-ink"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </main>
   );
