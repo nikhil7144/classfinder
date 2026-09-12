@@ -16,6 +16,7 @@ export default function AccountSettings() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -58,11 +59,20 @@ export default function AccountSettings() {
     setNewEmail("");
   };
 
+  // Clearing the server cookie and then the client session is two round
+  // trips. Saying so beats a button that looks ignored while they run.
   const logOut = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    await supabase.auth.signOut();
-    router.push("/");
-    router.refresh();
+    if (loggingOut) return;
+    setLoggingOut(true);
+
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      await supabase.auth.signOut();
+      router.push("/");
+      router.refresh();
+    } catch {
+      setLoggingOut(false);
+    }
   };
 
   return (
@@ -118,8 +128,14 @@ export default function AccountSettings() {
       <section className="cf-card p-7">
         <h2 className="cf-display text-lg text-ink">Sign out</h2>
         <p className="mt-2 text-sm text-muted">Sign out on this device.</p>
-        <button type="button" onClick={logOut} className="cf-btn-ghost mt-5">
-          Log out
+        <button
+          type="button"
+          onClick={logOut}
+          disabled={loggingOut}
+          aria-busy={loggingOut}
+          className="cf-btn-ghost mt-5 disabled:cursor-wait disabled:opacity-70"
+        >
+          {loggingOut ? "Logging you out…" : "Log out"}
         </button>
       </section>
     </div>

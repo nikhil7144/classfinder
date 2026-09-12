@@ -80,6 +80,30 @@ export async function resolveProfileAndRedirect(
     return {};
   }
 
+  // They came in through a door meant for the other side of the marketplace —
+  // a parent who clicked "I'm a coach" and then signed in with the Google
+  // account they already had. Returning users are deliberately never re-routed
+  // by the link they clicked, but saying nothing at all landed them on their
+  // own dashboard looking like the link was broken.
+  //
+  // Which of the two answers they get is the database's call, not this
+  // function's: switch_role() allows a change right up until the profile is
+  // complete. So someone mid-signup goes to /choose-role, where they can
+  // genuinely switch, and only a finished profile is told no.
+  //
+  // That "no" is sent to the sign-up form rather than explained here: they are
+  // signed in by now, so that page shows the notice and offers the two things
+  // they can actually do. It does not bounce back, which is what makes this
+  // safe.
+  if (intendedRole && result.role !== intendedRole && result.role !== "admin") {
+    router.push(
+      result.profileComplete
+        ? `/signup/${intendedRole}`
+        : withNext("/choose-role", target)
+    );
+    return {};
+  }
+
   if (result.role === "admin") {
     router.push("/admin");
   } else if (target && result.profileComplete) {

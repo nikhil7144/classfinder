@@ -4,8 +4,29 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { resolveProfileAndRedirect } from "@/lib/auth-redirect";
+import { safeNextPath, withNext } from "@/lib/next-path";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// What each side of the marketplace is called, in the words someone would use
+// about themselves rather than the words the database uses about them.
+const ROLE_WORDS: Record<string, string> = {
+  seeker: "a family looking for classes",
+  provider: "a coach",
+  organiser: "an event organiser",
+};
+
+const roleWords = (role: string | null) => ROLE_WORDS[role ?? ""] ?? "another kind of account";
+
+// The same three roles as something to do rather than something to be, so the
+// sentence offering a second account reads like an action.
+const ROLE_ACTIONS: Record<string, string> = {
+  seeker: "look for classes",
+  provider: "list as a coach",
+  organiser: "run events",
+};
+
+const roleAction = (role: string | null) => ROLE_ACTIONS[role ?? ""] ?? "use the other side";
 
 /**
  * Google's own four-colour G.
@@ -57,6 +78,12 @@ export default function AuthForm({ eyebrow, heading, subheading, intendedRole }:
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
+  /**
+   * They are signed in, their profile is finished, and it is the other side of
+   * the marketplace from the door they just walked through. Holds the role
+   * they actually have.
+   */
+  const [wrongRole, setWrongRole] = useState<string | null>(null);
 
   // Someone already signed in has no business on a login form — and if they
   // arrived from an invite, sitting here loses it. Send them on instead.
@@ -69,6 +96,35 @@ export default function AuthForm({ eyebrow, heading, subheading, intendedRole }:
       if (!active) return;
 
       if (data.session) {
+        // A parent who clicked "I'm a coach" was landed on their own parent
+        // dashboard without a word, which reads as the link being broken. It
+        // is not: one account is one side of this marketplace.
+        //
+        // Which answer they get depends on the database, not on this screen.
+        // switch_role() allows a change right up until the profile is
+        // complete, so someone mid-signup is sent to /choose-role where they
+        // can genuinely switch, and only a finished profile is told no.
+        if (intendedRole) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role, profile_complete")
+            .eq("id", data.session.user.id)
+            .maybeSingle();
+
+          if (!active) return;
+
+          if (profile && profile.role !== intendedRole && profile.role !== "admin") {
+            if (profile.profile_complete) {
+              setWrongRole(profile.role);
+              setCheckingSession(false);
+              return;
+            }
+
+            router.push(withNext("/choose-role", safeNextPath(next)));
+            return;
+          }
+        }
+
         await resolveProfileAndRedirect(router, intendedRole, next);
         return;
       }
@@ -202,6 +258,48 @@ export default function AuthForm({ eyebrow, heading, subheading, intendedRole }:
   };
 
   if (checkingSession) return <div className="min-h-screen bg-bg" />;
+
+  // Said in place rather than in a dialog. A dialog over a sign-in form invites
+  // them to dismiss it and carry on typing into a form that will not do what
+  // the page promised — and there is no version of this they can dismiss their
+  // way out of, so there is nothing to put behind it.
+  if (wrongRole) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-bg px-6 py-16">
+        <div className="cf-card w-full max-w-md p-8">
+          <p className="cf-eyebrow">Already signed in</p>
+          <h1 className="cf-display mt-4 mb-2 text-3xl text-ink">
+            This account is {roleWords(wrongRole)}
+          </h1>
+          <p className="text-sm leading-relaxed text-muted">
+            You&apos;re signed in, and your profile is complete — so the account type is
+            settled. To {roleAction(intendedRole ?? null)} as well, sign out and make a
+            separate account with a different email address.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard")}
+            className="cf-btn-primary mt-6 w-full"
+          >
+            Go to your dashboard
+          </button>
+
+          <button
+            type="button"
+            onClick={async () => {
+              await fetch("/api/auth/logout", { method: "POST" });
+              await supabase.auth.signOut();
+              setWrongRole(null);
+            }}
+            className="cf-btn-ghost mt-3 w-full"
+          >
+            Sign out and use another email
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg px-6 py-16">

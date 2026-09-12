@@ -30,6 +30,7 @@ export default function Navbar() {
   const [roleRead, setRoleRead] = useState<{ userId: string; role: string | null } | null>(null);
   const [sessionChecked, setSessionChecked] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const alerts = useAlerts();
   const waiting = waitingCount(alerts);
 
@@ -75,14 +76,29 @@ export default function Navbar() {
     };
   }, [user]);
 
+  // Two network calls — clearing the server cookie, then the client session —
+  // so this is not instant, and it used to say nothing at all while it ran. A
+  // button that does nothing visible when pressed gets pressed again.
+  //
+  // The menu deliberately stays open until it is done: closing it first is
+  // what hid the only place the message could appear on a phone.
   const handleLogout = async () => {
-    setMenuOpen(false);
-    await fetch("/api/auth/logout", {
-      method: "POST",
-    });
-    await supabase.auth.signOut();
-    router.push("/");
-    router.refresh();
+    if (loggingOut) return;
+    setLoggingOut(true);
+
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+      await supabase.auth.signOut();
+      setMenuOpen(false);
+      router.push("/");
+      router.refresh();
+    } catch {
+      // Whatever failed, they are still signed in and should be able to try
+      // again rather than look at a button stuck mid-sentence.
+      setLoggingOut(false);
+    }
   };
 
   const navigate = (path: string) => {
@@ -180,9 +196,11 @@ export default function Navbar() {
 
               <button
                 onClick={handleLogout}
-                className="cursor-pointer rounded-full border border-line bg-surface-2 px-4 py-2 text-sm font-medium text-muted transition hover:border-danger hover:text-danger"
+                disabled={loggingOut}
+                aria-busy={loggingOut}
+                className="cursor-pointer rounded-full border border-line bg-surface-2 px-4 py-2 text-sm font-medium text-muted transition hover:border-danger hover:text-danger disabled:cursor-wait disabled:opacity-70 disabled:hover:border-line disabled:hover:text-muted"
               >
-                Logout
+                {loggingOut ? "Logging you out…" : "Logout"}
               </button>
             </>
           ) : (
@@ -225,9 +243,11 @@ export default function Navbar() {
 
               <button
                 onClick={handleLogout}
-                className="cursor-pointer rounded-full border border-line bg-surface-2 px-4 py-2 text-sm font-medium text-muted transition hover:border-danger hover:text-danger"
+                disabled={loggingOut}
+                aria-busy={loggingOut}
+                className="cursor-pointer rounded-full border border-line bg-surface-2 px-4 py-2 text-sm font-medium text-muted transition hover:border-danger hover:text-danger disabled:cursor-wait disabled:opacity-70 disabled:hover:border-line disabled:hover:text-muted"
               >
-                Logout
+                {loggingOut ? "Logging you out…" : "Logout"}
               </button>
             </>
           ) : (
