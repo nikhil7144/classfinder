@@ -39,14 +39,41 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     final needsAttention = provider == null || !provider.approved;
 
     return Scaffold(
-      body: IndexedStack(
-        index: _tab,
-        children: const [
-          StudentsScreen(),
-          QueriesScreen(),
-          ThreadsScreen(),
-          SpaceScreen(),
-          MoreScreen(),
+      // IndexedStack keeps every tab's scroll position, which is the whole
+      // reason for it — but switching between them was a hard cut. The fade
+      // is short enough not to be waited on and long enough to read as a
+      // change rather than a glitch.
+      // A Stack rather than an IndexedStack, and rather than an
+      // AnimatedSwitcher.
+      //
+      // Every tab has to stay alive: a coach who scrolls the demand feed,
+      // reads a message and comes back should find it where they left it.
+      // AnimatedSwitcher would keyed-rebuild the whole stack on each switch
+      // and throw exactly that away, which is the thing IndexedStack was there
+      // to prevent. Opacity keeps them all mounted, and Flutter skips painting
+      // a subtree at zero, so the cost is what IndexedStack's already was.
+      body: Stack(
+        children: [
+          for (var i = 0; i < 5; i++)
+            AnimatedOpacity(
+              opacity: _tab == i ? 1 : 0,
+              duration: A91.tabFade,
+              curve: Curves.easeOut,
+              child: IgnorePointer(
+                ignoring: _tab != i,
+                // Stops animations and timers on the tabs nobody is looking at.
+                child: TickerMode(
+                  enabled: _tab == i,
+                  child: const [
+                    StudentsScreen(),
+                    QueriesScreen(),
+                    ThreadsScreen(),
+                    SpaceScreen(),
+                    MoreScreen(),
+                  ][i],
+                ),
+              ),
+            ),
         ],
       ),
       bottomNavigationBar: NavigationBar(

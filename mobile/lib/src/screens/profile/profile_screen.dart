@@ -10,6 +10,7 @@ import '../../data/seeker_rules.dart';
 import '../../providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/primary_button.dart';
+import '../../widgets/skeleton.dart';
 import '../../widgets/states.dart';
 import '../listing/fields.dart';
 import '../listing/pickers.dart';
@@ -31,7 +32,7 @@ class ProfileScreen extends ConsumerWidget {
     final me = ref.watch(meProvider);
 
     if (reference.isLoading || profile.isLoading || me.isLoading) {
-      return const Scaffold(body: Loading());
+      return const Scaffold(body: FormSkeleton(sections: 3));
     }
 
     final error = reference.error ?? profile.error ?? me.error;

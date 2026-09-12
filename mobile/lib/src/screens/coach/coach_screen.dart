@@ -7,6 +7,7 @@ import '../../data/models/seeker.dart';
 import '../../providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/branding.dart';
+import '../../widgets/skeleton.dart';
 import '../../widgets/states.dart';
 import 'coach_space_tab.dart';
 import 'contact_sheet.dart';
@@ -42,7 +43,7 @@ class CoachScreen extends ConsumerWidget {
           ),
         ),
         body: coach.when(
-          loading: () => const Loading(),
+          loading: () => const DetailSkeleton(),
           error: (error, _) => ErrorState(
             message: error is ApiException
                 ? error.message

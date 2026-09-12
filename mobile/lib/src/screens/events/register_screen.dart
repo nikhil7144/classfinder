@@ -6,6 +6,7 @@ import '../../data/models/entry.dart';
 import '../../data/models/event.dart';
 import '../../providers.dart';
 import '../../theme/theme.dart';
+import '../../widgets/skeleton.dart';
 import '../../widgets/states.dart';
 import 'entry_tile.dart';
 
@@ -91,7 +92,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       ),
       body: SafeArea(
         child: entries.when(
-          loading: () => const Loading(),
+          loading: () => const ListSkeleton(avatar: false),
           error: (error, _) => ErrorState(
             message: error is ApiException
                 ? error.message

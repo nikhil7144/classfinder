@@ -6,6 +6,7 @@ import '../../data/api_exception.dart';
 import '../../providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/branding.dart';
+import '../../widgets/skeleton.dart';
 import '../../widgets/states.dart';
 import 'demand_card.dart';
 
@@ -32,7 +33,7 @@ class StudentsScreen extends ConsumerWidget {
           backgroundColor: A91.surface,
           onRefresh: () async => ref.refresh(demandFeedProvider.future),
           child: feed.when(
-            loading: () => const Loading(),
+            loading: () => const ListSkeleton(),
             error: (error, _) => ListView(
               // A ListView so pull-to-refresh still works on an error, which
               // is exactly when somebody wants to retry.

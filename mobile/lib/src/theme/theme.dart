@@ -94,6 +94,16 @@ class A91 {
         ),
         bodyMedium: text.bodyMedium?.copyWith(color: muted, height: 1.55),
       ),
+      // Chosen rather than inherited. Flutter's defaults differ per platform —
+      // a slide on iOS, a fade-upwards on Android — and the two then match
+      // neither each other nor the web. One shared motion, and a short one:
+      // this is an app somebody opens between other things.
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: _SharedAxisTransitionBuilder(),
+          TargetPlatform.iOS: _SharedAxisTransitionBuilder(),
+        },
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: bg,
         surfaceTintColor: Colors.transparent,
@@ -146,6 +156,10 @@ class A91 {
     );
   }
 
+  /// How long a tab cross-fade takes. Long enough to read as a change, short
+  /// enough not to be waited on.
+  static const tabFade = Duration(milliseconds: 160);
+
   /// The colour for one of the eight taxonomy groups.
   ///
   /// A group added to the taxonomy after this shipped falls back to muted
@@ -171,4 +185,38 @@ class A91 {
         fontWeight: FontWeight.w500,
         color: grad2,
       );
+}
+
+/// A slide from the right with a fade, on both platforms.
+///
+/// Close to what iOS does natively and to what a web page does when it
+/// navigates, which is the point: the product should feel like one thing on
+/// three surfaces rather than like whatever each framework shipped.
+class _SharedAxisTransitionBuilder extends PageTransitionsBuilder {
+  const _SharedAxisTransitionBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+
+    return SlideTransition(
+      position: Tween(
+        // A tenth of the width, not a full slide. A page that flies in from
+        // off-screen reads as further away than it is.
+        begin: const Offset(0.1, 0),
+        end: Offset.zero,
+      ).animate(curved),
+      child: FadeTransition(opacity: curved, child: child),
+    );
+  }
 }

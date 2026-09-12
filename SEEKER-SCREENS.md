@@ -226,6 +226,22 @@ Extends `MOBILE-PLAN.md` §9 for the seeker flavor. Keep both current.
 | `/events`, `/events/[id]`, entry, `/account/entries` | `screens/events/` *(shared, needs the seeker half)* |
 | `/account/settings` | `screens/settings/` *(not built — change email, sign out)* |
 
+## Motion and waiting
+
+Done across every screen that exists, 2026-09-12.
+
+- **Skeletons** where the shape is knowable — `widgets/skeleton.dart`, a port
+  of `components/ui/PageSkeleton.tsx` including its reasoning: blocks one step
+  above the card they lie on, `surface-3` on `surface`, no shadows. A spinner
+  is still right for a wait with no shape, like a save in flight.
+- **One page transition for both platforms**, in `A91.theme()`. Flutter's
+  defaults differ per platform, so the two matched neither each other nor the
+  web until this was stated.
+- **Tabs cross-fade** without losing their place. Deliberately a `Stack` of
+  `AnimatedOpacity` rather than an `AnimatedSwitcher`: the latter rebuilds the
+  whole subtree on each switch and throws away the scroll positions that were
+  the entire reason for an `IndexedStack`.
+
 ## Build order
 
 Each slice is usable on its own, and each depends only on what is above it.

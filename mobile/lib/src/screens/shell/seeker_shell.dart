@@ -5,7 +5,7 @@ import '../../providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/branding.dart';
 import '../../widgets/primary_button.dart';
-import '../../widgets/states.dart';
+import '../../widgets/skeleton.dart';
 import '../profile/profile_screen.dart';
 import '../search/search_screen.dart';
 
@@ -31,15 +31,40 @@ class _SeekerShellState extends ConsumerState<SeekerShell> {
   Widget build(BuildContext context) {
     final profile = ref.watch(myProfileProvider);
 
-    if (profile.isLoading) return const Scaffold(body: Loading());
+    if (profile.isLoading) {
+      return const Scaffold(body: FormSkeleton(sections: 2));
+    }
     // A failure to read the profile is not a reason to lock somebody out of
     // their own account — the form behind this can still write one.
     if (profile.hasValue && profile.value == null) return const _Welcome();
 
     return Scaffold(
-      body: IndexedStack(
-        index: _tab,
-        children: const [SearchScreen(), ProfileScreen()],
+      // A Stack rather than an IndexedStack, and rather than an
+      // AnimatedSwitcher.
+      //
+      // Every tab has to stay alive: a parent who scrolls a list, opens
+      // another tab and comes back should find it where they left it.
+      // AnimatedSwitcher would keyed-rebuild the whole stack on each switch
+      // and throw exactly that away, which is the thing IndexedStack was there
+      // to prevent. Opacity keeps them all mounted, and Flutter skips painting
+      // a subtree at zero, so the cost is what IndexedStack's already was.
+      body: Stack(
+        children: [
+          for (var i = 0; i < 2; i++)
+            AnimatedOpacity(
+              opacity: _tab == i ? 1 : 0,
+              duration: A91.tabFade,
+              curve: Curves.easeOut,
+              child: IgnorePointer(
+                ignoring: _tab != i,
+                // Stops animations and timers on the tabs nobody is looking at.
+                child: TickerMode(
+                  enabled: _tab == i,
+                  child: const [SearchScreen(), ProfileScreen()][i],
+                ),
+              ),
+            ),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,

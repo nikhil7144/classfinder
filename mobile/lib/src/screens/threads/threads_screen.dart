@@ -7,6 +7,7 @@ import '../../data/models/thread.dart';
 import '../../providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/branding.dart';
+import '../../widgets/skeleton.dart';
 import '../../widgets/states.dart';
 
 /// Every conversation, both kinds in one list.
@@ -32,7 +33,7 @@ class ThreadsScreen extends ConsumerWidget {
             await ref.read(inboxProvider.future);
           },
           child: inbox.when(
-            loading: () => const Loading(),
+            loading: () => const ListSkeleton(),
             error: (error, _) => ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               children: [

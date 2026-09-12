@@ -6,6 +6,7 @@ import '../../data/models/query.dart';
 import '../../providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/branding.dart';
+import '../../widgets/skeleton.dart';
 import '../../widgets/states.dart';
 import 'query_card.dart';
 
@@ -70,7 +71,7 @@ class _QueriesScreenState extends ConsumerState<QueriesScreen> {
             await ref.read(queriesProvider.future);
           },
           child: queries.when(
-            loading: () => const Loading(),
+            loading: () => const ListSkeleton(),
             error: (error, _) => ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               children: [

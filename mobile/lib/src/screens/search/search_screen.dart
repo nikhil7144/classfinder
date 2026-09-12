@@ -8,6 +8,7 @@ import '../../data/repositories/coaches_repository.dart';
 import '../../providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/branding.dart';
+import '../../widgets/skeleton.dart';
 import '../../widgets/states.dart';
 import '../coach/coach_screen.dart';
 import '../listing/fields.dart';
@@ -106,8 +107,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 SliverToBoxAdapter(child: _filters(reference)),
                 ...results.when(
                   loading: () => [
-                    const SliverFillRemaining(
-                        hasScrollBody: false, child: Loading()),
+                    const SliverToBoxAdapter(child: ListSkeleton()),
                   ],
                   error: (error, _) => [
                     SliverFillRemaining(

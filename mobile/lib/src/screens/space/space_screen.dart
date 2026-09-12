@@ -6,6 +6,7 @@ import '../../data/models/space.dart';
 import '../../providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/branding.dart';
+import '../../widgets/skeleton.dart';
 import '../../widgets/states.dart';
 import 'composer_screen.dart';
 import 'post_card.dart';
@@ -26,7 +27,7 @@ class SpaceScreen extends ConsumerWidget {
     return Scaffold(
       body: SafeArea(
         child: space.when(
-          loading: () => const Loading(),
+          loading: () => const ListSkeleton(avatar: false),
           error: (error, _) => ErrorState(
             message: error is ApiException
                 ? error.message

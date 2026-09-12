@@ -6,6 +6,7 @@ import '../../data/models/event.dart';
 import '../../providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/branding.dart';
+import '../../widgets/skeleton.dart';
 import '../../widgets/states.dart';
 import 'event_form_screen.dart';
 import 'register_screen.dart';
@@ -33,7 +34,7 @@ class EventsScreen extends ConsumerWidget {
             await ref.read(myEventsProvider.future);
           },
           child: events.when(
-            loading: () => const Loading(),
+            loading: () => const ListSkeleton(avatar: false),
             error: (error, _) => ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               children: [

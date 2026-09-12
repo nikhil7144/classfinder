@@ -9,6 +9,7 @@ import '../../data/models/reference.dart';
 import '../../providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/primary_button.dart';
+import '../../widgets/skeleton.dart';
 import '../../widgets/states.dart';
 import 'fields.dart';
 import 'photo_field.dart';
@@ -40,7 +41,7 @@ class ListingScreen extends ConsumerWidget {
     // Three loads, one screen. Any of them failing means no usable form, so
     // they are reported together rather than half-rendered.
     if (reference.isLoading || listing.isLoading || me.isLoading) {
-      return const Scaffold(body: Loading());
+      return const Scaffold(body: FormSkeleton(sections: 3));
     }
 
     final error = reference.error ?? listing.error ?? me.error;
