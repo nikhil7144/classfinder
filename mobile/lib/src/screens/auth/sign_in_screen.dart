@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/api_exception.dart';
+import '../../data/auth_rules.dart';
 import '../../flavor.dart';
 import '../../providers.dart';
 import '../../theme/theme.dart';
@@ -39,11 +40,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     super.dispose();
   }
 
-  static final _emailPattern = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
-
   Future<void> _send() async {
     final email = _email.text.trim();
-    if (!_emailPattern.hasMatch(email)) {
+    if (!isValidEmail(email)) {
       setState(() => _error = 'Enter a valid email address.');
       return;
     }

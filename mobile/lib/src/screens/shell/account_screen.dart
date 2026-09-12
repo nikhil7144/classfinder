@@ -7,6 +7,7 @@ import '../../theme/theme.dart';
 import '../../widgets/branding.dart';
 import '../events/browse_screen.dart';
 import '../groups/groups_screen.dart';
+import '../settings/settings_screen.dart';
 import '../profile/profile_screen.dart';
 
 /// Everything a family needs occasionally rather than daily.
@@ -69,41 +70,16 @@ class AccountScreen extends ConsumerWidget {
                 MaterialPageRoute(builder: (_) => const BrowseEventsScreen()),
               ),
             ),
-            const SizedBox(height: 26),
-            _SignOut(
-              onTap: () async {
-                final sure = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    backgroundColor: A91.surface,
-                    title: const Text('Sign out?'),
-                    content: const Text(
-                      'You will need your email to get back in.',
-                      style: TextStyle(color: A91.muted, height: 1.5),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Stay',
-                            style: TextStyle(color: A91.muted)),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Sign out',
-                            style: TextStyle(
-                                color: A91.danger,
-                                fontWeight: FontWeight.w700)),
-                      ),
-                    ],
-                  ),
-                );
-                // The router listens to the auth stream, so signing out is all
-                // this has to do — it moves on its own.
-                if (sure == true) {
-                  await ref.read(authRepositoryProvider).signOut();
-                }
-              },
+            _Item(
+              icon: Icons.settings_outlined,
+              title: 'Settings',
+              subtitle: 'The email you sign in with.',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              ),
             ),
+            const SizedBox(height: 26),
+            _SignOut(onTap: () => confirmSignOut(context, ref)),
           ],
         ),
       ),

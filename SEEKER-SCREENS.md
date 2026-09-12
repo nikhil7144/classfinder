@@ -235,7 +235,7 @@ Extends `MOBILE-PLAN.md` §9 for the seeker flavor. Keep both current.
 | `/account/messages` | `screens/threads/` *(shared)* |
 | `/groups/*`, `/account/groups` | `screens/groups/` |
 | `/events`, `/events/[id]`, entry, `/account/entries` | `screens/events/` *(shared)* |
-| `/account/settings` | `screens/settings/` *(not built — change email, sign out)* |
+| `/account/settings` | `screens/settings/` *(shared)* |
 
 ## Motion and waiting
 
@@ -280,5 +280,14 @@ Each slice is usable on its own, and each depends only on what is above it.
    `formatCapacity` and the form's three checks out of the screen, because the
    consent rule is worth reading in one place — `test/entry_rules_test.dart`
    covers it, along with the date-only birthday.
-7. **Settings** — small: change email and sign out, both straight to
-   `supabase.auth`. No endpoint needed.
+7. ~~**Settings**~~ — **done.** `screens/settings/settings_screen.dart`,
+   shared by both apps, reached from You and from More. No endpoint: both
+   actions are `supabase.auth`, which is one of the two doors PLAN.md keeps
+   open. Deliberately no password — people sign in with an emailed code or
+   with Google, so one set here could never be used, and offering it would be
+   a trap. `data/auth_rules.dart` holds the email pattern the sign-in screen
+   had privately, plus the no-op check: the same address typed back is refused
+   rather than confirmed, because emailing a confirmation for a change that is
+   not one teaches people the confirmation means nothing.
+
+**Every seeker slice is built.**

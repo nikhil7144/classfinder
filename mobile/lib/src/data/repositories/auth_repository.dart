@@ -21,6 +21,10 @@ class AuthRepository {
 
   bool get isSignedIn => session != null;
 
+  /// The address they sign in with. Empty only in the moment between a sign-out
+  /// and the router noticing.
+  String get email => supabase.auth.currentUser?.email ?? '';
+
   /// Fires whenever the session changes — signed in, signed out, refreshed, or
   /// refresh failed. The router listens so a token expiring on a sleeping
   /// phone lands the user on sign-in rather than on a screen that 401s.
@@ -54,6 +58,24 @@ class AuthRepository {
       }
     } on AuthException catch (e) {
       throw ApiException(e.message);
+    }
+  }
+
+  /// Change the address, which changes the login.
+  ///
+  /// Supabase emails the new address to confirm it and the old one keeps
+  /// working until they do, so nothing here has happened yet when this
+  /// returns — which is why the screen says so rather than showing the new
+  /// address as if it were already theirs.
+  Future<void> changeEmail(String email) async {
+    try {
+      await supabase.auth.updateUser(UserAttributes(email: email.trim()));
+    } on AuthException catch (e) {
+      throw ApiException(e.message);
+    } catch (_) {
+      throw const ApiException(
+          "Couldn't send the confirmation. Check your connection and try "
+          'again.');
     }
   }
 

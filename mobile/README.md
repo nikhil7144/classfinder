@@ -30,7 +30,7 @@ Both flavors run. Both are worth putting on a device.
 | Messages — inbox, conversation, live delivery, trials, approach answers, phone sharing | `screens/threads/` |
 
 **`provider` — the coach app.** Five tabs: Students, Queries, Messages, Space,
-More (listing, events, sign out).
+More (listing, events, settings, sign out).
 
 | Screen | Files |
 |---|---|
@@ -40,6 +40,7 @@ More (listing, events, sign out).
 | Listing — the whole coach profile | `screens/listing/` |
 | Events — create, publish, categories | `screens/events/` |
 | Register — entries, payments, withdrawals | `screens/events/` |
+| Settings — the email you sign in with | `screens/settings/` *(shared)* |
 
 **`seeker` — the families app.** Four tabs: Home, Find, Messages, You.
 
@@ -51,11 +52,11 @@ More (listing, events, sign out).
 | Search — area, subject, radius, distance | `screens/search/` | built |
 | Coach page — profile and Space, two tabs | `screens/coach/` | built |
 | Events — browse, enter, your entries | `screens/events/` | built |
-| Settings — change email, sign out | — | **not built** |
+| Settings — change email, sign out | `screens/settings/` *(shared)* | built |
 
 `../SEEKER-SCREENS.md` has the rest, in order.
 
-`flutter analyze` is clean and `flutter test` passes (170 tests). It has **never
+`flutter analyze` is clean and `flutter test` passes (176 tests). It has **never
 been built into an APK** — the machine it was written on has no Android SDK, so
 `flutter build` could not run. `test/smoke_test.dart` imports both entry points
 specifically so the whole tree is compiled by `flutter test`; that is as close
@@ -206,7 +207,7 @@ mobile/
         repositories/         one per surface; pure Dart, no Riverpod
       screens/                one folder per screen
       widgets/                shared: PrimaryButton, states, skeleton, branding
-  test/                       170 tests, no device needed
+  test/                       176 tests, no device needed
 ```
 
 `lib/src/providers.dart` is the seam. Below it — `lib/src/data` — is pure Dart
@@ -287,7 +288,7 @@ partial-save or autosave path to `ListingScreen`.
 ## 6. Tests
 
 ```bash
-flutter test          # 170 tests, no device or SDK needed
+flutter test          # 176 tests, no device or SDK needed
 ```
 
 - `test/listing_rules_test.dart` pins the completeness rules against the web's
@@ -299,6 +300,9 @@ flutter test          # 170 tests, no device or SDK needed
   server is asked.
 - `test/query_test.dart` pins which statuses are still on the worklist, and
   the thread origin line.
+- `test/auth_rules_test.dart` pins the one credential action there is. There
+  is no password in Aspire91 — the email address is the login — so a mistake
+  here locks somebody out of their own account.
 - `test/entry_rules_test.dart` pins the entry form, which is the one place in
   the product that takes a child's name and date of birth: the consent check
   the API refuses an entry without, the age band a cap actually means (a
