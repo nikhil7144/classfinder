@@ -46,6 +46,10 @@ dependencies:
   # so nothing breaks if a parent refuses the permission.
   geolocator: ^13.0.2
 
+  # Sending a group's invite link. The web copies it to the clipboard; a phone
+  # hands it to WhatsApp, which is where a building group actually lives.
+  share_plus: ^10.1.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

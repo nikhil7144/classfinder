@@ -233,7 +233,7 @@ Extends `MOBILE-PLAN.md` §9 for the seeker flavor. Keep both current.
 | `/search` | `screens/search/` |
 | `/provider/[id]`, `/provider/[id]/space` | `screens/coach/` |
 | `/account/messages` | `screens/threads/` *(shared)* |
-| `/groups/*`, `/account/groups` | `screens/groups/` *(not built)* |
+| `/groups/*`, `/account/groups` | `screens/groups/` |
 | `/events`, `/events/[id]`, entry, `/account/entries` | `screens/events/` *(shared, needs the seeker half)* |
 | `/account/settings` | `screens/settings/` *(not built — change email, sign out)* |
 
@@ -270,7 +270,8 @@ Each slice is usable on its own, and each depends only on what is above it.
 4. ~~**Home**~~ — **done.** `screens/home/`. What it adds beyond links is the
    two things no other screen says: what is waiting on them, and who to look
    at first.
-5. **Groups**.
+5. ~~**Groups**~~ — **done.** `screens/groups/`, plus `screens/shell/account_screen.dart`:
+   the bar stops at four, so the profile and groups live behind You.
 6. **Events** — the seeker half; the coach half already exists.
 7. **Settings** — small: change email and sign out, both straight to
    `supabase.auth`. No endpoint needed.

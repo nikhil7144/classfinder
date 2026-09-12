@@ -8,13 +8,18 @@ import '../../widgets/primary_button.dart';
 import '../../widgets/skeleton.dart';
 import '../home/home_screen.dart';
 import '../profile/profile_screen.dart';
+import 'account_screen.dart';
 import '../search/search_screen.dart';
 import '../threads/threads_screen.dart';
 
 /// Where a family lands.
 ///
-/// Four tabs. SEEKER-SCREENS.md has what is left — groups, events and
-/// settings — and the bar grows a destination per slice.
+/// Four tabs: Home, Find, Messages, You.
+///
+/// The bar stops growing here. A NavigationBar takes five destinations and the
+/// four things opened every day earn those places, so the profile, groups and
+/// everything else live behind You — the same shape the coach app reached, for
+/// the same reason.
 ///
 /// A brand new account gets the welcome instead: the profile asks for a
 /// child's age and a neighbourhood, and a blank form is a poor way to open
@@ -66,7 +71,7 @@ class _SeekerShellState extends ConsumerState<SeekerShell> {
                     HomeScreen(),
                     SearchScreen(),
                     ThreadsScreen(),
-                    ProfileScreen(),
+                    AccountScreen(),
                   ][i],
                 ),
               ),

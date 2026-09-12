@@ -9,6 +9,7 @@ import 'data/models/alerts.dart';
 import 'data/models/listing.dart';
 import 'data/models/coach.dart';
 import 'data/models/entry.dart';
+import 'data/models/group.dart';
 import 'data/models/event.dart';
 import 'data/models/query.dart';
 import 'data/models/reference.dart';
@@ -23,6 +24,7 @@ import 'data/repositories/reference_repository.dart';
 import 'data/repositories/coaches_repository.dart';
 import 'data/repositories/enquiries_repository.dart';
 import 'data/repositories/events_repository.dart';
+import 'data/repositories/groups_repository.dart';
 import 'data/repositories/queries_repository.dart';
 import 'data/repositories/seeker_repository.dart';
 import 'data/repositories/spaces_repository.dart';
@@ -108,6 +110,20 @@ final searchProvider =
 /// One coach's page.
 final coachProvider = FutureProvider.family<CoachProfile, String>(
   (ref, id) => ref.watch(coachesRepositoryProvider).one(id),
+);
+
+final groupsRepositoryProvider = Provider<GroupsRepository>(
+  (ref) => GroupsRepository(ref.watch(apiClientProvider)),
+);
+
+/// Every group the caller is in, made or joined.
+final myGroupsProvider = FutureProvider<List<Group>>(
+  (ref) => ref.watch(groupsRepositoryProvider).mine(),
+);
+
+/// The coaches who have pitched to one group.
+final groupPitchesProvider = FutureProvider.family<List<GroupPitch>, String>(
+  (ref, groupId) => ref.watch(groupsRepositoryProvider).pitches(groupId),
 );
 
 final eventsRepositoryProvider = Provider<EventsRepository>(
