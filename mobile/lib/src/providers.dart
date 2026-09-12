@@ -135,6 +135,21 @@ final myEventsProvider = FutureProvider<List<Event>>(
   (ref) => ref.watch(eventsRepositoryProvider).mine(),
 );
 
+/// What is on in one city.
+final cityEventsProvider = FutureProvider.family<List<Event>, String>(
+  (ref, cityId) => ref.watch(eventsRepositoryProvider).inCity(cityId),
+);
+
+/// Every entry this family has made.
+final myEntriesProvider = FutureProvider<List<Entry>>(
+  (ref) => ref.watch(eventsRepositoryProvider).myEntries(),
+);
+
+/// One event in full, with its categories.
+final eventProvider = FutureProvider.family<Event, String>(
+  (ref, id) => ref.watch(eventsRepositoryProvider).one(id),
+);
+
 /// The register for one event.
 final entriesProvider = FutureProvider.family<List<Entry>, String>(
   (ref, eventId) => ref.watch(eventsRepositoryProvider).entries(eventId),

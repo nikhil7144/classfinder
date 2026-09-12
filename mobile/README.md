@@ -50,11 +50,12 @@ More (listing, events, sign out).
 | Profile — who you are, and what you want | `screens/profile/` | built |
 | Search — area, subject, radius, distance | `screens/search/` | built |
 | Coach page — profile and Space, two tabs | `screens/coach/` | built |
-| Events, settings | — | **not built** |
+| Events — browse, enter, your entries | `screens/events/` | built |
+| Settings — change email, sign out | — | **not built** |
 
 `../SEEKER-SCREENS.md` has the rest, in order.
 
-`flutter analyze` is clean and `flutter test` passes (151 tests). It has **never
+`flutter analyze` is clean and `flutter test` passes (170 tests). It has **never
 been built into an APK** — the machine it was written on has no Android SDK, so
 `flutter build` could not run. `test/smoke_test.dart` imports both entry points
 specifically so the whole tree is compiled by `flutter test`; that is as close
@@ -205,7 +206,7 @@ mobile/
         repositories/         one per surface; pure Dart, no Riverpod
       screens/                one folder per screen
       widgets/                shared: PrimaryButton, states, skeleton, branding
-  test/                       151 tests, no device needed
+  test/                       170 tests, no device needed
 ```
 
 `lib/src/providers.dart` is the seam. Below it — `lib/src/data` — is pure Dart
@@ -286,7 +287,7 @@ partial-save or autosave path to `ListingScreen`.
 ## 6. Tests
 
 ```bash
-flutter test          # 151 tests, no device or SDK needed
+flutter test          # 170 tests, no device or SDK needed
 ```
 
 - `test/listing_rules_test.dart` pins the completeness rules against the web's
@@ -298,6 +299,12 @@ flutter test          # 151 tests, no device or SDK needed
   server is asked.
 - `test/query_test.dart` pins which statuses are still on the worklist, and
   the thread origin line.
+- `test/entry_rules_test.dart` pins the entry form, which is the one place in
+  the product that takes a child's name and date of birth: the consent check
+  the API refuses an entry without, the age band a cap actually means (a
+  category capped at 9 is the under-10s), and a birthday sent as a date with no
+  time on it — an offset of a few hours is enough to move a child across an age
+  band in transit.
 - `test/event_test.dart` pins the two rules the database would otherwise
   report as a constraint violation: team size belongs only to a team, and a
   booking URL only to an event that sends entries elsewhere. Also the age

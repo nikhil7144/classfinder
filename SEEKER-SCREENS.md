@@ -234,7 +234,7 @@ Extends `MOBILE-PLAN.md` §9 for the seeker flavor. Keep both current.
 | `/provider/[id]`, `/provider/[id]/space` | `screens/coach/` |
 | `/account/messages` | `screens/threads/` *(shared)* |
 | `/groups/*`, `/account/groups` | `screens/groups/` |
-| `/events`, `/events/[id]`, entry, `/account/entries` | `screens/events/` *(shared, needs the seeker half)* |
+| `/events`, `/events/[id]`, entry, `/account/entries` | `screens/events/` *(shared)* |
 | `/account/settings` | `screens/settings/` *(not built — change email, sign out)* |
 
 ## Motion and waiting
@@ -272,6 +272,13 @@ Each slice is usable on its own, and each depends only on what is above it.
    at first.
 5. ~~**Groups**~~ — **done.** `screens/groups/`, plus `screens/shell/account_screen.dart`:
    the bar stops at four, so the profile and groups live behind You.
-6. **Events** — the seeker half; the coach half already exists.
+6. ~~**Events**~~ — **done.** `screens/events/browse_screen.dart`,
+   `event_detail_screen.dart`, `enter_screen.dart`, `my_entries_screen.dart`,
+   reached from You. Browsing is by **city**, not by the search radius: a
+   family will cross a city for a competition in a way they will not cross one
+   for a Tuesday class. `data/entry_rules.dart` ports `formatAges`,
+   `formatCapacity` and the form's three checks out of the screen, because the
+   consent rule is worth reading in one place — `test/entry_rules_test.dart`
+   covers it, along with the date-only birthday.
 7. **Settings** — small: change email and sign out, both straight to
    `supabase.auth`. No endpoint needed.

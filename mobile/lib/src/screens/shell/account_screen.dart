@@ -5,6 +5,7 @@ import '../../data/models/seeker.dart';
 import '../../providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/branding.dart';
+import '../events/browse_screen.dart';
 import '../groups/groups_screen.dart';
 import '../profile/profile_screen.dart';
 
@@ -58,6 +59,14 @@ class AccountScreen extends ConsumerWidget {
               subtitle: _groupsState(groups?.length),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const GroupsScreen()),
+              ),
+            ),
+            _Item(
+              icon: Icons.event_outlined,
+              title: 'Events',
+              subtitle: 'Competitions, workshops and camps near you.',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const BrowseEventsScreen()),
               ),
             ),
             const SizedBox(height: 26),

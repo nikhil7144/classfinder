@@ -77,6 +77,52 @@ class EventsRepository {
     return Event.fromJson(json as Map<String, dynamic>);
   }
 
+  /// What is on in a city. The family's way in — readable signed out.
+  Future<List<Event>> inCity(String cityId) async {
+    final json = await _api.get('/api/v1/events/city/$cityId');
+    return (json as List)
+        .map((e) => Event.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Every entry this family has made, across every event.
+  Future<List<Entry>> myEntries() async {
+    final json = await _api.get('/api/v1/entries/mine');
+    return (json as List)
+        .map((e) => Entry.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Enter a child in one category.
+  ///
+  /// `consentGiven` must be true and the service records which wording was
+  /// agreed and when. This is the one place the product takes a child's name
+  /// and date of birth, and the API refuses the entry without it — so a client
+  /// that forgets the box gets no further than the web form does.
+  Future<Entry> enter({
+    required String categoryId,
+    required String participantName,
+    String? participantDob,
+    required bool consentGiven,
+    List<({String name, String? dob})> members = const [],
+  }) async {
+    final json = await _api.post('/api/v1/entries', body: {
+      'categoryId': categoryId,
+      'participantName': participantName.trim(),
+      if (participantDob != null) 'participantDob': participantDob,
+      'consentGiven': consentGiven,
+      if (members.isNotEmpty)
+        'members': [
+          for (final m in members)
+            {
+              'name': m.name.trim(),
+              if (m.dob != null && m.dob!.isNotEmpty) 'dob': m.dob,
+            },
+        ],
+    });
+    return Entry.fromJson(json as Map<String, dynamic>);
+  }
+
   /// The register for one event.
   Future<List<Entry>> entries(String eventId) async {
     final json = await _api.get('/api/v1/events/$eventId/entries');
