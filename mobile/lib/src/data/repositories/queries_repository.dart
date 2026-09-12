@@ -21,6 +21,32 @@ class QueriesRepository {
         .toList();
   }
 
+  /// Ask a coach to ring you.
+  ///
+  /// The family's side. A number is required, unlike on an enquiry: the point
+  /// of a query is to be called, so one without a number is a request nobody
+  /// can act on.
+  Future<Query> raise({
+    required String providerId,
+    required String contactName,
+    required String contactPhone,
+    String? serviceCategoryId,
+    String? details,
+  }) async {
+    final json = await _api.post(
+      '/api/v1/queries',
+      body: {
+        'providerId': providerId,
+        'contactName': contactName.trim(),
+        'contactPhone': contactPhone.trim(),
+        if (serviceCategoryId != null) 'serviceCategoryId': serviceCategoryId,
+        if (details != null && details.trim().isNotEmpty)
+          'details': details.trim(),
+      },
+    );
+    return Query.fromJson(json as Map<String, dynamic>);
+  }
+
   /// Move the lead along. `callbackAt` is required when booking a call and
   /// ignored otherwise — the service and a check constraint both say so.
   Future<Query> setStatus(

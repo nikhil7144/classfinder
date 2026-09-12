@@ -28,6 +28,14 @@ class SpacesRepository {
     return Space.fromJson(json as Map<String, dynamic>);
   }
 
+  /// The Spaces the caller follows.
+  Future<List<FollowedSpace>> following() async {
+    final json = await _api.get('/api/v1/spaces/following');
+    return (json as List)
+        .map((e) => FollowedSpace.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
   /// Newest first, so `before` pages backwards.
   Future<List<SpacePost>> posts(
     String providerId, {

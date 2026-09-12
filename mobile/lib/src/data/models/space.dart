@@ -61,6 +61,36 @@ class Space {
       );
 }
 
+/// A Space a family follows. The roster, not the reading surface — what those
+/// coaches have posted is the feed.
+class FollowedSpace {
+  const FollowedSpace({
+    required this.providerId,
+    required this.displayName,
+    required this.photoUrl,
+    required this.headline,
+    required this.postCount,
+    required this.followedAt,
+  });
+
+  final String providerId;
+  final String? displayName;
+  final String? photoUrl;
+  final String? headline;
+  final int postCount;
+  final DateTime followedAt;
+
+  factory FollowedSpace.fromJson(Map<String, dynamic> json) => FollowedSpace(
+        providerId: json['providerId'] as String,
+        displayName: json['displayName'] as String?,
+        photoUrl: json['photoUrl'] as String?,
+        headline: json['headline'] as String?,
+        postCount: (json['postCount'] as num?)?.toInt() ?? 0,
+        followedAt: DateTime.tryParse(json['followedAt'] as String? ?? '') ??
+            DateTime.now(),
+      );
+}
+
 /// The three reactions a post can carry. Sending the same one again is not a
 /// toggle as far as the service is concerned — the client decides that.
 enum Reaction {

@@ -7,6 +7,7 @@ import 'data/models/demand.dart';
 import 'data/repositories/me_repository.dart';
 import 'data/models/alerts.dart';
 import 'data/models/listing.dart';
+import 'data/models/coach.dart';
 import 'data/models/entry.dart';
 import 'data/models/event.dart';
 import 'data/models/query.dart';
@@ -17,6 +18,8 @@ import 'data/models/thread.dart';
 import 'data/repositories/alerts_repository.dart';
 import 'data/repositories/listing_repository.dart';
 import 'data/repositories/reference_repository.dart';
+import 'data/repositories/coaches_repository.dart';
+import 'data/repositories/enquiries_repository.dart';
 import 'data/repositories/events_repository.dart';
 import 'data/repositories/queries_repository.dart';
 import 'data/repositories/seeker_repository.dart';
@@ -80,6 +83,29 @@ final myListingProvider = FutureProvider<Listing?>((ref) async {
   return ref.watch(listingRepositoryProvider).mine();
 });
 
+final coachesRepositoryProvider = Provider<CoachesRepository>(
+  (ref) => CoachesRepository(ref.watch(apiClientProvider)),
+);
+
+final enquiriesRepositoryProvider = Provider<EnquiriesRepository>(
+  (ref) => EnquiriesRepository(ref.watch(apiClientProvider)),
+);
+
+/// Search results for one set of filters.
+///
+/// Keyed on the whole query, so changing any part of it re-runs the search and
+/// changing none of it does not.
+final searchProvider =
+    FutureProvider.family<List<CoachResult>, SearchQuery>((ref, query) {
+  if (!query.isReady) return Future.value(const []);
+  return ref.watch(coachesRepositoryProvider).search(query);
+});
+
+/// One coach's page.
+final coachProvider = FutureProvider.family<CoachProfile, String>(
+  (ref, id) => ref.watch(coachesRepositoryProvider).one(id),
+);
+
 final eventsRepositoryProvider = Provider<EventsRepository>(
   (ref) => EventsRepository(ref.watch(apiClientProvider)),
 );
@@ -92,6 +118,21 @@ final myEventsProvider = FutureProvider<List<Event>>(
 /// The register for one event.
 final entriesProvider = FutureProvider.family<List<Entry>, String>(
   (ref, eventId) => ref.watch(eventsRepositoryProvider).entries(eventId),
+);
+
+/// Somebody else's Space, and its posts. Keyed on the provider because that is
+/// what a client arrives holding — from search, or from a profile.
+final spaceProvider = FutureProvider.family<Space, String>(
+  (ref, providerId) => ref.watch(spacesRepositoryProvider).one(providerId),
+);
+
+final spacePostsProvider = FutureProvider.family<List<SpacePost>, String>(
+  (ref, providerId) => ref.watch(spacesRepositoryProvider).posts(providerId),
+);
+
+/// The Spaces a family follows.
+final followedSpacesProvider = FutureProvider<List<FollowedSpace>>(
+  (ref) => ref.watch(spacesRepositoryProvider).following(),
 );
 
 final queriesRepositoryProvider = Provider<QueriesRepository>(

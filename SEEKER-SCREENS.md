@@ -219,8 +219,8 @@ Extends `MOBILE-PLAN.md` §9 for the seeker flavor. Keep both current.
 | `/login`, `/signup/seeker` | `screens/auth/sign_in_screen.dart` *(shared)* |
 | `/complete-profile/seeker`, `/account/profile` | `screens/profile/` |
 | `/home` | `screens/home/` *(not built)* |
-| `/search` | `screens/search/` *(not built)* |
-| `/provider/[id]`, `/provider/[id]/space` | `screens/coach/` *(not built)* |
+| `/search` | `screens/search/` |
+| `/provider/[id]`, `/provider/[id]/space` | `screens/coach/` |
 | `/account/messages` | `screens/threads/` *(shared, needs trials + approach + phone)* |
 | `/groups/*`, `/account/groups` | `screens/groups/` *(not built)* |
 | `/events`, `/events/[id]`, entry, `/account/entries` | `screens/events/` *(shared, needs the seeker half)* |
@@ -233,7 +233,9 @@ Each slice is usable on its own, and each depends only on what is above it.
 1. ~~**Profile**~~ — **done.** `screens/profile/`, `seeker_rules.dart`,
    `screens/shell/seeker_shell.dart`, and the router now picks a shell by
    flavor.
-2. **Search + coach profile** — the first five minutes, and the reason to install.
+2. ~~**Search + coach profile**~~ — **done.** `screens/search/`,
+   `screens/coach/`, and the contact sheet that carries both ways of getting
+   in touch.
 3. **Messages** — including the three things the coach app's version lacks.
 4. **Home** — it is mostly links to 1–3, so it is worth the least first.
 5. **Groups**.

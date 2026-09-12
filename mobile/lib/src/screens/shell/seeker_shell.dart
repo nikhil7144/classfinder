@@ -7,30 +7,58 @@ import '../../widgets/branding.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/states.dart';
 import '../profile/profile_screen.dart';
+import '../search/search_screen.dart';
 
 /// Where a family lands.
 ///
-/// One tab so far. SEEKER-SCREENS.md has the build order — profile, then
-/// search and the coach profile, then messages, then home, groups and events —
-/// and the bar grows a destination per slice.
+/// Two tabs so far. SEEKER-SCREENS.md has the build order — messages, then
+/// home, groups and events — and the bar grows a destination per slice.
 ///
-/// Until then this is deliberately not a NavigationBar with one item, which
-/// would be a bar that does nothing. It is the first thing a parent has to do
-/// anyway: nothing else works until the profile exists.
-class SeekerShell extends ConsumerWidget {
+/// A brand new account gets the welcome instead: the profile asks for a
+/// child's age and a neighbourhood, and a blank form is a poor way to open
+/// that conversation.
+class SeekerShell extends ConsumerStatefulWidget {
   const SeekerShell({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SeekerShell> createState() => _SeekerShellState();
+}
+
+class _SeekerShellState extends ConsumerState<SeekerShell> {
+  int _tab = 0;
+
+  @override
+  Widget build(BuildContext context) {
     final profile = ref.watch(myProfileProvider);
 
-    return profile.when(
-      loading: () => const Scaffold(body: Loading()),
-      // A failure to read the profile is not a reason to block somebody out of
-      // their own account — the screen behind this can still write one.
-      error: (_, __) => const ProfileScreen(),
-      data: (profile) =>
-          profile == null ? const _Welcome() : const ProfileScreen(),
+    if (profile.isLoading) return const Scaffold(body: Loading());
+    // A failure to read the profile is not a reason to lock somebody out of
+    // their own account — the form behind this can still write one.
+    if (profile.hasValue && profile.value == null) return const _Welcome();
+
+    return Scaffold(
+      body: IndexedStack(
+        index: _tab,
+        children: const [SearchScreen(), ProfileScreen()],
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _tab,
+        onDestinationSelected: (i) => setState(() => _tab = i),
+        backgroundColor: A91.surface,
+        indicatorColor: A91.surface3,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.search),
+            selectedIcon: Icon(Icons.search),
+            label: 'Find',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'You',
+          ),
+        ],
+      ),
     );
   }
 }
