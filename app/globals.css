@@ -22,8 +22,16 @@
   --border-soft: #212427;
 
   --ink: #f2f3f4;
-  --muted: #97a1a7;
-  --faint: #666e73;
+  /* Raised from #97a1a7 / #666e73 after the app was read outdoors.
+     --faint was 3.4:1 on a card — below the 4.5 AA needs for body text, and
+     it is the colour under 143 labels, 88 of them at text-xs or smaller. It
+     failed indoors too; sunlight is only where it became obvious, because
+     glare adds a fixed amount of light to every pixel and collapses the
+     ratio further. Both now clear AA on every surface, bg through surface-3.
+     Also used for hover borders and input placeholders, both of which wanted
+     to be more visible anyway. */
+  --muted: #b3bcc2;
+  --faint: #8b949b;
 
   --grad-1: #ff6b4d;
   --grad-2: #ffb238;
