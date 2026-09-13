@@ -2,11 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { EXAM_SUBGROUP_ORDER } from "@/lib/requirements";
 
 type ServiceCategory = {
   id: string;
   name: string;
   group: string;
+  subgroup: string | null;
   is_active: boolean;
 };
 
@@ -18,14 +20,22 @@ const groupOptions = [
   { value: "dance", label: "Dance" },
   { value: "music", label: "Music" },
   { value: "subject", label: "Subject" },
-  { value: "exam_board", label: "Exam Board" },
+  { value: "exam_board", label: "School Board" },
   { value: "acting", label: "Acting & Theatre" },
+  { value: "competitive_exam", label: "Exam / Certification" },
 ];
+
+// Exams are the one group with a second level, because ~200 of them in one
+// list is not a list. The keys come from lib/requirements.ts, which is also
+// what the pickers render from, so this form cannot drift out of step with
+// them — only with the check constraint in db/2026-09-20-phase3u-exams.sql.
+const subgroupOptions = EXAM_SUBGROUP_ORDER.map((s) => ({ value: s.key, label: s.label }));
 
 export default function ServiceCategoriesAdmin() {
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [name, setName] = useState("");
   const [group, setGroup] = useState("sport");
+  const [subgroup, setSubgroup] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("");
@@ -44,7 +54,7 @@ export default function ServiceCategoriesAdmin() {
     load();
   }, []);
 
-  // The seeded taxonomy runs to 100+ rows, which is many screens of flat
+  // The seeded taxonomy runs to 350+ rows, which is many screens of flat
   // list — filtering keeps a single edit from being a scroll hunt.
   const grouped = useMemo(() => {
     const query = filter.trim().toLowerCase();
@@ -78,7 +88,7 @@ export default function ServiceCategoriesAdmin() {
     const response = await fetch("/api/admin/taxonomy/service-categories", {
       method: "POST",
       headers: { "Content-Type": "application/json", ...(await withAuthHeader()) },
-      body: JSON.stringify({ name, group }),
+      body: JSON.stringify({ name, group, subgroup: group === "competitive_exam" ? subgroup : "" }),
     });
 
     const result = await response.json();
@@ -138,6 +148,21 @@ export default function ServiceCategoriesAdmin() {
               </option>
             ))}
           </select>
+          {group === "competitive_exam" && (
+            <select
+              value={subgroup}
+              onChange={(e) => setSubgroup(e.target.value)}
+              aria-label="Exam stream"
+              className="rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-indigo-400"
+            >
+              <option value="">Stream — unfiled</option>
+              {subgroupOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          )}
           <button
             onClick={addCategory}
             disabled={saving}
@@ -180,7 +205,15 @@ export default function ServiceCategoriesAdmin() {
                       index !== items.length - 1 ? "border-b border-gray-200" : ""
                     } ${!cat.is_active ? "opacity-50" : ""}`}
                   >
-                    <span className="font-medium text-gray-900">{cat.name}</span>
+                    <span className="font-medium text-gray-900">
+                      {cat.name}
+                      {cat.subgroup && (
+                        <span className="ml-2 text-xs font-normal text-gray-400">
+                          {subgroupOptions.find((o) => o.value === cat.subgroup)?.label ||
+                            cat.subgroup}
+                        </span>
+                      )}
+                    </span>
                     <button
                       onClick={() => toggleActive(cat.id, cat.is_active)}
                       className={`rounded-lg px-3 py-2 text-sm font-medium transition ${

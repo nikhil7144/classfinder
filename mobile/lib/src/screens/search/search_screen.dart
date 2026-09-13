@@ -267,7 +267,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         PickOption(
                           id: s.id,
                           label: s.name,
-                          sublabel: s.group,
+                          sublabel: s.pickerSublabel,
+                          keywords: s.aliases,
                           dot: A91.group(s.group),
                         ),
                     ],

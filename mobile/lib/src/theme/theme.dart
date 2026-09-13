@@ -160,20 +160,26 @@ class A91 {
   /// enough not to be waited on.
   static const tabFade = Duration(milliseconds: 160);
 
-  /// The colour for one of the eight taxonomy groups.
+  /// The colour for one of the ten taxonomy groups.
   ///
   /// A group added to the taxonomy after this shipped falls back to muted
   /// rather than throwing — a category with the wrong dot beside it is a far
   /// smaller problem than a screen that will not render.
+  ///
+  /// Four of these keys were the colour's name rather than the group's, so
+  /// wellness_fitness, mind_game, indoor_game and exam_board had all been
+  /// falling through to muted since they shipped. The fallback is why nobody
+  /// noticed: it degrades quietly, which is the point and also the risk.
   static Color group(String? name) => switch (name) {
         'sport' => sport,
-        'wellness' => wellness,
-        'mind' => mind,
-        'indoor' => indoor,
+        'wellness_fitness' => wellness,
+        'mind_game' => mind,
+        'indoor_game' => indoor,
         'dance' => dance,
         'music' => music,
         'subject' => subject,
-        'exam' => exam,
+        'exam_board' => exam,
+        'competitive_exam' => exam,
         'acting' => acting,
         _ => muted,
       };

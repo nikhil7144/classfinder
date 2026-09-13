@@ -10,6 +10,7 @@ class PickOption {
     this.sublabel,
     this.dot,
     this.dimmed = false,
+    this.keywords = const [],
   });
 
   final String id;
@@ -25,10 +26,15 @@ class PickOption {
   /// families. Removing it would hide somewhere they genuinely work.
   final bool dimmed;
 
+  /// Searched but never drawn. Exams carry the names people actually type —
+  /// "IIT JEE", "Bank PO", "Daroga" — none of which is a row's label.
+  final List<String> keywords;
+
   bool matches(String query) {
     final q = query.toLowerCase();
     return label.toLowerCase().contains(q) ||
-        (sublabel?.toLowerCase().contains(q) ?? false);
+        (sublabel?.toLowerCase().contains(q) ?? false) ||
+        keywords.any((k) => k.toLowerCase().contains(q));
   }
 }
 

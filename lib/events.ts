@@ -53,7 +53,8 @@ export const GROUP_TONE: Record<string, string> = {
   music: "var(--music)",
   acting: "var(--acting)",
   subject: "var(--subject)",
-  exam_board: "var(--exam)",
+  exam_board: "var(--board)",
+  competitive_exam: "var(--exam)",
 };
 
 export function groupTone(group?: string | null): string {

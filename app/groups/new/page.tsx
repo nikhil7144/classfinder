@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import ServicePicker from "@/components/taxonomy/ServicePicker";
 import { supabase } from "@/lib/supabase";
 import {
   fetchSeekerLocations,
@@ -22,7 +23,6 @@ import {
   ServiceOption,
   emptyRequirement,
   getRequirementErrors,
-  groupServices,
   requirementToColumns,
 } from "@/lib/requirements";
 
@@ -98,7 +98,6 @@ export default function NewGroupPage() {
 
   const cityAreas = useMemo(() => areas.filter((a) => a.cityId === cityId), [areas, cityId]);
 
-  const servicesByGroup = useMemo(() => groupServices(services), [services]);
 
   const create = async () => {
     setError("");
@@ -189,18 +188,13 @@ export default function NewGroupPage() {
 
           <div>
             <label className="mb-2 block text-sm text-muted">What are you looking for?</label>
-            <select className="cf-input" value={serviceId} onChange={(e) => setServiceId(e.target.value)}>
-              <option value="">Choose…</option>
-              {servicesByGroup.map((g) => (
-                <optgroup key={g.group} label={g.label}>
-                  {g.items.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
+            <ServicePicker
+              services={services}
+              selectedIds={serviceId ? [serviceId] : []}
+              onChange={(ids) => setServiceId(ids[0] || "")}
+              placeholder="Choose…"
+              label="What are you looking for?"
+            />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">

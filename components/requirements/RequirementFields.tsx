@@ -11,8 +11,8 @@ import {
   RequirementErrors,
   ServiceOption,
   WEEK_DAYS,
-  groupServices,
 } from "@/lib/requirements";
+import ServicePicker from "@/components/taxonomy/ServicePicker";
 
 type TeachingPlace = { id: string; label: string; description: string | null };
 
@@ -91,29 +91,22 @@ export default function RequirementFields({
             same list.
           </p>
 
+          {/* Every service used to render as a pill here. That was 176 of
+              them and already long; phase 3U took it to 360, at which point
+              the form was a wall a parent had to scroll past to reach the
+              rest of the questions. Same list, behind a search box. */}
           {services.length === 0 ? (
             <p className="text-sm text-muted">Loading…</p>
           ) : (
-            <div className="space-y-4">
-              {groupServices(services).map((g) => (
-                <div key={g.group}>
-                  <p className="cf-eyebrow">{g.label}</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {g.items.map((s) => (
-                      <button
-                        key={s.id}
-                        type="button"
-                        className="cf-pill px-3 py-1.5 text-xs"
-                        data-selected={value.lookingFor.includes(s.id)}
-                        onClick={() => toggle("lookingFor", s.id)}
-                      >
-                        {s.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <ServicePicker
+              services={services}
+              selectedIds={value.lookingFor}
+              onChange={(ids) => onChange({ ...value, lookingFor: ids })}
+              multiple
+              placeholder="Pick subjects, sports, exams…"
+              label="What are you looking for?"
+              invalid={Boolean(errors.lookingFor?.[0])}
+            />
           )}
           {errors.lookingFor?.[0] && <p className={errorText}>{errors.lookingFor[0]}</p>}
         </div>

@@ -67,25 +67,105 @@ export const SERVICE_GROUP_LABEL: Record<string, string> = {
   music: "Music",
   acting: "Acting & Theatre",
   subject: "School Subjects",
-  exam_board: "Boards & Exams",
+  exam_board: "School Boards",
+  competitive_exam: "Exams & Certifications",
 };
 
 export const SERVICE_GROUP_ORDER = Object.keys(SERVICE_GROUP_LABEL);
 
-export type ServiceOption = { id: string; name: string; group: string };
+/**
+ * The streams inside `competitive_exam`, in the order they render.
+ *
+ * That group is ~200 rows — the only one with a second level — and this list
+ * is the display order for it everywhere: the provider picker, the seeker
+ * search sheet, and the requirement form. Keys match the subgroup check
+ * constraint in db/2026-09-20-phase3u-exams.sql.
+ */
+export const EXAM_SUBGROUP_ORDER: { key: string; label: string }[] = [
+  { key: "engineering", label: "Engineering & Sciences" },
+  { key: "medical", label: "Medical & Pharmacy" },
+  { key: "school", label: "School & Scholarship" },
+  { key: "management", label: "Management & Business" },
+  { key: "civil_services", label: "Civil Services" },
+  { key: "ssc_railway", label: "SSC & Railways" },
+  { key: "banking", label: "Banking & Insurance" },
+  { key: "defence", label: "Defence & Police" },
+  { key: "teaching", label: "Teaching & Research" },
+  { key: "law", label: "Law" },
+  { key: "design", label: "Design & Architecture" },
+  { key: "university", label: "University & Research" },
+  { key: "finance", label: "Finance & Accountancy" },
+  { key: "study_abroad", label: "Study Abroad" },
+  { key: "language", label: "Language Proficiency" },
+  { key: "certification", label: "IT & Professional" },
+  { key: "vocational", label: "Aviation & Hospitality" },
+];
 
-/** Options for a `<select>`, grouped into `<optgroup>`s in taxonomy order. */
-export function groupServices(services: ServiceOption[]) {
-  const grouped = services.reduce<Record<string, ServiceOption[]>>((acc, s) => {
+export const EXAM_SUBGROUP_LABEL: Record<string, string> = Object.fromEntries(
+  EXAM_SUBGROUP_ORDER.map((s) => [s.key, s.label])
+);
+
+export type ServiceOption = {
+  id: string;
+  name: string;
+  group: string;
+  /** Only `competitive_exam` fills this. Null or absent everywhere else. */
+  subgroup?: string | null;
+  /** Searched, never rendered — "IIT JEE" has to find JEE Advanced. */
+  aliases?: string[] | null;
+};
+
+/**
+ * Does this service answer to what was typed?
+ *
+ * Aliases are the whole reason this is a function rather than an inline
+ * `.includes()`: nobody searches for "Police Sub-Inspector (SI)", they search
+ * for "Daroga", and before phase 3U that returned nothing.
+ */
+export function serviceMatches(service: ServiceOption, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  if (service.name.toLowerCase().includes(q)) return true;
+  return (service.aliases || []).some((a) => a.toLowerCase().includes(q));
+}
+
+export type ServiceSection = { key: string; label: string; items: ServiceOption[] };
+
+/**
+ * Services as flat, ordered sections — one per group, except the exam group,
+ * which contributes one section per stream.
+ *
+ * Sections rather than nested groups because every surface that shows the
+ * whole taxonomy is a scrolling list, and "Engineering & Sciences" is a more
+ * useful heading than "Exams & Certifications" repeated two hundred times.
+ */
+export function sectionServices(services: ServiceOption[]): ServiceSection[] {
+  const byGroup = services.reduce<Record<string, ServiceOption[]>>((acc, s) => {
     (acc[s.group] = acc[s.group] || []).push(s);
     return acc;
   }, {});
 
-  return SERVICE_GROUP_ORDER.filter((g) => grouped[g]?.length).map((g) => ({
-    group: g,
-    label: SERVICE_GROUP_LABEL[g],
-    items: grouped[g],
-  }));
+  return SERVICE_GROUP_ORDER.flatMap((group) => {
+    const items = byGroup[group] || [];
+    if (items.length === 0) return [];
+    if (!items.some((i) => i.subgroup)) {
+      return [{ key: group, label: SERVICE_GROUP_LABEL[group], items }];
+    }
+
+    const bySub = items.reduce<Record<string, ServiceOption[]>>((acc, s) => {
+      (acc[s.subgroup || ""] = acc[s.subgroup || ""] || []).push(s);
+      return acc;
+    }, {});
+
+    const streams: ServiceSection[] = EXAM_SUBGROUP_ORDER.filter((s) => bySub[s.key]?.length).map(
+      (s) => ({ key: `${group}:${s.key}`, label: s.label, items: bySub[s.key] })
+    );
+
+    // An exam an admin added without picking a stream still has to appear.
+    return bySub[""]?.length
+      ? [...streams, { key: `${group}:other`, label: SERVICE_GROUP_LABEL[group], items: bySub[""] }]
+      : streams;
+  });
 }
 
 /**

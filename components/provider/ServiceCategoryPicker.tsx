@@ -1,8 +1,21 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  EXAM_SUBGROUP_LABEL as SUBGROUP_LABEL,
+  EXAM_SUBGROUP_ORDER,
+  serviceMatches,
+} from "@/lib/requirements";
 
-export type ServiceCategory = { id: string; name: string; group: string };
+export type ServiceCategory = {
+  id: string;
+  name: string;
+  group: string;
+  /** Only `competitive_exam` has these. See EXAM_SUBGROUP_ORDER. */
+  subgroup?: string | null;
+  /** Searched, never shown. "IIT JEE" finds JEE Advanced. */
+  aliases?: string[] | null;
+};
 
 // Explicit order + labels. Without this the groups render in whatever order
 // they arrive in, which once put "Mind Games" above "Sports" and buried the
@@ -16,8 +29,40 @@ export const SERVICE_GROUP_ORDER: { key: string; label: string }[] = [
   { key: "music", label: "Music" },
   { key: "acting", label: "Acting & Theatre" },
   { key: "subject", label: "School Subjects" },
-  { key: "exam_board", label: "Boards & Exams" },
+  { key: "exam_board", label: "School Boards" },
+  { key: "competitive_exam", label: "Exams & Certifications" },
 ];
+
+// The stream list and the alias matcher live in lib/requirements.ts, with
+// the group labels, rather than in a fifth copy here. Phase 3F's migration
+// complained about four copies of one list; this is the start of paying that
+// down.
+
+/**
+ * Split a group into its streams, in EXAM_SUBGROUP_ORDER.
+ *
+ * Anything with no subgroup — every other group, and an exam an admin added
+ * from the taxonomy page without picking a stream — falls into one unnamed
+ * bucket rather than disappearing.
+ */
+function bySubgroup(items: ServiceCategory[]) {
+  const buckets = new Map<string, ServiceCategory[]>();
+  for (const item of items) {
+    const key = item.subgroup || "";
+    const bucket = buckets.get(key);
+    if (bucket) bucket.push(item);
+    else buckets.set(key, [item]);
+  }
+
+  const ordered = EXAM_SUBGROUP_ORDER.filter((s) => buckets.has(s.key)).map((s) => ({
+    key: s.key,
+    label: s.label,
+    items: buckets.get(s.key)!,
+  }));
+
+  const loose = buckets.get("");
+  return loose ? [...ordered, { key: "", label: "Other", items: loose }] : ordered;
+}
 
 // The provider already told us their category, so lead with the groups that
 // category actually teaches. This only reorders and pre-opens sections —
@@ -28,7 +73,7 @@ export const CATEGORY_GROUP_HINTS: Record<string, string[]> = {
   "Home Tutor": ["subject", "exam_board"],
   "Sports Academy": ["sport"],
   "Sports Center": ["sport", "wellness_fitness"],
-  "Coaching Center": ["subject", "exam_board"],
+  "Coaching Center": ["competitive_exam", "subject", "exam_board"],
   "Dance Teacher": ["dance"],
   "Music Teacher": ["music"],
   "Dance Academy": ["dance"],
@@ -44,8 +89,13 @@ const GROUP_TONE: Record<string, string> = {
   indoor_game: "var(--indoor)",
   dance: "var(--dance)",
   music: "var(--music)",
+  // acting shipped in phase 3F without a dot here, so its sections drew a
+  // colourless one. lib/events.ts had it; this copy did not, which is the
+  // cost of the same map living in two files.
+  acting: "var(--acting)",
   subject: "var(--subject)",
-  exam_board: "var(--exam)",
+  exam_board: "var(--board)",
+  competitive_exam: "var(--exam)",
 };
 
 // Past this a section stops being scannable and becomes a wall.
@@ -70,6 +120,9 @@ export default function ServiceCategoryPicker({
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [modalKey, setModalKey] = useState<string | null>(null);
   const [modalSearch, setModalSearch] = useState("");
+  // Which stream the modal opened on. Null means "all of them", which is
+  // what the group header opens, and what clearing the filter returns to.
+  const [modalSubgroup, setModalSubgroup] = useState<string | null>(null);
 
   const byGroup = useMemo(() => {
     return categories.reduce<Record<string, ServiceCategory[]>>((acc, item) => {
@@ -94,8 +147,17 @@ export default function ServiceCategoryPicker({
         label,
         total: items.length,
         suggested: suggested.includes(key),
-        items: query ? items.filter((i) => i.name.toLowerCase().includes(query)) : items,
+        items: query ? items.filter((i) => serviceMatches(i, query)) : items,
         selectedCount: items.filter((i) => selectedIds.includes(i.id)).length,
+        // Only competitive_exam has these today, but the picker asks the data
+        // rather than the group name, so a second streamed group needs no
+        // change here.
+        streams: items.some((i) => i.subgroup)
+          ? bySubgroup(items).map((sub) => ({
+              ...sub,
+              selectedCount: sub.items.filter((i) => selectedIds.includes(i.id)).length,
+            }))
+          : [],
       };
     }).filter((g) => g.total > 0);
 
@@ -103,16 +165,33 @@ export default function ServiceCategoryPicker({
   }, [byGroup, query, selectedIds, suggested]);
 
   const modalLabel = SERVICE_GROUP_ORDER.find((g) => g.key === modalKey)?.label || "";
-  const modalItems = useMemo(() => {
+  // Sections, not a flat list: one per stream for a group that has them, and
+  // a single unlabelled section for a group that does not. Searching looks
+  // across every stream — the whole point of typing "IIT" is not knowing
+  // which one it is in — so a filtered modal ignores the chosen stream.
+  const modalSections = useMemo(() => {
     if (!modalKey) return [];
     const items = byGroup[modalKey] || [];
     const q = modalSearch.trim().toLowerCase();
-    return q ? items.filter((i) => i.name.toLowerCase().includes(q)) : items;
-  }, [modalKey, byGroup, modalSearch]);
+    if (q) {
+      const hits = items.filter((i) => serviceMatches(i, q));
+      return items.some((i) => i.subgroup)
+        ? bySubgroup(hits)
+        : hits.length
+          ? [{ key: "", label: "", items: hits }]
+          : [];
+    }
+    if (!items.some((i) => i.subgroup)) return [{ key: "", label: "", items }];
+    const sections = bySubgroup(items);
+    return modalSubgroup ? sections.filter((sec) => sec.key === modalSubgroup) : sections;
+  }, [modalKey, byGroup, modalSearch, modalSubgroup]);
+
+  const modalCount = modalSections.reduce((n, sec) => n + sec.items.length, 0);
 
   const closeModal = () => {
     setModalKey(null);
     setModalSearch("");
+    setModalSubgroup(null);
   };
 
   useEffect(() => {
@@ -189,31 +268,69 @@ export default function ServiceCategoryPicker({
 
               {open && (
                 <div className="border-t border-line-soft px-4 py-3">
-                  <div className="flex flex-wrap gap-2">
-                    {group.items.slice(0, INLINE_OPTION_LIMIT).map((item) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        className="cf-pill"
-                        data-selected={selectedIds.includes(item.id)}
-                        onClick={() => toggle(item.id)}
-                      >
-                        {item.name}
-                      </button>
-                    ))}
-                  </div>
+                  {/* A streamed group opens on its streams, not on the first
+                      20 of 200 rows in alphabetical order — which for exams
+                      meant ACT, ACCA, AFCAT and no JEE anywhere in sight.
+                      Searching skips this and matches rows directly. */}
+                  {group.streams.length > 0 && !query ? (
+                    <div className="flex flex-wrap gap-2">
+                      {group.streams.map((stream) => (
+                        <button
+                          key={stream.key || "other"}
+                          type="button"
+                          onClick={() => {
+                            setModalKey(group.key);
+                            setModalSearch("");
+                            setModalSubgroup(stream.key || null);
+                          }}
+                          className="cf-pill"
+                          data-selected={stream.selectedCount > 0}
+                        >
+                          {stream.label}
+                          <span className="ml-1.5 font-mono text-xs text-faint">
+                            {stream.selectedCount > 0
+                              ? `${stream.selectedCount}/${stream.items.length}`
+                              : stream.items.length}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {group.items.slice(0, INLINE_OPTION_LIMIT).map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className="cf-pill"
+                          data-selected={selectedIds.includes(item.id)}
+                          onClick={() => toggle(item.id)}
+                        >
+                          {item.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
-                  {group.items.length > INLINE_OPTION_LIMIT && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setModalKey(group.key);
-                        setModalSearch("");
-                      }}
-                      className="mt-3 text-sm font-semibold text-gold transition hover:text-accent-ink"
-                    >
-                      View all {group.total} {group.label.toLowerCase()} →
-                    </button>
+                  {(group.streams.length > 0 || group.items.length > INLINE_OPTION_LIMIT) &&
+                    !query && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setModalKey(group.key);
+                          setModalSearch("");
+                          setModalSubgroup(null);
+                        }}
+                        className="mt-3 text-sm font-semibold text-gold transition hover:text-accent-ink"
+                      >
+                        View all {group.total} {group.label.toLowerCase()} →
+                      </button>
+                    )}
+
+                  {query && group.items.length > INLINE_OPTION_LIMIT && (
+                    <p className="mt-3 font-mono text-xs text-faint">
+                      Showing {INLINE_OPTION_LIMIT} of {group.items.length} matches — keep typing to
+                      narrow.
+                    </p>
                   )}
                 </div>
               )}
@@ -240,11 +357,22 @@ export default function ServiceCategoryPicker({
           >
             <div className="flex items-start justify-between gap-4 border-b border-line px-6 py-5">
               <div>
-                <h3 className="cf-display text-lg text-ink">{modalLabel}</h3>
+                <h3 className="cf-display text-lg text-ink">
+                  {modalSubgroup ? SUBGROUP_LABEL[modalSubgroup] || modalLabel : modalLabel}
+                </h3>
                 <p className="mt-1 font-mono text-xs text-faint">
                   {selected.filter((s) => s.group === modalKey).length} of{" "}
                   {(byGroup[modalKey] || []).length} selected
                 </p>
+                {modalSubgroup && (
+                  <button
+                    type="button"
+                    onClick={() => setModalSubgroup(null)}
+                    className="mt-2 text-sm font-semibold text-gold transition hover:text-accent-ink"
+                  >
+                    ← All {modalLabel.toLowerCase()}
+                  </button>
+                )}
               </div>
               <button
                 type="button"
@@ -261,28 +389,40 @@ export default function ServiceCategoryPicker({
                 autoFocus
                 className="cf-input"
                 placeholder={`Search ${modalLabel.toLowerCase()}…`}
+                aria-label={`Search ${modalLabel}`}
                 value={modalSearch}
                 onChange={(e) => setModalSearch(e.target.value)}
               />
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-4">
-              {modalItems.length === 0 ? (
+            <div className="flex-1 space-y-5 overflow-y-auto px-6 py-4">
+              {modalCount === 0 ? (
                 <p className="text-sm text-muted">Nothing matches “{modalSearch.trim()}”.</p>
               ) : (
-                <div className="flex flex-wrap gap-2">
-                  {modalItems.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className="cf-pill"
-                      data-selected={selectedIds.includes(item.id)}
-                      onClick={() => toggle(item.id)}
-                    >
-                      {item.name}
-                    </button>
-                  ))}
-                </div>
+                modalSections.map((section) => (
+                  <div key={section.key || "all"}>
+                    {/* A single unnamed section is a group without streams —
+                        it gets no heading, so nothing changes for Sports. */}
+                    {section.label && (
+                      <h4 className="mb-2 font-mono text-xs uppercase tracking-wide text-faint">
+                        {section.label}
+                      </h4>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      {section.items.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className="cf-pill"
+                          data-selected={selectedIds.includes(item.id)}
+                          onClick={() => toggle(item.id)}
+                        >
+                          {item.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))
               )}
             </div>
 

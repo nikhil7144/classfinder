@@ -7,7 +7,7 @@ import type { components } from "@/lib/api/schema";
  * These five tables used to be read from nine screens, each fetching its own
  * slice on mount: the search page pulled all five, both profile forms pulled
  * three, and a parent opening search and then their profile paid for the same
- * 176 service categories twice. They are public, small, identical for
+ * 359 service categories twice. They are public, small, identical for
  * everyone, and change only when an admin edits them.
  *
  * No Supabase import, so a server component can use this too. The API caches

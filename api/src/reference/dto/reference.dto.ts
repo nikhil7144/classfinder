@@ -44,9 +44,30 @@ export class ServiceCategoryRefDto {
 
   @ApiProperty({
     example: "dance",
-    description: "One of the eight taxonomy groups. Drives the colour a category renders in.",
+    description: "One of the ten taxonomy groups. Drives the colour a category renders in.",
   })
   group!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: "engineering",
+    description:
+      "Only `competitive_exam` uses this — that group is ~200 rows, too many for one " +
+      "flat list, so it is split into streams (engineering, medical, banking, " +
+      "study_abroad…). Null everywhere else, and null for an exam an admin added " +
+      "without picking a stream.",
+  })
+  subgroup!: string | null;
+
+  @ApiProperty({
+    type: [String],
+    example: ["IIT JEE", "AIEEE"],
+    description:
+      "Search terms, not labels. What people type for this category without ever " +
+      "being its name — nothing renders these.",
+  })
+  aliases!: string[];
 }
 
 export class ProviderCategoryRefDto {

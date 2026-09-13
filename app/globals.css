@@ -48,6 +48,9 @@
   --subject: #4cc9f0;
   --exam: #f472b6;
   --acting: #f0a05a;
+  /* exam_board split into boards and competitive exams in phase 3U; sky
+     keeps a CBSE tutor visually distinct from a UPSC institute. */
+  --board: #38bdf8;
 }
 
 @theme inline {
@@ -81,6 +84,7 @@
   --color-subject: var(--subject);
   --color-acting: var(--acting);
   --color-exam: var(--exam);
+  --color-board: var(--board);
 
   --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-jakarta), var(--font-manrope), sans-serif;

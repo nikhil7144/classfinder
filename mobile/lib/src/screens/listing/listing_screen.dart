@@ -379,7 +379,8 @@ class _ListingFormState extends ConsumerState<_ListingForm> {
                       PickOption(
                         id: s.id,
                         label: s.name,
-                        sublabel: s.group,
+                        sublabel: s.pickerSublabel,
+                        keywords: s.aliases,
                         dot: A91.group(s.group),
                       ),
                   ],

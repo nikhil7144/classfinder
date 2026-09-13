@@ -16,7 +16,12 @@ const ROWS: Record<string, unknown[]> = {
     { id: "a1", city_id: "c1", name: "Vijay Nagar", lat: 22.7, lng: 75.9, is_live: true },
     { id: "a2", city_id: "c1", name: "Not Open Yet", lat: null, lng: null, is_live: false },
   ],
-  service_category_master: [{ id: "s1", name: "Kathak", group: "dance" }],
+  service_category_master: [
+    // No subgroup and no aliases — the shape of every row outside the exam
+    // group, and the one the contract has to survive.
+    { id: "s1", name: "Kathak", group: "dance" },
+    { id: "s2", name: "JEE Main", group: "competitive_exam", subgroup: "engineering", aliases: ["IIT JEE"] },
+  ],
   provider_category_master: [{ id: "p1", name: "Dance Teacher", provider_type: "individual" }],
   teaching_place_master: [
     { id: "individual_classes", label: "One-to-one", description: null, sort_order: 1 },
@@ -61,6 +66,18 @@ describe("GET /api/v1/reference", () => {
     expect(res.body.areas[0].cityId).toBe("c1");
     expect(res.body.teachingPlaces[0].sortOrder).toBe(1);
     expect(res.body.serviceCategories[0].group).toBe("dance");
+    expect(res.body.serviceCategories[1].subgroup).toBe("engineering");
+    expect(res.body.serviceCategories[1].aliases).toEqual(["IIT JEE"]);
+  });
+
+  it("gives a category with no stream a null subgroup and an empty alias list", async () => {
+    // The columns arrived in phase 3U and only the exam group fills them.
+    // A client that trusted the contract and got undefined would crash on
+    // .some(), so the mapping has to answer for rows that predate them.
+    const res = await request(app.getHttpServer()).get("/api/v1/reference").expect(200);
+
+    expect(res.body.serviceCategories[0].subgroup).toBeNull();
+    expect(res.body.serviceCategories[0].aliases).toEqual([]);
   });
 
   it("returns areas that are not live, with the flag rather than omitting them", async () => {

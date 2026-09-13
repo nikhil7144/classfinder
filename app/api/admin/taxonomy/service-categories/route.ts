@@ -32,15 +32,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { name, group } = await request.json();
+  const { name, group, subgroup } = await request.json();
 
   if (!name || !group) {
     return NextResponse.json({ error: "Name and group are required." }, { status: 400 });
   }
 
+  // Only the exam group is streamed, and the column is nullable, so an empty
+  // string from an untouched <select> has to become null rather than fail the
+  // check constraint. Anything else the form sends is rejected by that
+  // constraint, which is where the list of valid streams actually lives.
   const { error } = await supabaseServerAdmin
     .from("service_category_master")
-    .insert({ name, group });
+    .insert({ name, group, subgroup: subgroup || null });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });

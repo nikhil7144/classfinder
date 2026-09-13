@@ -7,7 +7,7 @@ import { ReferenceDto } from "./dto/reference.dto";
  *
  * Reference data changes when an admin edits the taxonomy or opens an area —
  * rare, and never urgent. A few minutes of staleness costs a new area showing
- * up slightly late; asking Postgres for 176 service categories on every page
+ * up slightly late; asking Postgres for 359 service categories on every page
  * load costs that on every page load.
  */
 const TTL_MS = 5 * 60 * 1000;
@@ -42,7 +42,11 @@ export class ReferenceService {
       // gates seekers only — a provider may register in an area that has not
       // opened yet — so filtering here would break the provider signup form.
       db.from("areas").select("id, city_id, name, lat, lng, is_live").order("name"),
-      db.from("service_category_master").select('id, name, "group"').eq("is_active", true).order("name"),
+      db
+        .from("service_category_master")
+        .select('id, name, "group", subgroup, aliases')
+        .eq("is_active", true)
+        .order("name"),
       db.from("provider_category_master").select("id, name, provider_type").eq("is_active", true).order("name"),
       db.from("teaching_place_master").select("id, label, description, sort_order").eq("is_active", true).order("sort_order"),
     ]);
@@ -64,6 +68,10 @@ export class ReferenceService {
         id: s.id,
         name: s.name,
         group: s.group,
+        subgroup: s.subgroup ?? null,
+        // Never null in the database — the column defaults to '{}' — but a
+        // client that trusted the type and got null would crash on .some().
+        aliases: s.aliases ?? [],
       })),
       providerCategories: (providerCategories.data ?? []).map((p) => ({
         id: p.id,

@@ -48,26 +48,87 @@ class Area {
       );
 }
 
+/// Group keys as the API sends them, in words a person would use.
+///
+/// A key with no entry here renders as the key itself rather than as blank:
+/// an unlabelled row is still pickable, an empty one looks broken.
+const _groupLabels = <String, String>{
+  'sport': 'Sports',
+  'wellness_fitness': 'Wellness & Fitness',
+  'mind_game': 'Mind Games',
+  'indoor_game': 'Indoor Games',
+  'dance': 'Dance',
+  'music': 'Music',
+  'acting': 'Acting & Theatre',
+  'subject': 'School Subjects',
+  'exam_board': 'School Boards',
+  'competitive_exam': 'Exams & Certifications',
+};
+
+String groupLabel(String group) => _groupLabels[group] ?? group;
+
 class ServiceCategory {
   const ServiceCategory({
     required this.id,
     required this.name,
     required this.group,
+    this.subgroup,
+    this.aliases = const [],
   });
 
   final String id;
   final String name;
 
-  /// One of the eight taxonomy groups. Decides the colour it renders in.
+  /// One of the ten taxonomy groups. Decides the colour it renders in.
   final String group;
+
+  /// The stream within the group, for the one group large enough to need
+  /// one: `competitive_exam` runs to ~200 rows and splits into engineering,
+  /// medical, banking and so on. Null everywhere else.
+  final String? subgroup;
+
+  /// Searched, never shown — "IIT JEE" has to find the row called JEE Main.
+  final List<String> aliases;
+
+  /// What to show under the name in a picker: the stream if the row has one,
+  /// the group if it does not. "Engineering & Sciences" beats "Exams &
+  /// Certifications" repeated two hundred times.
+  String get pickerSublabel =>
+      subgroup == null ? groupLabel(group) : _subgroupLabels[subgroup] ?? groupLabel(group);
 
   factory ServiceCategory.fromJson(Map<String, dynamic> json) =>
       ServiceCategory(
         id: json['id'] as String,
         name: json['name'] as String? ?? '',
         group: json['group'] as String? ?? '',
+        subgroup: json['subgroup'] as String?,
+        aliases: (json['aliases'] as List<dynamic>? ?? const [])
+            .map((a) => a as String)
+            .toList(growable: false),
       );
 }
+
+/// Mirrors EXAM_SUBGROUP_ORDER in ServiceCategoryPicker.tsx and the check
+/// constraint in db/2026-09-20-phase3u-exams.sql.
+const _subgroupLabels = <String, String>{
+  'engineering': 'Engineering & Sciences',
+  'medical': 'Medical & Pharmacy',
+  'school': 'School & Scholarship',
+  'management': 'Management & Business',
+  'civil_services': 'Civil Services',
+  'ssc_railway': 'SSC & Railways',
+  'banking': 'Banking & Insurance',
+  'defence': 'Defence & Police',
+  'teaching': 'Teaching & Research',
+  'law': 'Law',
+  'design': 'Design & Architecture',
+  'university': 'University & Research',
+  'finance': 'Finance & Accountancy',
+  'study_abroad': 'Study Abroad',
+  'language': 'Language Proficiency',
+  'certification': 'IT & Professional',
+  'vocational': 'Aviation & Hospitality',
+};
 
 class ProviderCategory {
   const ProviderCategory({

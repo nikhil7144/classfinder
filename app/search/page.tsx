@@ -19,7 +19,8 @@ import {
   SearchResult,
   searchProviders,
 } from "@/lib/search";
-import { ServiceOption, groupServices } from "@/lib/requirements";
+import { ServiceOption } from "@/lib/requirements";
+import ServicePicker from "@/components/taxonomy/ServicePicker";
 import SuggestedCoaches from "@/components/seeker/SuggestedCoaches";
 import { BRAND } from "@/lib/brand";
 import PageSkeleton from "@/components/ui/PageSkeleton";
@@ -161,8 +162,6 @@ function SearchPage() {
     [places]
   );
 
-  const servicesByGroup = useMemo(() => groupServices(services), [services]);
-
   const runSearch = useCallback(async () => {
     if (!areaId && !coords) {
       setResults([]);
@@ -290,27 +289,19 @@ function SearchPage() {
 
                 <div>
                   <label className="mb-2 block text-xs text-muted">What are you looking for?</label>
-                  <select
-                    className="cf-input"
-                    value={serviceId}
-                    onChange={(e) => {
-                      setServiceId(e.target.value);
+                  <ServicePicker
+                    services={services}
+                    selectedIds={serviceId ? [serviceId] : []}
+                    onChange={(ids) => {
+                      setServiceId(ids[0] || "");
                       // Once they touch it, it is their choice and the note
                       // about where it came from stops being true.
                       setSubjectFromProfile(false);
                     }}
-                  >
-                    <option value="">Anything</option>
-                    {servicesByGroup.map((g) => (
-                      <optgroup key={g.group} label={g.label}>
-                        {g.items.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
+                    placeholder="Anything"
+                    noneLabel="Anything"
+                    label="What are you looking for?"
+                  />
                 </div>
               </div>
 

@@ -60,7 +60,7 @@ delete a redundant condition is a large diff for no change in behaviour.
 
 ## Service taxonomy
 
-176 services across 8 groups, all admin-managed (`/admin/service-categories`):
+359 services across 10 groups, all admin-managed (`/admin/service-categories`):
 
 | Group | Count | Examples |
 |---|---|---|
@@ -70,16 +70,31 @@ delete a redundant condition is a large diff for no change in behaviour.
 | Indoor Games | 8 | Carrom, Snooker, Billiards |
 | Dance | 23 | Bharatanatyam, Kathak, Bhangra, Hip Hop |
 | Music | 25 | Hindustani/Carnatic vocal, Sitar, Tabla, Guitar |
+| Acting & Theatre | 12 | Acting, Theatre, Public Speaking, Stand-up |
 | School Subjects | 30 | Maths, Physics, regional languages |
-| Boards & Exams | 36 | CBSE, ICSE, IB, JEE, NEET, UPSC, CAT |
+| School Boards | 7 | CBSE, ICSE, ISC, IB, IGCSE, NIOS, State Board |
+| Exams & Certifications | 200 | JEE, NEET, CAT, UPSC, IBPS PO, IELTS, JLPT, AWS |
 
 Abacus and Vedic Maths sit under Mind Games, not Subjects — in India they're
 taught as brain-training programmes, not school subjects.
 
-**Open question:** `exam_board` mixes school boards (CBSE) with entrance exams
-(JEE, UPSC). Different search intents, and a CBSE Class-10 tutor is a different
-business from a JEE institute. Splitting out `competitive_exam` is a one-line
-check-constraint change now and a data migration later.
+**Settled in phase 3U.** `exam_board` used to mix school boards (CBSE) with
+entrance exams (JEE, UPSC) — different search intents, and a CBSE Class-10
+tutor is a different business from a JEE institute. `competitive_exam` now
+holds the exams and `exam_board` only the boards. Existing rows were UPDATEd
+rather than replaced, so the uuids in `providers.service_category_ids`
+survived the split.
+
+That group is ~200 rows, far too many to browse flat, so it is the one group
+with a second level: `subgroup` files each exam into one of seventeen streams
+(Engineering, Medical, Banking, SSC & Railways, Study Abroad, Language, IT
+Certification…) and the pickers open on the streams rather than on the first
+twenty rows alphabetically. Every other group stays flat and renders exactly
+as before.
+
+Exams also carry `aliases` — search terms, never labels. "IIT JEE" finds JEE
+Advanced, "Bank PO" finds IBPS PO, "Daroga" finds Police SI. Nobody searches
+for the name a syllabus committee chose.
 
 ---
 

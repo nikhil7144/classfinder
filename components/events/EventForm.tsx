@@ -12,7 +12,7 @@ import {
 } from "@/lib/api/my-events";
 import type { Event } from "@/lib/api/events";
 import { fromLocalInput, toLocalInput } from "@/lib/events";
-import { groupServices } from "@/lib/requirements";
+import ServicePicker from "@/components/taxonomy/ServicePicker";
 import { BRAND } from "@/lib/brand";
 
 type Props = {
@@ -256,23 +256,16 @@ export default function EventForm({ event, onSaved }: Props) {
           <label className={label} htmlFor="service">
             Sport, subject or activity
           </label>
-          <select
-            id="service"
-            className={`${field} mt-2`}
-            value={serviceCategoryId}
-            onChange={(e) => setServiceCategoryId(e.target.value)}
-          >
-            <option value="">Not listed here</option>
-            {groupServices(services).map((g) => (
-              <optgroup key={g.group} label={g.label}>
-                {g.items.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+          <div className="mt-2">
+            <ServicePicker
+              services={services}
+              selectedIds={serviceCategoryId ? [serviceCategoryId] : []}
+              onChange={(ids) => setServiceCategoryId(ids[0] || "")}
+              placeholder="Not listed here"
+              noneLabel="Not listed here"
+              label="Sport, subject or activity"
+            />
+          </div>
         </div>
 
         <div>
