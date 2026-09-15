@@ -14,9 +14,10 @@ can be built. This file is the setup guide.
 
 ## State of play
 
-**The provider (coach) app is built. The seeker app is about half built** —
-see `../SEEKER-SCREENS.md`, which inventories all twenty of its web routes and
-carries the build order.
+**Both flavors are built.** `../SEEKER-SCREENS.md` inventories all twenty of
+the seeker's web routes and closes with "Every seeker slice is built"; the coach
+app is feature-complete against what the API exposes. What is left is platform
+and store work, not screens — §10 lists it.
 
 Both flavors run. Both are worth putting on a device.
 
@@ -57,14 +58,84 @@ More (listing, events, settings, sign out).
 
 `../SEEKER-SCREENS.md` has the rest, in order.
 
-`flutter analyze` is clean and `flutter test` passes (177 tests). It has **never
-been built into an APK** — the machine it was written on has no Android SDK, so
-`flutter build` could not run. `test/smoke_test.dart` imports both entry points
-specifically so the whole tree is compiled by `flutter test`; that is as close
-to proof as this repo can get on its own. Expect your first job to be `flutter
-build apk` and whatever falls out of it.
+`flutter analyze` is clean and `flutter test` passes (177 tests).
+`test/smoke_test.dart` imports both entry points specifically so the whole tree
+is compiled by `flutter test`.
+
+**It has been built into an APK and run on a device.** That is what §0 is
+about: building it is what found the bugs a test suite of hand-written mocks
+never could, and one of them stopped every new coach dead.
 
 Google sign-in and deep links are **not wired** — see §7.
+
+---
+
+## 0. Read this first — what the last round of testing found
+
+The app was built into an APK and put on a device, and the reports that came
+back were "a coach whose profile is not finished gets an error saving it, and
+sometimes signing in on an existing coach account". One bug caused both. It and
+three others are already fixed in this repo.
+
+**Two of the four fixes are not in the app at all** — they are a backend deploy
+and a migration — so a new APK on its own changes nothing.
+
+### What you have to do, in order
+
+1. **Deploy the API.** `api/` has the fix that matters. Until it is deployed,
+   the bug below is live for every coach whatever APK they hold.
+2. **Run `db/2026-09-21-phase3v-provider-role-check.sql`** in the Supabase SQL
+   editor. Idempotent, safe to re-run, and it replaces one function whose body
+   is otherwise unchanged from phase 3O.
+3. **Then** rebuild both APKs (§2) and reinstall.
+
+Steps 1 and 2 are a backend deploy and a migration. Neither needs a new app.
+
+### The bug, because it is worth understanding before you touch anything
+
+`GET /api/v1/providers/me` answered a coach with no listing yet by returning
+`null`. Nest serialises that as **200 with a zero-length body** — the API's own
+test pinned it as `expect(res.body).toEqual({})`. The app expected a 404,
+because that is what `/seekers/me` does for the identical state, and cast the
+body to a map. Dio decodes an empty body as `null`, so the cast threw a
+`TypeError` — which is not an `ApiException`, so nothing caught it, and
+`ListingScreen` showed *"Something went wrong loading your listing"* with a
+retry that could never succeed.
+
+Every coach without a `providers` row was locked out of the one screen that
+creates one. That is every new signup, and every existing web account that
+never finished its listing — which is why it looked like "an error on login"
+to some people and "an error saving my profile" to others.
+
+Neither half was unreasonable on its own. Nobody had ever written down which
+one was right: `MOBILE-PLAN.md` §M8 said "Done — /providers/me, /seekers/me"
+and `api/openapi.json` declared only `200 MyListingDto`. The two sides guessed,
+and guessed differently. §5 now carries the rule.
+
+### The other two
+
+- **`providers.service.ts` returned a 500 for a correct refusal.** phase 3R's
+  role-guard trigger raises Postgres `23514`, which is not `P0001`, so a
+  readable refusal arrived as a server fault carrying a raw Postgres string.
+  `seekers.service.ts` had mapped it all along; the provider half had not.
+  `save_provider_profile()` now also checks the role itself and raises a
+  sentence — that is the migration in step 2.
+- **`GET /api/v1/me` swallowed its read errors.** A failed `profiles` read
+  answered `role: null`, which every client reads as a brand-new account, so an
+  established coach was shown the role chooser. A failed `providers` read made
+  an approved, findable listing look unstarted. Both now fail loudly.
+
+### And one that was hiding in the test suite
+
+`flutter test` had been **failing since the taxonomy commit** and nobody ran
+it. `A91.group` was correctly updated to the real group keys; the test still
+passed the old short names. Worse, the old test had been pinning a bug:
+`wellness`, `mind`, `indoor` and `exam` were never the API's keys, so four of
+the ten taxonomy groups had been rendering in fallback grey the whole time and
+a green suite said they were covered.
+
+**Run `flutter test` and `cd api && npm test` before you build anything.** A
+test that agrees with the code and not with the contract is worse than no test.
 
 ---
 
@@ -276,6 +347,37 @@ your coach or company profile before creating an event"*. `ApiClient` already
 extracts it; show it. Replacing it with "Something went wrong" is a bug the
 web shipped once and was worth fixing.
 
+### "Nothing yet" is a 404, and never an empty body
+
+A surface that can legitimately be empty — no listing started, no profile
+filled in — says so with a status code. Never with `200` and nothing in it.
+
+This is not style. A Nest handler that returns `null` sends a zero-length body,
+`openapi.json` still advertises the DTO, and every client that believes the
+contract casts an empty response to a model. Dart throws a `TypeError` on that
+cast, which is not an `ApiException`, so it lands outside every `catch` the
+screens have and surfaces as "something went wrong" on the one screen somebody
+needed. §0 has the full account; it cost every new coach their onboarding.
+
+So:
+
+- **In the service** — `throw new NotFoundException("...")` with a sentence,
+  the way `/seekers/me` always did. Do not `return null` from a controller.
+- **In the contract** — declare it. `@ApiNotFoundResponse` on the route, so the
+  spec says the state exists and a generated client handles it.
+- **In the repository** — catch the 404 and answer `null`, *and* treat an empty
+  200 as the same thing. Belt and braces, because an app already on a phone
+  cannot be patched when the server changes its mind.
+
+`/providers/me` and `/seekers/me` now both do all three; `ListingRepository.mine()`
+and `SeekerRepository.mine()` are the repository half of it. Copy that shape.
+
+One instance is left: **`GET /api/v1/organisers/me` still returns `null`.** It
+is the only other endpoint in the service that does, and neither flavor calls
+it — organisers work on the website (§1 of `../MOBILE-PLAN.md`), so it has
+never hurt anybody. Fix it if you touch that controller; do not let a third one
+appear.
+
 ### The listing saves whole, never in parts
 
 `save_provider_profile()` replaces branches and service areas wholesale, in one
@@ -315,13 +417,21 @@ flutter test          # 177 tests, no device or SDK needed
   booking URL only to an event that sends entries elsewhere. Also the age
   calculation, which is about the day of the event and not today.
 - `test/smoke_test.dart` imports both entry points so `flutter test` compiles
-  the whole tree.
+  the whole tree, and pins a colour to each of the ten taxonomy group keys. Use
+  the keys the API actually sends — the list must match `_groupLabels` in
+  `data/models/reference.dart`. It once listed shortened versions of them,
+  which matched the `switch` and nothing else, so four groups rendered grey
+  while the test called them covered. A test that agrees with the code instead
+  of the contract will pass forever and prove nothing.
 
-The API has its own suite: `cd api && npm test` (299 tests, 63 endpoints).
+The API has its own suite: `cd api && npm test` (300 tests, 63 endpoints).
 
 ---
 
 ## 7. Still to do before auth works end to end
+
+> Restated as an actionable item in §10.4, with what was verified about the
+> current state of the manifest. This section is the detail behind it.
 
 Auth is email OTP plus Google. **Only email OTP is wired.** Both need platform
 work that does not exist yet:
@@ -344,6 +454,8 @@ Supabase custom domain — and nothing the app can fix.
 
 ## 8. Compliance, before either store review
 
+> Restated as §10.5. This section is the detail behind it.
+
 - `/privacy` and `/terms` are live on the website; link to them in-app. Both
   stores require it.
 - **Play Data Safety and App Store privacy labels must match `/privacy`
@@ -362,16 +474,117 @@ Supabase custom domain — and nothing the app can fix.
 
 ## 9. What to build next
 
-In order, for the provider app:
+**Nothing, in screens.** This section used to say the coach app was blocked on
+migration M6 and the seeker flavor on M1, M2 and M6. All of them have landed —
+`M6: groups have a contract. Every migration is done.` — and every seeker slice
+was built on top of them. Both flavors are feature-complete against the API.
 
-**The provider app is feature-complete against what the API exposes.** What is
-left is either blocked or a different app:
-
-1. **Groups** — `/dashboard/groups`. **Blocked**: groups is migration M6 and
-   has not happened, so there is no API to build against.
-2. **The seeker flavor** — search, coach profiles, groups, enquiries. Blocked
-   on M1, M2 and M6; threads and Spaces it can reuse as they are.
-
-So the next real work is backend, not Flutter.
+What remains is platform work, store work, and shipping the repairs in §0.
+§10 is the list, in the order it has to happen.
 
 Twelve `/admin/*` routes stay on the web permanently and are out of scope.
+
+---
+
+## 10. What still needs implementing
+
+Everything below is outstanding. Nothing here is a screen — both flavors are
+feature-complete against the API. The order matters: 1 and 2 are live bugs for
+people already holding the app, 3–5 gate the first store upload, 6 is cleanup.
+
+### 1. Ship the fixes that are already in this repo — **do this first**
+
+They are in this repo but not live, so they are doing nobody any good yet.
+
+| Step | Where | Why |
+|---|---|---|
+| Deploy the API | `api/` | Carries the `/providers/me` fix. **Fixes the APK already on phones** — the installed app handles 404 correctly, so no rebuild is needed for this one |
+| Run `db/2026-09-21-phase3v-provider-role-check.sql` | Supabase SQL editor | Gives `save_provider_profile()` the role check its seeker twin has had since phase 3S. Idempotent |
+| Rebuild both APKs (§2) | `mobile/` | Picks up the repository hardening, so an empty body can never crash a screen again |
+
+Acceptance: sign in as a coach who has never saved a listing, open **More →
+Your listing**. The form loads blank. Before the fix it said "Something went
+wrong loading your listing" and the retry never worked. §0 has the full account.
+
+### 2. Handle a 401 by refreshing, not by failing the screen
+
+`ApiClient` reads `supabase.auth.currentSession?.accessToken` fresh on every
+request, which is right — but `supabase_flutter` hands back a *stored* token on
+a cold start and refreshes it in the background. A request that goes out in
+that window gets a 401, and `GateScreen` renders "That session is no longer
+valid." to somebody whose session is fine.
+
+- In `data/api.dart`, on a 401: await one `supabase.auth.refreshSession()`,
+  retry the request **once**, and only then surface the error.
+- Guard against a stampede — five tabs mount at once (`HomeShell` builds all
+  five children), so five requests can 401 together and must share one refresh.
+- Sign the user out only if the refresh itself fails. That is the real
+  "session is no longer valid".
+
+This is the most likely remaining cause of an intermittent error on launch.
+
+### 3. Release signing
+
+`android/app/build.gradle.kts:47-50` still signs release builds with the
+**debug** keystore, with a TODO saying so. Anything leaving the team needs a
+real one first, and the upload key is permanent once Play has it.
+
+- Generate an upload keystore, keep it out of the repo, read it from
+  `key.properties` + an environment variable in CI.
+- **Confirm the application ids before the first upload** — `com.aspire91.app`
+  and `com.aspire91.app.coach`. §3 explains why this is the last moment.
+
+### 4. Deep links and native Google sign-in
+
+Still exactly as §7 describes — nothing has been wired. The two `<intent>`
+blocks in `AndroidManifest.xml` are `<queries>` entries for `url_launcher`, not
+deep-link `<intent-filter>`s; there are none.
+
+- `https://www.aspire91.com/.well-known/assetlinks.json` (Android) and an Apple
+  App Site Association file, both served from the live site.
+- The app's redirect URL on the Supabase allowlist.
+- An `<intent-filter>` per flavor for `/auth/callback`.
+- Native Google sign-in through the platform SDK — **not** a webview, which
+  Google blocks for OAuth. Needs an Android OAuth client with release *and*
+  debug SHA-1s, plus an iOS client, all in the same Google Cloud project as the
+  existing web client.
+
+Email OTP works today and does not need any of this, so the app is usable
+without it. Google sign-in is not.
+
+### 5. iOS, and the store paperwork
+
+- **iOS flavors do not exist.** `ios/Runner.xcodeproj/project.pbxproj` has no
+  `Debug-seeker` / `Release-provider` configurations — §3 has the exact steps,
+  and they need a Mac.
+- **Link `/privacy` and `/terms` in-app.** Both stores require it and neither
+  is reachable from any screen today; `Env.siteUrl` is already there to build
+  the URLs from. Settings is the obvious home.
+- Play Data Safety and App Store privacy labels must match `/privacy` exactly —
+  including that a learner's age, level and the parent's free-text notes go to
+  Gemini for ranking. §8 has the rest.
+
+### 6. `ListingRepository.save()` returns a type it does not have
+
+`PUT /api/v1/providers/me` answers `SavedProfileDto` — `{id, approved,
+isSuspended}` — but `save()` is typed `Future<Listing>` and runs the response
+through `Listing.fromJson`. Every other field comes back as its default, so it
+returns a near-blank `Listing` that claims to be the saved one.
+
+Harmless today only because `ListingScreen._save()` discards the result and
+invalidates `myListingProvider` instead. The next person to trust the return
+value gets a blank listing with no warning. Give it a `SavedProfile` model and
+return that. `SeekerRepository.save()` does not have this problem —
+`PUT /seekers/me` really does answer the whole profile.
+
+### Before you call any of it done
+
+```bash
+cd mobile && flutter analyze && flutter test   # 177 tests
+cd api    && npm test                          # 300 tests, 63 endpoints
+```
+
+If you change an endpoint's shape, `cd api && npm run spec` regenerates
+`api/openapi.json`, and `npm run gen:api` at the repo root regenerates the
+web's `lib/api/schema.d.ts` from it. The spec is the contract — §0 is what it
+costs when the contract does not describe a state that actually happens.

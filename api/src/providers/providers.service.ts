@@ -142,10 +142,12 @@ export class ProvidersService {
    * branch and service-area policies cover all three, so nothing here has
    * privilege the browser did not already have.
    *
-   * Null when they have not started one. That is a real state, not an error:
-   * a coach who has chosen their role but filled nothing in yet.
+   * 404 when they have not started one. That is a real state, not a failure:
+   * a coach who has chosen their role but filled nothing in yet. It is the
+   * same answer /seekers/me gives for the same state — see the note on the
+   * refusal below for why it is a status and not an empty body.
    */
-  async myListing(caller: Caller): Promise<MyListingDto | null> {
+  async myListing(caller: Caller): Promise<MyListingDto> {
     const db = this.supabase.asUser(caller.accessToken);
 
     const [{ data: provider, error }, { data: profile }] = await Promise.all([
@@ -154,7 +156,15 @@ export class ProvidersService {
     ]);
 
     if (error) throw new InternalServerErrorException(error.message);
-    if (!provider) return null;
+
+    // 404, not 200-with-no-body. Nest serialises a returned `null` as a zero
+    // length body, which is a shape no client can read: the spec says 200
+    // MyListingDto, so a generated client casts and a hand-written one did —
+    // the Flutter app crashed on the cast and showed every coach who had not
+    // started a listing "Something went wrong loading your listing", with a
+    // retry that could never succeed. /seekers/me answers 404 for exactly this
+    // state; this is the same answer, so both halves of onboarding behave alike.
+    if (!provider) throw new NotFoundException("You have not started a listing yet.");
 
     const row = provider as Record<string, unknown>;
     const id = row.id as string;
@@ -258,6 +268,11 @@ export class ProvidersService {
       // The function raises sentences — "Sign in first.", "Choose what kind of
       // provider this is." — and P0001 carries them. Anything else is ours.
       if (error.code === "P0001") throw new BadRequestException(error.message);
+      // phase3r's party_role_matches trigger, which raises check_violation:
+      // "This account is a seeker, so it cannot have a provider profile."
+      // Worth reading, so it is a refusal rather than a 500 — the same
+      // mapping seekers.service already makes on its half of M8.
+      if (error.code === "23514") throw new BadRequestException(error.message);
       throw new InternalServerErrorException(error.message);
     }
 

@@ -300,16 +300,21 @@ describe("GET /api/v1/providers", () => {
       expect(res.body.feeMin).toBe(1500);
     });
 
-    it("answers null for a coach who has not started one", async () => {
+    // It used to answer 200 with no body at all, which the spec did not
+    // describe and no client could read: the Flutter app cast the empty
+    // response to a map and crashed, so every coach who had not started a
+    // listing was told their listing failed to load. 404 is what /seekers/me
+    // already says for the same state.
+    it("answers 404 for a coach who has not started one", async () => {
       from.mockImplementation(() => query({ data: null, error: null }));
 
-      const res = await auth(request(app.getHttpServer()).get("/api/v1/providers/me")).expect(200);
-      expect(res.body).toEqual({});
+      const res = await auth(request(app.getHttpServer()).get("/api/v1/providers/me")).expect(404);
+      expect(res.body.message).toBe("You have not started a listing yet.");
     });
 
     it("reads /me as the route and not as a coach id", async () => {
       from.mockImplementation(() => query({ data: null, error: null }));
-      await auth(request(app.getHttpServer()).get("/api/v1/providers/me")).expect(200);
+      await auth(request(app.getHttpServer()).get("/api/v1/providers/me")).expect(404);
       expect(rpc).not.toHaveBeenCalled();
     });
 

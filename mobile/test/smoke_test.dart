@@ -126,20 +126,31 @@ void main() {
 
   test('every taxonomy group has its own colour, and an unknown one falls back',
       () {
+    // The keys the API actually sends, not shortened versions of them. This
+    // test used to list 'wellness', 'mind', 'indoor' and 'exam', which matched
+    // the switch but never matched the contract — so four of the ten groups
+    // rendered in fallback grey in the app while the test called it covered.
+    // Keep this list equal to _groupLabels in data/models/reference.dart.
     const groups = [
       'sport',
-      'wellness',
-      'mind',
-      'indoor',
+      'wellness_fitness',
+      'mind_game',
+      'indoor_game',
       'dance',
       'music',
-      'subject',
-      'exam',
       'acting',
+      'subject',
+      'exam_board',
+      'competitive_exam',
     ];
 
+    // Nine, not ten: the two exam groups share one colour on purpose. A school
+    // board and an entrance exam are the same kind of thing to somebody
+    // scanning a list of chips, and splitting them would spend a hue saying so.
     final colours = groups.map(A91.group).toSet();
-    expect(colours, hasLength(groups.length));
+    expect(colours, hasLength(9));
+    expect(colours, isNot(contains(A91.muted)));
+    expect(A91.group('exam_board'), A91.group('competitive_exam'));
 
     // A group added to the taxonomy after this shipped must not throw.
     expect(A91.group('something-new'), A91.muted);

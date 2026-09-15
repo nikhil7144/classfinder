@@ -21,10 +21,18 @@ class SeekerRepository {
   ///
   /// 404 is that state and not an error: the account exists from the moment a
   /// role is chosen, and the row is written by the first save.
+  /// An empty 200 is read as the same state rather than cast and thrown on.
+  /// This endpoint has always answered 404, but /providers/me answered a
+  /// body-less 200 and the cast there crashed every coach who had not started
+  /// a listing. The guard costs nothing and the failure it prevents is not
+  /// one the screens can catch.
   Future<SeekerProfile?> mine() async {
     try {
       final json = await _api.get('/api/v1/seekers/me');
-      return SeekerProfile.fromJson(json as Map<String, dynamic>);
+      if (json == null || json is! Map<String, dynamic> || json.isEmpty) {
+        return null;
+      }
+      return SeekerProfile.fromJson(json);
     } on ApiException catch (e) {
       if (e.statusCode == 404) return null;
       rethrow;

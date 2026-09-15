@@ -895,7 +895,7 @@ export interface paths {
         };
         /**
          * The caller's own listing, as they edit it
-         * @description Not the public profile: that one is null while a listing is unapproved, so the screen a new coach fills in could never load through it. Field names match the save endpoint so a client can load, edit and send it back unchanged. Null when they have not started one — a real state, not an error. Declared before /:id so it is not read as a coach id.
+         * @description Not the public profile: that one is null while a listing is unapproved, so the screen a new coach fills in could never load through it. Field names match the save endpoint so a client can load, edit and send it back unchanged. 404 when they have not started one — a real state, not an error, and the same answer /seekers/me gives. Declared before /:id so it is not read as a coach id.
          */
         get: operations["ProvidersController_myListing_v1"];
         /**
@@ -3864,6 +3864,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["MyListingDto"];
                 };
+            };
+            /** @description No listing started yet. Show a blank form, not an error. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

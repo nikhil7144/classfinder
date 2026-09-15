@@ -73,11 +73,19 @@ export class MeService {
   async get(caller: Caller): Promise<MeDto> {
     const db = this.supabase.asUser(caller.accessToken);
 
-    const { data: profile } = await db
+    const { data: profile, error } = await db
       .from("profiles")
       .select("role, profile_complete, phone")
       .eq("id", caller.id)
       .maybeSingle();
+
+    // A failed read is not "no role". maybeSingle() reports zero rows as data
+    // null with no error, so anything in `error` is a real failure — and
+    // swallowing it here meant a transient one answered `role: null`, which
+    // every client reads as a brand-new account. An established coach was
+    // shown the role chooser, and a listing they had finished looked unstarted.
+    // Say it failed and let them retry.
+    if (error) throw new InternalServerErrorException(error.message);
 
     // No row yet is a real, expected state, not an error: the account exists
     // the moment the email is verified, and the role is chosen after that.
@@ -94,11 +102,15 @@ export class MeService {
     };
 
     if (profile.role === "seeker") {
-      const { data: seeker } = await db
+      const { data: seeker, error: seekerError } = await db
         .from("seekers")
         .select("name, photo_url, area_id, looking_for, open_to_offers")
         .eq("user_id", caller.id)
         .maybeSingle();
+
+      // Same reasoning as the profile read above: null means no profile
+      // filled in yet, and a failure must not be able to impersonate that.
+      if (seekerError) throw new InternalServerErrorException(seekerError.message);
 
       return {
         ...base,
@@ -115,11 +127,17 @@ export class MeService {
     }
 
     if (profile.role === "provider") {
-      const { data: provider } = await db
+      const { data: provider, error: providerError } = await db
         .from("providers")
         .select("id, display_name, photo_url, provider_type, approved, is_suspended")
         .eq("user_id", caller.id)
         .maybeSingle();
+
+      // A failure here would read as "no listing started", which is the state
+      // the whole coach app branches on: the demand feed and Space both go
+      // empty, and More says "Families cannot find you yet" to somebody who is
+      // approved and findable.
+      if (providerError) throw new InternalServerErrorException(providerError.message);
 
       return {
         ...base,

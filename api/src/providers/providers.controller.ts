@@ -8,7 +8,13 @@ import {
   Query,
   UnauthorizedException,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from "@nestjs/swagger";
 import { Caller, CurrentUser } from "../auth/current-user.decorator";
 import { Public } from "../auth/public.decorator";
 import {
@@ -55,11 +61,13 @@ export class ProvidersController {
     description:
       "Not the public profile: that one is null while a listing is unapproved, so the screen a " +
       "new coach fills in could never load through it. Field names match the save endpoint so a " +
-      "client can load, edit and send it back unchanged. Null when they have not started one — " +
-      "a real state, not an error. Declared before /:id so it is not read as a coach id.",
+      "client can load, edit and send it back unchanged. 404 when they have not started one — " +
+      "a real state, not an error, and the same answer /seekers/me gives. Declared before /:id " +
+      "so it is not read as a coach id.",
   })
   @ApiOkResponse({ type: MyListingDto })
-  myListing(@CurrentUser() caller: Caller | null): Promise<MyListingDto | null> {
+  @ApiNotFoundResponse({ description: "No listing started yet. Show a blank form, not an error." })
+  myListing(@CurrentUser() caller: Caller | null): Promise<MyListingDto> {
     if (!caller) throw new UnauthorizedException("Sign in first.");
     return this.providers.myListing(caller);
   }

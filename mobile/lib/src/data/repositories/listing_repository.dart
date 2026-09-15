@@ -26,10 +26,22 @@ class ListingRepository {
   ///
   /// 404 is that case and not an error: the account exists from the moment a
   /// role is chosen, and the provider row is written by the first save.
+  ///
+  /// An empty 200 means the same thing. The service used to answer a coach
+  /// with no listing by returning `null`, which Nest serialises as a
+  /// zero-length body and Dio decodes as `null` — so the cast below threw a
+  /// TypeError, which is not an ApiException and so was not caught anywhere.
+  /// Every new coach saw "Something went wrong loading your listing" on the
+  /// one screen they had to fill in, and a retry could not help. The service
+  /// answers 404 now; this stays because a body-less 200 must never again be
+  /// read as a failure, and an app already on a phone cannot be patched.
   Future<Listing?> mine() async {
     try {
       final json = await _api.get('/api/v1/providers/me');
-      return Listing.fromJson(json as Map<String, dynamic>);
+      if (json == null || json is! Map<String, dynamic> || json.isEmpty) {
+        return null;
+      }
+      return Listing.fromJson(json);
     } on ApiException catch (e) {
       if (e.statusCode == 404) return null;
       rethrow;
