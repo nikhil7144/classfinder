@@ -549,24 +549,14 @@ They are in this repo but not live, so they are doing nobody any good yet.
 | Run `db/2026-09-21-phase3v-provider-role-check.sql` | Supabase SQL editor | Gives `save_provider_profile()` the role check its seeker twin has had since phase 3S. Idempotent |
 | Rebuild both APKs (§2) | `mobile/` | Picks up the repository hardening, so an empty body can never crash a screen again, **and** the availability venue fix, which is app-only |
 
-**Check what the old builds left behind.** Any coach who saved availability
-from an APK before the venue fix has a class format sitting in
-`providers.availability[].place` where a venue belongs:
-
-```sql
-select p.id, p.display_name, s->>'place' as place
-from public.providers p, jsonb_array_elements(p.availability) s
-where s->>'place' in (
-  select id from public.teaching_place_master
-);
-```
-
-Nothing automatic is safe here — a format cannot be mapped to a venue, because
-knowing somebody teaches one-to-one does not say where. Expect the count to be
-small: availability is optional and the app has not been out long. The picker
-now shows the stored value raw rather than blank, so a coach who opens their
-listing can see there is something to re-pick. If the count is large enough to
-matter, ask them; do not guess on their behalf.
+**No backfill.** A handful of coaches who saved availability from an early APK
+have a class format sitting in `providers.availability[].place` where a venue
+belongs. That is known and deliberately left alone — the numbers are small, the
+field is optional, and a format cannot be mapped to a venue anyway, because
+knowing somebody teaches one-to-one does not say where. The picker shows the
+stored value raw rather than blank, so a coach who opens their listing sees
+there is something to re-pick, and the next save puts it right. Do not write a
+migration for this.
 
 Acceptance: sign in as a coach who has never saved a listing, open **More →
 Your listing**. The form loads blank. Before the fix it said "Something went
