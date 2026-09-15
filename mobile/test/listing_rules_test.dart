@@ -156,6 +156,85 @@ void main() {
     });
   });
 
+  // The place list is the thing the app had wrong. It fed `teachingPlaces` —
+  // which answers "group or one-to-one" — into a picker whose value is stored
+  // as a venue, so the phone wrote a class format into the same column the web
+  // fills with a branch name or an area. phase 2U is the migration that split
+  // the two questions; these pin the web's availabilityPlaces, case for case.
+  group('availability places', () {
+    String? areaName(String id) => const {
+          'area-1': 'Indirapuram',
+          'area-2': 'Vaishali',
+        }[id];
+
+    test('an institution is found at its branches', () {
+      final l = complete()
+        ..providerType = 'institution'
+        ..branches = [
+          Branch(label: '  Vaishali centre  ', areaId: 'area-1'),
+          Branch(label: 'Indirapuram centre', areaId: 'area-2'),
+        ];
+      expect(
+        availabilityPlaces(l, areaName: areaName),
+        ['Vaishali centre', 'Indirapuram centre'],
+      );
+    });
+
+    test('a branch with no name yet is not a place to teach at', () {
+      final l = complete()
+        ..providerType = 'institution'
+        ..branches = [Branch(label: '   ', areaId: 'area-1')];
+      expect(availabilityPlaces(l, areaName: areaName), isEmpty);
+    });
+
+    test('an individual who teaches at their own place gets it', () {
+      final l = complete()
+        ..teachingPlaces = ['my_academy', 'individual_classes']
+        ..travelsToStudents = false;
+      expect(availabilityPlaces(l, areaName: areaName), ['My place']);
+    });
+
+    test('a coach who travels gets the areas they travel to', () {
+      final l = complete()
+        ..teachingPlaces = ['my_academy']
+        ..travelsToStudents = true
+        ..serviceAreaIds = ['area-1', 'area-2'];
+      expect(
+        availabilityPlaces(l, areaName: areaName),
+        ['My place', 'Indirapuram', 'Vaishali'],
+      );
+    });
+
+    // The bug phase 2U was written to fix. Service areas are required of every
+    // individual because that is also how search locates them, so a coach who
+    // only ever teaches at their own centre was offered availability rows for
+    // areas they have never visited — and a scheduler would have believed it.
+    test('a coach who does not travel gets no areas', () {
+      final l = complete()
+        ..teachingPlaces = ['my_academy']
+        ..travelsToStudents = false
+        ..serviceAreaIds = ['area-1', 'area-2'];
+      expect(availabilityPlaces(l, areaName: areaName), ['My place']);
+    });
+
+    test('a class format is never a place', () {
+      final l = complete()
+        ..teachingPlaces = ['group_classes', 'individual_classes']
+        ..travelsToStudents = false;
+      expect(availabilityPlaces(l, areaName: areaName), isEmpty);
+    });
+
+    // Bare names. Reference.areaLabel renders "Indirapuram, Ghaziabad" for a
+    // flat picker, and storing that would be the same mismatch a second time.
+    test('an area the reference does not know is skipped, not blank', () {
+      final l = complete()
+        ..teachingPlaces = <String>[]
+        ..travelsToStudents = true
+        ..serviceAreaIds = ['area-1', 'area-gone'];
+      expect(availabilityPlaces(l, areaName: areaName), ['Indirapuram']);
+    });
+  });
+
   group('certifications', () {
     test('ignore a blank row', () {
       final l = complete()..certifications = [Certification()];

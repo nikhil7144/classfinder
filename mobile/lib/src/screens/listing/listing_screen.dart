@@ -571,13 +571,22 @@ class _ListingFormState extends ConsumerState<_ListingForm> {
 
   Widget _availability() => Section(
         title: 'When you teach',
-        subtitle: 'Optional, and it saves both sides a conversation.',
+        subtitle: 'Optional, and it saves both sides a conversation. Each slot '
+            'is at one of your venues, so parents know where to turn up.',
         unfinished: _bad.contains(ListingSection.availability),
         children: [
           AvailabilityEditor(
             items: _l.availability,
-            places: _l.teachingPlaces,
-            reference: _ref,
+            // Venues, not class formats. This used to pass teachingPlaces,
+            // which answers "group or one-to-one" — so the app wrote a format
+            // into the column the web fills with a branch or an area name, and
+            // the two clients disagreed about what a slot meant. See
+            // availabilityPlaces, and phase 2U for why they are different
+            // questions.
+            places: availabilityPlaces(
+              _l,
+              areaName: (id) => _ref.area(id)?.name,
+            ),
             onChanged: _changed,
           ),
         ],

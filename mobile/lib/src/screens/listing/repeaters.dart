@@ -156,16 +156,19 @@ class AvailabilityEditor extends StatelessWidget {
     super.key,
     required this.items,
     required this.places,
-    required this.reference,
     required this.onChanged,
   });
 
   final List<AvailabilitySlot> items;
 
-  /// Only the teaching places the coach actually selected. Offering all of
-  /// them would let somebody promise Tuesdays at a centre they do not have.
+  /// The venues this listing has, from `availabilityPlaces` — branch names for
+  /// an institution, "My place" and the areas they travel to for an individual.
+  /// Already the label: a slot's place is stored as the venue's own name,
+  /// because that is what the web writes into the same column.
+  ///
+  /// Offering anything wider would let somebody promise Tuesdays at a centre
+  /// they do not have.
   final List<String> places;
-  final Reference reference;
   final VoidCallback onChanged;
 
   Future<void> _pickTime(
@@ -191,8 +194,8 @@ class AvailabilityEditor extends StatelessWidget {
   Widget build(BuildContext context) {
     if (places.isEmpty) {
       return const Text(
-        'Choose how you run your classes first — a time slot has to be '
-        'somewhere.',
+        'Add where you teach first — your branches, or the areas you serve — '
+        'then you can say when you are available at each one.',
         style: TextStyle(color: A91.faint, fontSize: 13, height: 1.5),
       );
     }
@@ -223,9 +226,11 @@ class AvailabilityEditor extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               PickerField(
-                value: items[i].place.isEmpty
-                    ? null
-                    : reference.teachingPlaceLabel(items[i].place),
+                // The stored value is the label. A slot written before
+                // phase 2U holds a teaching-place id instead, and showing it
+                // raw is better than showing nothing: the coach can see there
+                // is something to re-pick.
+                value: items[i].place.isEmpty ? null : items[i].place,
                 placeholder: 'Where',
                 onTap: () async {
                   final picked = await pickOne(
@@ -233,9 +238,7 @@ class AvailabilityEditor extends StatelessWidget {
                     title: 'Where is this slot',
                     selected: items[i].place.isEmpty ? null : items[i].place,
                     options: [
-                      for (final p in places)
-                        PickOption(
-                            id: p, label: reference.teachingPlaceLabel(p)),
+                      for (final p in places) PickOption(id: p, label: p),
                     ],
                   );
                   if (picked == null) return;

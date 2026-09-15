@@ -58,7 +58,7 @@ More (listing, events, settings, sign out).
 
 `../SEEKER-SCREENS.md` has the rest, in order.
 
-`flutter analyze` is clean and `flutter test` passes (177 tests).
+`flutter analyze` is clean and `flutter test` passes (184 tests).
 `test/smoke_test.dart` imports both entry points specifically so the whole tree
 is compiled by `flutter test`.
 
@@ -75,10 +75,11 @@ Google sign-in and deep links are **not wired** — see §7.
 The app was built into an APK and put on a device, and the reports that came
 back were "a coach whose profile is not finished gets an error saving it, and
 sometimes signing in on an existing coach account". One bug caused both. It and
-three others are already fixed in this repo.
+four others are already fixed in this repo.
 
-**Two of the four fixes are not in the app at all** — they are a backend deploy
-and a migration — so a new APK on its own changes nothing.
+**Two of the five fixes are not in the app at all** — they are a backend deploy
+and a migration — so a new APK on its own changes nothing. One of the other
+three is app-only and needs the rebuild.
 
 ### What you have to do, in order
 
@@ -112,7 +113,7 @@ one was right: `MOBILE-PLAN.md` §M8 said "Done — /providers/me, /seekers/me"
 and `api/openapi.json` declared only `200 MyListingDto`. The two sides guessed,
 and guessed differently. §5 now carries the rule.
 
-### The other two
+### The other three
 
 - **`providers.service.ts` returned a 500 for a correct refusal.** phase 3R's
   role-guard trigger raises Postgres `23514`, which is not `P0001`, so a
@@ -124,6 +125,17 @@ and guessed differently. §5 now carries the rule.
   answered `role: null`, which every client reads as a brand-new account, so an
   established coach was shown the role chooser. A failed `providers` read made
   an approved, findable listing look unstarted. Both now fail loudly.
+- **An availability slot's place was a class format, not a venue.** The app fed
+  `teachingPlaces` — "group or one-to-one" — into the picker whose value is
+  stored as *where* a slot happens, so a coach editing on the phone wrote
+  `individual_classes` into the same `providers.availability` column a browser
+  fills with `Indirapuram`. One column, two clients, two meanings, last write
+  wins. phase 2U separated the two questions and the app had never caught up —
+  partly because the web's own `AvailabilityEditor` still carried a pre-2U
+  comment saying the places were teaching formats. §5 has the rule; the
+  derivation is `availabilityPlaces()` and it is pinned in
+  `listing_rules_test.dart`. **App-only — it needs the APK rebuild, not the
+  deploy.**
 
 ### And one that was hiding in the test suite
 
@@ -279,7 +291,7 @@ mobile/
         repositories/         one per surface; pure Dart, no Riverpod
       screens/                one folder per screen
       widgets/                shared: PrimaryButton, states, skeleton, branding
-  test/                       177 tests, no device needed
+  test/                       184 tests, no device needed
 ```
 
 `lib/src/providers.dart` is the seam. Below it — `lib/src/data` — is pure Dart
@@ -378,6 +390,39 @@ it — organisers work on the website (§1 of `../MOBILE-PLAN.md`), so it has
 never hurt anybody. Fix it if you touch that controller; do not let a third one
 appear.
 
+### An availability slot's place is a venue, never a class format
+
+`providers.availability[].place` holds **where** a slot happens — a branch
+name, `"My place"`, or an area name like `"Indirapuram"`. It does not hold a
+`teaching_places` value. Those answer a different question — group or
+one-to-one — and format says nothing about venue: one coach runs group batches
+at their own academy, another travels to run them.
+
+phase 2U is the migration that separated the two, and added
+`providers.travels_to_students` to ask the venue question properly. Its column
+comment says the quiet part: this list is what the appointment scheduler reads.
+
+The app was built from a reading of the web, and the web's `AvailabilityEditor`
+still carried a pre-2U comment saying the places were "chosen teaching formats
+for an individual". So the app fed `teachingPlaces` into the picker and wrote
+`individual_classes` into the column a browser fills with `Indirapuram` — one
+column, two clients, two meanings, and whichever saved last won.
+
+`availabilityPlaces()` in `data/listing_rules.dart` is the single derivation,
+ported case for case from the `useMemo` of the same name in
+`ProviderProfileForm.tsx` and pinned in `listing_rules_test.dart`:
+
+- an **institution** — its branch names,
+- an **individual** — `"My place"` if they teach at their own premises, plus
+  every area they travel to, **only** when `travelsToStudents` is true. Service
+  areas are required of every individual because search locates them that way,
+  so offering them unconditionally put areas a coach has never visited into
+  their availability.
+
+Bare area names, not `Reference.areaLabel` — that renders "Indirapuram,
+Ghaziabad" for a flat picker, and storing it would be the same mismatch again,
+quieter.
+
 ### The listing saves whole, never in parts
 
 `save_provider_profile()` replaces branches and service areas wholesale, in one
@@ -391,13 +436,15 @@ partial-save or autosave path to `ListingScreen`.
 ## 6. Tests
 
 ```bash
-flutter test          # 177 tests, no device or SDK needed
+flutter test          # 184 tests, no device or SDK needed
 ```
 
 - `test/listing_rules_test.dart` pins the completeness rules against the web's
   `lib/profile-rules.ts`. If you change one, change both — a coach who
   completes a listing in the app and opens it on the web must not be told it is
-  unfinished.
+  unfinished. It also pins `availabilityPlaces`, which is a port of a `useMemo`
+  in `ProviderProfileForm.tsx` rather than of `profile-rules.ts` — see the rule
+  in §5 on what a slot's place means, and why the app had it wrong.
 - `test/space_test.dart` pins `parseYouTubeId` against the web's
   `lib/spaces.ts`, and the optimistic reaction arithmetic that runs before the
   server is asked.
@@ -500,7 +547,26 @@ They are in this repo but not live, so they are doing nobody any good yet.
 |---|---|---|
 | Deploy the API | `api/` | Carries the `/providers/me` fix. **Fixes the APK already on phones** — the installed app handles 404 correctly, so no rebuild is needed for this one |
 | Run `db/2026-09-21-phase3v-provider-role-check.sql` | Supabase SQL editor | Gives `save_provider_profile()` the role check its seeker twin has had since phase 3S. Idempotent |
-| Rebuild both APKs (§2) | `mobile/` | Picks up the repository hardening, so an empty body can never crash a screen again |
+| Rebuild both APKs (§2) | `mobile/` | Picks up the repository hardening, so an empty body can never crash a screen again, **and** the availability venue fix, which is app-only |
+
+**Check what the old builds left behind.** Any coach who saved availability
+from an APK before the venue fix has a class format sitting in
+`providers.availability[].place` where a venue belongs:
+
+```sql
+select p.id, p.display_name, s->>'place' as place
+from public.providers p, jsonb_array_elements(p.availability) s
+where s->>'place' in (
+  select id from public.teaching_place_master
+);
+```
+
+Nothing automatic is safe here — a format cannot be mapped to a venue, because
+knowing somebody teaches one-to-one does not say where. Expect the count to be
+small: availability is optional and the app has not been out long. The picker
+now shows the stored value raw rather than blank, so a coach who opens their
+listing can see there is something to re-pick. If the count is large enough to
+matter, ask them; do not guess on their behalf.
 
 Acceptance: sign in as a coach who has never saved a listing, open **More →
 Your listing**. The form loads blank. Before the fix it said "Something went
@@ -580,7 +646,7 @@ return that. `SeekerRepository.save()` does not have this problem —
 ### Before you call any of it done
 
 ```bash
-cd mobile && flutter analyze && flutter test   # 177 tests
+cd mobile && flutter analyze && flutter test   # 184 tests
 cd api    && npm test                          # 300 tests, 63 endpoints
 ```
 

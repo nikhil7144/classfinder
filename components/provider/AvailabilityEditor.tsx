@@ -14,9 +14,16 @@ type Props = {
  * their academy at the weekend and travel to students on weekday evenings,
  * so a slot carries where it happens, not just when.
  *
- * `places` is derived from the rest of the form — branch names for an
- * institution, chosen teaching formats for an individual — so the options
- * always reflect what the provider actually said they do.
+ * `places` are VENUES, and the distinction is the whole of phase 2U: branch
+ * names for an institution; "My place" and the areas they travel to for an
+ * individual. Teaching places are a FORMAT — group or one-to-one — and say
+ * nothing about where, so they are not offered here. This comment used to say
+ * they were, and the Flutter app was built from a reading of it: the app fed
+ * the format list into this picker and wrote `individual_classes` into the
+ * column a browser fills with "Indirapuram".
+ *
+ * See availabilityPlaces in ProviderProfileForm, which derives them, and its
+ * port in the app's data/listing_rules.dart.
  */
 export default function AvailabilityEditor({ slots, places, onChange, invalid }: Props) {
   const update = (index: number, patch: Partial<AvailabilitySlotInput>) =>

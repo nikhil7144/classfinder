@@ -29,6 +29,59 @@ const weekDays = <String, String>{
   'sun': 'Sun',
 };
 
+/// Where a time slot can be, for this listing.
+///
+/// A port of `availabilityPlaces` in the web's ProviderProfileForm. It lives
+/// here rather than in the screen because it is a rule about what the data may
+/// say, and because the web and the app write the same
+/// `providers.availability` column — a slot saved on a phone and one saved in
+/// a browser have to mean the same thing to the scheduler that reads them.
+///
+/// These are **venues**, not formats. `teachingPlaces` answers "group or
+/// one-to-one", which says nothing about where — phase 2U is the migration
+/// that separated the two, and this app was still feeding the format list into
+/// the place picker, so a coach on the phone wrote `individual_classes` into a
+/// column the web fills with "Indirapuram".
+///
+/// Bare area names, not `Reference.areaLabel` — that renders "Indirapuram,
+/// Ghaziabad" for a flat picker, and storing it would be a second, quieter
+/// version of the same mismatch.
+///
+/// An institution is found at its branches. An individual is found at their
+/// own place, if they teach there, plus every area they travel to — which is
+/// what lets a home tutor say Indirapuram on Monday and Vaishali on Saturday.
+List<String> availabilityPlaces(
+  Listing l, {
+  required String? Function(String areaId) areaName,
+}) {
+  if (l.isInstitution) {
+    return l.branches
+        .map((b) => b.label.trim())
+        .where((label) => label.isNotEmpty)
+        .toList();
+  }
+
+  final places = <String>[];
+
+  // The one teaching place that is also a venue: it is the coach's own
+  // premises, and phase 2U left it in the format list rather than restructure
+  // a taxonomy the seeker side reads as `seekers.preferred_modes`.
+  if (l.teachingPlaces.contains('my_academy')) places.add('My place');
+
+  // Only when they actually travel. For a coach who does not, the service
+  // areas are where they ARE, not places they go — listing them here put
+  // areas a coach has never visited into their availability, and any
+  // scheduler reading that data would have believed it.
+  if (l.travelsToStudents == true) {
+    for (final id in l.serviceAreaIds) {
+      final name = areaName(id);
+      if (name != null && name.trim().isNotEmpty) places.add(name.trim());
+    }
+  }
+
+  return places;
+}
+
 /// The sections of the form, in the order they are shown. A section with a
 /// problem in it gets a marker, so somebody scrolling knows where to go back
 /// to without reading every field.
