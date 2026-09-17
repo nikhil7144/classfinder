@@ -1,0 +1,33 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Aspire91 — Seeker",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main_seeker.dart",
+      "args": [
+        "--flavor",
+        "seeker",
+        "--dart-define=SUPABASE_URL=https://wpegcnmqygdaqrjhryit.supabase.co",
+        "--dart-define=SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwZWdjbm1xeWdkYXFyamhyeWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxMTI0OTQsImV4cCI6MjEwMzY4ODQ5NH0.zR-aFGDoAOwSCfMdGeJPaSfyj9XI4lmGK9HsOKYhzb0",
+        "--dart-define=API_BASE_URL=https://api.aspire91.com",
+                "--dart-define=GOOGLE_WEB_CLIENT_ID=198476591357-49fnmise6e2o9t7qkpap6sv519sssjem.apps.googleusercontent.com"
+      ]
+    },
+    {
+      "name": "Aspire91 — Provider",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main_provider.dart",
+      "args": [
+        "--flavor",
+        "provider",
+        "--dart-define=SUPABASE_URL=https://wpegcnmqygdaqrjhryit.supabase.co",
+        "--dart-define=SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwZWdjbm1xeWdkYXFyamhyeWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxMTI0OTQsImV4cCI6MjEwMzY4ODQ5NH0.zR-aFGDoAOwSCfMdGeJPaSfyj9XI4lmGK9HsOKYhzb0",
+        "--dart-define=API_BASE_URL=https://api.aspire91.com",
+                "--dart-define=GOOGLE_WEB_CLIENT_ID=198476591357-49fnmise6e2o9t7qkpap6sv519sssjem.apps.googleusercontent.com"
+      ]
+    }
+  ]
+}

@@ -50,16 +50,41 @@ dependencies:
   # hands it to WhatsApp, which is where a building group actually lives.
   share_plus: ^10.1.4
 
+  # Native Google sign-in — the platform picker, never a webview, which
+  # Google blocks for OAuth. Does nothing until GOOGLE_WEB_CLIENT_ID is
+  # supplied; see AuthRepository.googleSignInAvailable and README §7/§10.4.
+  google_sign_in: ^6.3.0
+
+  # Renders GoogleMark's exact SVG paths from components/AuthForm.tsx, so the
+  # sign-in button carries Google's actual four-colour mark like the web
+  # does, rather than a hand-ported approximation of it.
+  flutter_svg: ^2.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+
+  # Run once with `dart run flutter_launcher_icons` whenever aspire_app_logo
+  # changes — it writes every mipmap-*/ic_launcher.png and every
+  # AppIcon.appiconset entry directly, so nothing here ships in the app
+  # bundle itself.
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
 
   assets:
     # Copied from the web build rather than re-exported, so the two clients
-    # cannot drift apart on the mark. The wordmark is the cropped one — the
-    # full lockup carries the tagline, which is illegible below about 200px.
+    # cannot drift apart on the mark.
     - assets/brand/
+
+# The square "A91" mark, not the wordmark — a launcher icon is shown small
+# and round-cropped on some launchers, and the wordmark's "Aspire91" text
+# would be illegible at that size. Same icon for both flavors: nothing here
+# distinguishes seeker from provider, matching how android/app/build.gradle.kts
+# only overrides the label (@string/app_name) per flavor, not the icon.
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/brand/aspire_app_logo.jpeg"

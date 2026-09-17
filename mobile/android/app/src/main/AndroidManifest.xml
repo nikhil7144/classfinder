@@ -35,6 +35,21 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Where an OTP magic link or a Google OAuth round trip returns.
+                 ${applicationId} is an AGP built-in placeholder, so this is
+                 already "com.aspire91.app" for seeker and
+                 "com.aspire91.app.coach" for provider without a manifest
+                 per flavor — see Flavor.authRedirectUrl. A custom scheme, not
+                 an HTTPS App Link, so it needs no assetlinks.json and no
+                 verification; it still needs adding to Supabase's redirect
+                 URL allowlist (Authentication -> URL Configuration) before it
+                 does anything. See README §7/§10.4. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="${applicationId}" android:host="login-callback"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

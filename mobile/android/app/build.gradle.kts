@@ -1,7 +1,21 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+// Aspire91's own release key — never shared with another app or client.
+// android/key.properties is gitignored; aspire91-release.jks lives in this
+// folder and is gitignored too. Back both up somewhere safe outside the
+// repo: losing them after the first Play upload means Google's painful
+// key-reset process.
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
@@ -12,6 +26,12 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    // AGP 9 defaults this to false; the two flavors below set resValue("string",
+    // "app_name", ...), which needs it explicitly on.
+    buildFeatures {
+        resValues = true
     }
 
     defaultConfig {
@@ -43,11 +63,27 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            if (keystorePropertiesFile.exists()) {
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: a release signing config, before the first Play upload.
-            // Debug keys for now, so `flutter run --release` works at all.
-            signingConfig = signingConfigs.getByName("debug")
+            // Falls back to the debug key only when key.properties is missing
+            // (e.g. a fresh checkout before the keystore is copied in), so
+            // `flutter run --release` still works without it.
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }

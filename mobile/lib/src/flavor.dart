@@ -38,6 +38,25 @@ enum Flavor {
         Flavor.seeker => {'seeker'},
         Flavor.provider => {'provider'},
       };
+
+  /// The Android applicationId / iOS bundle id this flavor ships as — see §3
+  /// of the mobile README. Doubles as this flavor's deep-link URL scheme
+  /// below, so the two can never drift apart the way a hand-copied constant
+  /// could.
+  String get applicationId => switch (this) {
+        Flavor.seeker => 'com.aspire91.app',
+        Flavor.provider => 'com.aspire91.app.coach',
+      };
+
+  /// Where an OTP magic link or an OAuth round trip returns into this app.
+  ///
+  /// A custom scheme, not an HTTPS universal link: it needs an
+  /// `<intent-filter>` entry and an Info.plist entry, both already present,
+  /// and nothing hosted on the website — no assetlinks.json, no Apple App
+  /// Site Association file. This must also be on Supabase's redirect URL
+  /// allowlist (Authentication → URL Configuration) or Supabase silently
+  /// discards it and falls back to the default site URL. See README §7/§10.4.
+  String get authRedirectUrl => '$applicationId://login-callback';
 }
 
 /// Set once, at the top of main_seeker.dart / main_provider.dart.

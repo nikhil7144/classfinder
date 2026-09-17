@@ -9,13 +9,13 @@ import '../../theme/theme.dart';
 import '../../widgets/branding.dart';
 import '../../widgets/primary_button.dart';
 
-/// Email, then a six-digit code.
+/// Email, then a six-digit code — plus Google, once configured.
 ///
-/// A code rather than a link, deliberately. The link path needs
-/// assetlinks.json, an Apple App Site Association file and the build machine's
-/// SHA-1 fingerprints before it can come back into the app at all; the code
-/// path needs none of that and works today. Google sign-in lands in the same
-/// place once that native config exists — see MOBILE-PLAN.md §5.
+/// The code is the primary path and needs nothing beyond what ships today.
+/// Google sign-in is native (`AuthRepository.signInWithGoogle`) and needs no
+/// deep link of its own; it only appears once `Env.googleWebClientId` is set,
+/// which needs a Google Cloud Console client and Supabase's Google provider
+/// configured with it — see README §7/§10.4.
 class SignInScreen extends ConsumerStatefulWidget {
   const SignInScreen({super.key});
 
@@ -87,6 +87,23 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+
+    try {
+      await ref.read(authRepositoryProvider).signInWithGoogle();
+      // No navigation here either — same reason as _verify: the router
+      // reacts to the session appearing, wherever it came from.
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final onCode = _step == _Step.code;
@@ -103,7 +120,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 children: [
                   const Align(
                       alignment: Alignment.centerLeft,
-                      child: Wordmark(height: 38)),
+                      child: Wordmark(height: 45)),
                   const SizedBox(height: 36),
                   Eyebrow(
                       appFlavor.isProvider ? 'For coaches' : 'For families'),
@@ -160,6 +177,47 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                                 _error = null;
                               }),
                       child: const Text('Use a different email'),
+                    ),
+                  ],
+                  // Hidden entirely rather than shown disabled: a build with
+                  // no GOOGLE_WEB_CLIENT_ID has nothing this button could do,
+                  // and a button that always fails is worse than no button.
+                  if (!onCode &&
+                      ref.read(authRepositoryProvider).googleSignInAvailable) ...[
+                    const SizedBox(height: 22),
+                    Row(
+                      children: [
+                        Expanded(
+                            child: Divider(color: A91.muted.withValues(alpha: 0.3))),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 12),
+                          child: Text('or', style: TextStyle(color: A91.muted)),
+                        ),
+                        Expanded(
+                            child: Divider(color: A91.muted.withValues(alpha: 0.3))),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    // Matches the web's .cf-btn-ghost exactly (ink on
+                    // surface-2, a border, a full pill) rather than the
+                    // default OutlinedButton, which reads its text and icon
+                    // colour from colorScheme.primary — this app's coral CTA
+                    // colour. Google's button is neutral on every platform;
+                    // it must never look like it is trying to be the primary
+                    // action.
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : _signInWithGoogle,
+                      icon: const GoogleMark(),
+                      label: const Text('Continue with Google'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: A91.ink,
+                        backgroundColor: A91.surface2,
+                        side: const BorderSide(color: A91.border),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: const StadiumBorder(),
+                        textStyle: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 14.5),
+                      ),
                     ),
                   ],
                 ],

@@ -25,6 +25,20 @@ class Env {
   static const siteUrl = String.fromEnvironment('SITE_URL',
       defaultValue: 'https://www.aspire91.com');
 
+  /// The OAuth **Web** client id from the same Google Cloud project as the
+  /// site's existing Google sign-in — used as `serverClientId` so the id
+  /// token `google_sign_in` returns is one Supabase's Google provider (itself
+  /// configured with that same web client) will accept. Not the Android
+  /// client id — that one is registered in Google Cloud against this app's
+  /// SHA-1 and is never referenced from Dart at all.
+  ///
+  /// Optional and empty by default, unlike the three above: a build with none
+  /// of this configured must still work for email OTP, so the Google button
+  /// simply does not render rather than the app refusing to start. See README
+  /// §7/§10.4.
+  static const googleWebClientId =
+      String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
+
   /// Fail at startup with a sentence, rather than on the first request with a
   /// null-ish URL and a confusing socket error.
   static void assertConfigured() {

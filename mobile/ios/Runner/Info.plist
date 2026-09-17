@@ -33,6 +33,33 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<!-- Where an OTP magic link or a Google OAuth round trip returns — see
+	     Flavor.authRedirectUrl and README §7/§10.4. Both flavors' schemes are
+	     listed here because iOS has no flavor-specific Info.plist yet (§3:
+	     "iOS is not done"); once Debug-seeker/Debug-provider configurations
+	     exist, split this into one scheme per Info.plist instead. A custom
+	     scheme, not a universal link, so it needs no Apple App Site
+	     Association file — it still needs adding to Supabase's redirect URL
+	     allowlist before it does anything. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.aspire91.app.auth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.aspire91.app</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.aspire91.app.coach.auth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.aspire91.app.coach</string>
+			</array>
+		</dict>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>
