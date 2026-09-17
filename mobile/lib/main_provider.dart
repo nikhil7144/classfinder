@@ -18,3 +18,4 @@ Future<void> main() async {
   // it, so a test can wrap the app and override any provider it likes.
   runApp(const ProviderScope(child: Aspire91App()));
 }
+ 
