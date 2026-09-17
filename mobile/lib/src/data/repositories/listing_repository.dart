@@ -54,12 +54,19 @@ class ListingRepository {
   /// wholesale, and the web learned the hard way what a half-applied save
   /// costs: the delete ran before the insert, so a failure between them left a
   /// coach discoverable nowhere and told them it had saved.
-  Future<Listing> save(Listing listing) async {
+  ///
+  /// Returns `SavedProfile`, not `Listing`: `PUT /api/v1/providers/me`
+  /// answers `SavedProfileDto` — `{id, approved, isSuspended}` — never the
+  /// whole listing. `ListingScreen._save()` discards this and invalidates
+  /// `myListingProvider` instead, which is the only correct use of it; a
+  /// `Listing` built from this body would have every other field silently
+  /// blank.
+  Future<SavedProfile> save(Listing listing) async {
     final json = await _api.put(
       '/api/v1/providers/me',
       body: listing.toSaveJson(),
     );
-    return Listing.fromJson(json as Map<String, dynamic>);
+    return SavedProfile.fromJson(json as Map<String, dynamic>);
   }
 
   /// Upload a profile photo and return the URL to save on the listing.

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../config/env.dart';
 import '../../data/api_exception.dart';
 import '../../data/auth_rules.dart';
 import '../../providers.dart';
@@ -145,6 +147,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ],
             ),
+            const Section(
+              title: 'Legal',
+              subtitle: 'Both stores require these to be reachable in-app.',
+              children: [
+                _LegalLink(
+                  label: 'Privacy policy',
+                  url: '${Env.siteUrl}/privacy',
+                ),
+                SizedBox(height: 10),
+                _LegalLink(
+                  label: 'Terms of service',
+                  url: '${Env.siteUrl}/terms',
+                ),
+              ],
+            ),
             Section(
               title: 'Sign out',
               subtitle: 'Sign out on this device.',
@@ -207,4 +224,50 @@ Future<void> confirmSignOut(BuildContext context, WidgetRef ref) async {
   // The router listens to the auth stream, so signing out is all this has to
   // do — the app moves on its own.
   if (sure == true) await ref.read(authRepositoryProvider).signOut();
+}
+
+/// A row that opens a legal page in the phone's own browser.
+///
+/// External, not an in-app webview: these are the website's live pages —
+/// linking to a copy here would drift from whatever the site says the moment
+/// either changes, and the labels stores review need to match the live page,
+/// not a snapshot of it.
+class _LegalLink extends StatelessWidget {
+  const _LegalLink({required this.label, required this.url});
+
+  final String label;
+  final String url;
+
+  @override
+  Widget build(BuildContext context) => Material(
+        color: A91.surface2,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () async {
+            final uri = Uri.tryParse(url);
+            if (uri != null) {
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            }
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: A91.borderSoft),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(label,
+                      style: const TextStyle(
+                          color: A91.ink, fontWeight: FontWeight.w500)),
+                ),
+                const Icon(Icons.open_in_new, size: 17, color: A91.muted),
+              ],
+            ),
+          ),
+        ),
+      );
 }

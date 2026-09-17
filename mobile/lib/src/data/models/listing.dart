@@ -253,3 +253,30 @@ class Listing {
     }..removeWhere((_, value) => value == null);
   }
 }
+
+/// What a save answers — not the listing itself.
+///
+/// Deliberately not the public profile: get_provider_profile() answers null
+/// for an unapproved or suspended listing, so reading a first save back
+/// through it would 404 the very thing that just succeeded. Matches the API's
+/// `SavedProfileDto` exactly — `{id, approved, isSuspended}` and nothing else,
+/// which is why `ListingRepository.save()` must return this and not a
+/// `Listing`: every other field on a `Listing` built from this body would be
+/// silently blank.
+class SavedProfile {
+  SavedProfile({
+    required this.id,
+    required this.approved,
+    required this.isSuspended,
+  });
+
+  final String id;
+  final bool approved;
+  final bool isSuspended;
+
+  factory SavedProfile.fromJson(Map<String, dynamic> json) => SavedProfile(
+        id: json['id'] as String,
+        approved: json['approved'] as bool? ?? false,
+        isSuspended: json['isSuspended'] as bool? ?? false,
+      );
+}
