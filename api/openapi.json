@@ -1853,6 +1853,298 @@
         ]
       }
     },
+    "/api/v1/notifications": {
+      "get": {
+        "description": "Paged on time rather than an offset: notifications arrive while somebody is scrolling, and an offset would shuffle the page under their thumb each time one did. Pass the previous page's nextBefore to continue.",
+        "operationId": "NotificationsController_list_v1",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 30,
+              "type": "number"
+            }
+          },
+          {
+            "name": "before",
+            "required": false,
+            "in": "query",
+            "description": "Only notifications older than this. The previous page's `nextBefore`.",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "unreadOnly",
+            "required": false,
+            "in": "query",
+            "description": "Only the ones not yet read.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationListDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "What has happened, newest first",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/read": {
+      "post": {
+        "description": "Three readings, narrowest first: `ids` for specific ones, `threadId` for a conversation, `all` for the lot. A body naming none of them is refused rather than treated as `all` — clearing everything by accident cannot be undone. Returns the unread count afterwards, so a badge does not need a second call.",
+        "operationId": "NotificationsController_read_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkReadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkReadResultDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark notifications read",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/devices": {
+      "post": {
+        "description": "Call on every launch, not only the first. FCM rotates tokens, and an app that registers once goes quiet weeks later with nothing anywhere to say why. Re-registering also brings back a device FCM had previously told us to give up on. Safe to repeat: the token is the key, so the same device signing in as somebody else moves rather than doubling up.",
+        "operationId": "NotificationsController_register_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDeviceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisteredDeviceDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register this device for push",
+        "tags": [
+          "notifications"
+        ]
+      },
+      "get": {
+        "description": "Never includes the tokens themselves — they are send credentials, not data.",
+        "operationId": "NotificationsController_devices_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Devices registered on this account",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/devices/forget": {
+      "post": {
+        "description": "Call on sign-out. The token belongs to the device rather than the session, so an app that signs out without this leaves the next person to use that phone receiving the last person's messages. Omit the token to cover every device on the account.",
+        "operationId": "NotificationsController_forget_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgetDeviceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForgetDeviceResultDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Stop push to this device, or to all of them",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/settings": {
+      "get": {
+        "description": "Answers with the defaults for somebody who has never changed anything, rather than 404ing — a client should not have to treat 'never touched it' as a separate case.",
+        "operationId": "NotificationsController_settings_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettingsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "What this person wants to be told about",
+        "tags": [
+          "notifications"
+        ]
+      },
+      "patch": {
+        "description": "A real PATCH: fields you leave out keep their current values. Quiet hours hold push only — an email arriving at 2am is not a buzz at 2am — and need a start and an end or neither.",
+        "operationId": "NotificationsController_updateSettings_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNotificationSettingsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettingsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change them",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/channels": {
+      "get": {
+        "description": "The product's decision, not the caller's, which is why it is a read and not a setting. A settings screen uses it to say 'we'll email this one' rather than implying a switch that does nothing.",
+        "operationId": "NotificationsController_channels_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationChannelDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Which kinds push and which email",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
     "/api/v1/providers/search": {
       "get": {
         "description": "Ordered by distance from the search origin: the given lat/lng if there is one, otherwise the centroid of the area. Only approved, unsuspended coaches, and only in live areas — the area-wise launch gate is the database's, not this endpoint's. Declared before the :id route so /providers/search is not parsed as a coach whose id is the word search.",
@@ -5545,6 +5837,411 @@
           "name",
           "societyName",
           "shared"
+        ]
+      },
+      "NotificationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "enquiry_received",
+              "approach_received",
+              "pitch_received",
+              "message_received",
+              "trial_proposed",
+              "trial_answered",
+              "query_received",
+              "query_callback_scheduled",
+              "query_callback_due",
+              "entry_received",
+              "entry_cancelled",
+              "event_cancelled"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "description": "One line. Already written for a lock screen."
+          },
+          "body": {
+            "type": "string",
+            "nullable": true,
+            "description": "A preview, capped at 140 characters when it was queued — never the whole thing."
+          },
+          "url": {
+            "type": "string",
+            "description": "Where it points, as a web path. A mobile client maps it to its own route rather than opening a browser; the path is the same on both so one trigger serves both clients.",
+            "example": "/dashboard/queries?query=6f1b…"
+          },
+          "threadKind": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "group",
+              "enquiry"
+            ],
+            "description": "Set when this is about a conversation, so a client can mark that thread read."
+          },
+          "threadId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "readAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "unread": {
+            "type": "boolean",
+            "description": "Convenience for a list that dots the unread ones."
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "body",
+          "url",
+          "threadId",
+          "createdAt",
+          "readAt",
+          "unread"
+        ]
+      },
+      "NotificationListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationDto"
+            }
+          },
+          "unread": {
+            "type": "number",
+            "description": "How many of the returned page are unread."
+          },
+          "nextBefore": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "description": "Pass back as `before` for the next page. Null when this page is the end. Keyed on the timestamp rather than an offset, so a notification arriving mid-scroll cannot shift the page under somebody's thumb."
+          }
+        },
+        "required": [
+          "items",
+          "unread",
+          "nextBefore"
+        ]
+      },
+      "MarkReadDto": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "maxItems": 200,
+            "description": "Specific notifications — swiping one away, or clearing what a screen showed.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "threadId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Everything about one conversation — what opening a thread means."
+          },
+          "all": {
+            "type": "boolean",
+            "description": "Everything. What opening the bell means. Ignored if ids or threadId are given, because a request that says both is a client bug and the narrower reading is the safe one."
+          }
+        }
+      },
+      "MarkReadResultDto": {
+        "type": "object",
+        "properties": {
+          "remaining": {
+            "type": "number",
+            "description": "Unread notifications left after the call, for the badge."
+          }
+        },
+        "required": [
+          "remaining"
+        ]
+      },
+      "RegisterDeviceDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 16,
+            "maxLength": 4096,
+            "description": "The FCM registration token. iOS reaches APNs through Firebase, so it is one field."
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "ios",
+              "android",
+              "web"
+            ]
+          },
+          "appFlavor": {
+            "type": "string",
+            "enum": [
+              "provider",
+              "seeker"
+            ],
+            "description": "Which app this install is. The two flavours are separate builds, and a coach's phone must never be sent a parent's notification because both happen to be installed."
+          },
+          "locale": {
+            "type": "string",
+            "example": "en-IN",
+            "maxLength": 16
+          }
+        },
+        "required": [
+          "token",
+          "platform",
+          "appFlavor"
+        ]
+      },
+      "RegisteredDeviceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "ForgetDeviceDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 16,
+            "maxLength": 4096,
+            "description": "The device signing out. Omit to stop push to every device on this account — which is what somebody does after losing a phone."
+          }
+        }
+      },
+      "ForgetDeviceResultDto": {
+        "type": "object",
+        "properties": {
+          "forgotten": {
+            "type": "number",
+            "description": "Devices this turned off."
+          }
+        },
+        "required": [
+          "forgotten"
+        ]
+      },
+      "DeviceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "ios",
+              "android",
+              "web"
+            ]
+          },
+          "appFlavor": {
+            "type": "string",
+            "enum": [
+              "provider",
+              "seeker"
+            ]
+          },
+          "lastSeenAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last time this device registered — each launch."
+          },
+          "disabledReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why push to this device stopped: 'signed out', or what FCM said."
+          }
+        },
+        "required": [
+          "id",
+          "platform",
+          "appFlavor",
+          "lastSeenAt",
+          "disabledReason"
+        ]
+      },
+      "NotificationSettingsDto": {
+        "type": "object",
+        "properties": {
+          "pushEnabled": {
+            "type": "boolean"
+          },
+          "emailEnabled": {
+            "type": "boolean"
+          },
+          "mutedKinds": {
+            "type": "array",
+            "description": "Kinds this person has turned off individually, whatever the defaults say.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "enquiry_received",
+                "approach_received",
+                "pitch_received",
+                "message_received",
+                "trial_proposed",
+                "trial_answered",
+                "query_received",
+                "query_callback_scheduled",
+                "query_callback_due",
+                "entry_received",
+                "entry_cancelled",
+                "event_cancelled"
+              ]
+            }
+          },
+          "quietHoursStart": {
+            "type": "string",
+            "nullable": true,
+            "example": "22:00",
+            "description": "Start of the window where push is held. Email is unaffected."
+          },
+          "quietHoursEnd": {
+            "type": "string",
+            "nullable": true,
+            "example": "07:00"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Kolkata",
+            "description": "The zone quiet hours are read in."
+          }
+        },
+        "required": [
+          "pushEnabled",
+          "emailEnabled",
+          "mutedKinds",
+          "quietHoursStart",
+          "quietHoursEnd",
+          "timezone"
+        ]
+      },
+      "UpdateNotificationSettingsDto": {
+        "type": "object",
+        "properties": {
+          "pushEnabled": {
+            "type": "boolean"
+          },
+          "emailEnabled": {
+            "type": "boolean"
+          },
+          "mutedKinds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "enquiry_received",
+                "approach_received",
+                "pitch_received",
+                "message_received",
+                "trial_proposed",
+                "trial_answered",
+                "query_received",
+                "query_callback_scheduled",
+                "query_callback_due",
+                "entry_received",
+                "entry_cancelled",
+                "event_cancelled"
+              ]
+            }
+          },
+          "quietHoursStart": {
+            "type": "string",
+            "nullable": true,
+            "example": "22:00",
+            "description": "Send with quietHoursEnd, or send both as null to clear the window."
+          },
+          "quietHoursEnd": {
+            "type": "string",
+            "nullable": true,
+            "example": "07:00"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Kolkata"
+          }
+        }
+      },
+      "NotificationChannelDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "enquiry_received",
+              "approach_received",
+              "pitch_received",
+              "message_received",
+              "trial_proposed",
+              "trial_answered",
+              "query_received",
+              "query_callback_scheduled",
+              "query_callback_due",
+              "entry_received",
+              "entry_cancelled",
+              "event_cancelled"
+            ]
+          },
+          "pushes": {
+            "type": "boolean",
+            "description": "Whether this kind buzzes a phone."
+          },
+          "emails": {
+            "type": "boolean",
+            "description": "Whether this kind is emailed."
+          },
+          "audience": {
+            "type": "string",
+            "enum": [
+              "provider",
+              "seeker",
+              "either"
+            ],
+            "description": "Which app buzzes. A coach who is also a parent has both installed, and the kind is what knows which one should light up. Email ignores it — there is one inbox."
+          },
+          "note": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why it is set that way. Useful on a settings screen; kept honest in the table."
+          }
+        },
+        "required": [
+          "kind",
+          "pushes",
+          "emails",
+          "audience",
+          "note"
         ]
       },
       "ProviderSearchResultDto": {

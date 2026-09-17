@@ -21,6 +21,11 @@ and store work, not screens — §10 lists it.
 
 Both flavors run. Both are worth putting on a device.
 
+**One feature is outstanding rather than cosmetic: push notifications.** The
+backend for it shipped in phase 3W — tables, six endpoints, an FCM worker —
+and nothing on the Flutter side exists yet. **§11** is the implementation
+guide, and it is the largest remaining piece of work in this file.
+
 **Shared by both flavors**
 
 | Screen | Files |
@@ -535,9 +540,10 @@ Twelve `/admin/*` routes stay on the web permanently and are out of scope.
 
 ## 10. What still needs implementing
 
-Everything below is outstanding. Nothing here is a screen — both flavors are
-feature-complete against the API. The order matters: 1 and 2 are live bugs for
-people already holding the app, 3–5 gate the first store upload, 6 is cleanup.
+Everything below is outstanding. The order matters: 1 and 2 are live bugs for
+people already holding the app, 3–5 gate the first store upload, 6 is cleanup,
+and 7 is the one genuinely new feature left — push notifications, whose
+backend is already built and waiting.
 
 ### 1. Ship the fixes that are already in this repo — **do this first**
 
@@ -633,14 +639,320 @@ value gets a blank listing with no warning. Give it a `SavedProfile` model and
 return that. `SeekerRepository.save()` does not have this problem —
 `PUT /seekers/me` really does answer the whole profile.
 
+### 7. Push notifications
+
+The whole backend landed in phase 3W and none of the app side exists. It is
+the largest remaining piece of work in this file, so it has a section of its
+own: **§11**.
+
 ### Before you call any of it done
 
 ```bash
 cd mobile && flutter analyze && flutter test   # 184 tests
-cd api    && npm test                          # 300 tests, 63 endpoints
+cd api    && npm test                          # 325 tests, 69 endpoints
 ```
 
 If you change an endpoint's shape, `cd api && npm run spec` regenerates
 `api/openapi.json`, and `npm run gen:api` at the repo root regenerates the
 web's `lib/api/schema.d.ts` from it. The spec is the contract — §0 is what it
 costs when the contract does not describe a state that actually happens.
+
+---
+
+## 11. Push notifications — the app side
+
+**The backend is done and deployed-ready. None of the Flutter side exists.**
+
+Nothing on a phone lights up today. Every surface in both apps — the demand
+feed, the inbox, the query worklist — is a screen somebody has to remember to
+open, which is the problem the notification queue was built to solve for the
+web and has never solved for mobile.
+
+Read `../PLAN.md` § "Being told something happened" → "Push (3W)" for why the
+backend is shaped the way it is. This section is what you build against it.
+
+### What already exists, so you do not rebuild it
+
+| Piece | Where |
+|---|---|
+| `device_tokens`, `notification_settings`, `notification_channels` | `db/2026-09-22-phase3w-push-notifications.sql` |
+| Six endpoints under `/api/v1/notifications` | `api/src/notifications/` |
+| The FCM sender and the worker | `api/src/notify/push.service.ts`, `dispatch.controller.ts` |
+| The contract | `api/openapi.json` — search `notifications` |
+
+**Do not write to `device_tokens` through `supabase_flutter`.** It is readable
+under RLS and you could, and it would be the second client guessing at the
+schema that §5 exists to stop. Registration is a definer function for a reason
+the header explains: the upsert touches a row the caller may not own.
+
+### The contract, in full
+
+```
+POST   /api/v1/notifications/devices
+       {token, platform: ios|android|web, appFlavor: provider|seeker, locale?}
+       → {id}
+
+POST   /api/v1/notifications/devices/forget
+       {token?}                     omit the token to cover every device
+       → {forgotten: int}
+
+GET    /api/v1/notifications/devices
+       → [{id, platform, appFlavor, lastSeenAt, disabledReason}]
+       never returns the tokens themselves
+
+GET    /api/v1/notifications?limit=30&before=<iso>&unreadOnly=true
+       → {items: [...], unread: int, nextBefore: <iso>|null}
+
+POST   /api/v1/notifications/read
+       {ids: [...]} | {threadId} | {all: true}
+       → {remaining: int}           the badge number, so no second call
+
+GET    /api/v1/notifications/settings
+PATCH  /api/v1/notifications/settings
+       {pushEnabled?, emailEnabled?, mutedKinds?, quietHoursStart?,
+        quietHoursEnd?, timezone?}
+       a real PATCH — fields you leave out keep their values
+
+GET    /api/v1/notifications/channels        public, no token needed
+       → [{kind, pushes, emails, audience, note}]
+```
+
+A notification item is:
+
+```
+{id, kind, title, body, url, threadKind, threadId, createdAt, readAt, unread}
+```
+
+`kind` is one of twelve; the list is in `api/src/notifications/dto/
+notification.dto.ts` as `NOTIFICATION_KINDS`. Do not hardcode a subset — a
+kind you do not recognise should still render, using `title` and `body`, which
+are already written for a lock screen.
+
+### Dependencies
+
+```yaml
+firebase_core: ^3.6.0
+firebase_messaging: ^15.1.3
+flutter_local_notifications: ^18.0.1   # foreground display only — see below
+```
+
+`flutter_local_notifications` is not optional and not duplication. FCM does
+**not** display a notification while the app is in the foreground on either
+platform; it hands you the payload and expects you to decide. Without it, a
+message arriving while somebody is looking at another tab is silently dropped.
+
+### Firebase setup
+
+Four app registrations in one Firebase project:
+
+| Platform | Flavor | Id |
+|---|---|---|
+| Android | seeker | `com.aspire91.app` |
+| Android | provider | `com.aspire91.app.coach` |
+| iOS | seeker | `com.aspire91.app` |
+| iOS | provider | `com.aspire91.app.coach` |
+
+- Android: `google-services.json` per flavor, at
+  `android/app/src/seeker/` and `android/app/src/provider/`. The Gradle plugin
+  picks the right one per flavor automatically — do **not** put one file in
+  `android/app/`, it will be wrong for one of the two apps.
+- iOS: `GoogleService-Info.plist` per configuration. **This needs §10.5 done
+  first** — `ios/Runner.xcodeproj` still has one bundle id
+  (`com.aspire91.aspire91`) for what are meant to be two apps, so there is
+  nothing to register yet. iOS push is blocked on that, Android is not.
+- iOS also needs an APNs auth key (`.p8`) uploaded in the Firebase console.
+  That requires a paid Apple Developer account. Firebase talks to APNs on your
+  behalf, but only once it holds the key.
+
+### The registration lifecycle — get this exactly right
+
+Four rules, and each one is a bug if you skip it.
+
+1. **Register on every launch, not just the first.** FCM rotates tokens
+   silently. An app that registers once and trusts it goes quiet weeks later
+   with nothing in any log to say why. The endpoint is an upsert keyed on the
+   token; calling it every launch is free.
+
+2. **Also register on `onTokenRefresh`.** The stream fires when FCM rotates
+   mid-session. Same call, same endpoint.
+
+3. **Send `appFlavor`.** A coach who is also a parent has both apps on one
+   phone. The backend filters on this — `notification_channels.audience` says
+   which flavor each kind belongs to — but only if you tell it which app this
+   install is. Read it from `appFlavor` in `lib/src/flavor.dart`; do not
+   hardcode a string.
+
+4. **Call `devices/forget` before `signOut()`, not after.** The token belongs
+   to the device, not the session. An app that signs out without this leaves
+   the next person to use that phone receiving the last person's messages. The
+   call needs a valid token to authenticate, so it has to happen while the
+   session is still alive.
+
+   This goes in `AuthRepository.signOut()` — it is the one place sign-out
+   happens, and a sign-out path that forgets this is exactly the bug that
+   looks like "notifications are going to the wrong person".
+
+   Swallow its errors. Failing to sign out because a network call failed is
+   worse than a stale token, and the backend disables the token anyway the
+   first time FCM reports it gone.
+
+### Permission
+
+- **iOS** — `requestPermission()` is mandatory; nothing arrives without it.
+- **Android 13+** — `POST_NOTIFICATIONS` is a runtime permission. Below 13 it
+  is granted at install.
+
+**Do not ask on first launch.** A permission prompt on a screen somebody has
+not decided to trust yet is the cheapest way to get a permanent no, and iOS
+gives you exactly one chance. Ask at the first moment the value is obvious:
+for a coach, after they open the Queries tab or send their first reply; for a
+parent, after they raise a query or send an enquiry. A one-line explanation
+before the system sheet is worth the space.
+
+If they refuse, everything still works — the notification list, the badges,
+and email. Say so rather than nagging.
+
+### Handling a tap
+
+The payload's `data` block carries four string fields, always present, empty
+string rather than null when they do not apply:
+
+```
+{kind, url, threadKind, threadId}
+```
+
+Route on **`threadKind` + `threadId` first**, falling back to `url`. `url` is a
+*web* path (`/dashboard/queries?query=<uuid>`) because one trigger serves both
+clients — parse it, do not open it in a browser.
+
+Three entry points, and you need all three:
+
+| State | API |
+|---|---|
+| Terminated | `FirebaseMessaging.instance.getInitialMessage()` |
+| Background | `FirebaseMessaging.onMessageOpenedApp` |
+| Foreground | `FirebaseMessaging.onMessage` → display it yourself |
+
+**The routing problem you will hit.** `lib/src/router.dart` has no
+fetch-by-id routes. `/thread` and `/demand` both take a constructed object in
+`state.extra`, and the file says so in a comment that predicted this exact
+task:
+
+> If that changes — a notification opening a requirement — this wants a
+> fetch-by-id endpoint, which does not exist yet.
+
+It still does not. There is no `GET /threads/:kind/:id` and no
+`GET /queries/:id`. Two options, and **take the first**:
+
+1. **Fetch the list and find the row by id.** `ThreadsRepository.mine()` and
+   `QueriesRepository.mine()` both return everything the caller is party to;
+   an inbox is tens of rows, not thousands. One extra request on a
+   notification tap is not worth an API change.
+2. Add the endpoints. Only if a list turns out to be genuinely large — and
+   that is backend work, so it comes first, per §5.
+
+If the row is not in the list — deleted, or a thread the account can no longer
+see — land on the tab rather than an error. A notification that outlived its
+subject is normal.
+
+### Files to create
+
+Match the layout in §4. Nothing under `lib/src/data` imports Riverpod.
+
+```
+lib/src/data/models/notification.dart          AppNotification, NotificationSettings,
+                                               NotificationChannel
+lib/src/data/repositories/notifications_repository.dart
+lib/src/push.dart                              FCM lifecycle: init, permission,
+                                               token registration, tap routing
+lib/src/screens/notifications/                 the list screen
+lib/src/screens/settings/notification_settings_screen.dart
+```
+
+`push.dart` sits beside `router.dart` rather than under `data/` — it touches
+navigation and platform channels, so it is not pure Dart and does not belong
+below the seam.
+
+Register the repository in `providers.dart` the same way as every other:
+
+```dart
+final notificationsRepositoryProvider = Provider<NotificationsRepository>(
+    (ref) => NotificationsRepository(ref.watch(apiClientProvider)));
+```
+
+Model naming: call it `AppNotification`, not `Notification` — the latter
+collides with `dart:ui`'s `Notification` and the error is confusing.
+
+### Where it shows in the UI
+
+- **A bell with a count.** `Alerts.needsYou` is already the right number and
+  `alertsProvider` already fetches it — that is what the field was for. Do not
+  compute a second count from the notification list.
+- **The list screen** behind the bell. Page with `nextBefore`; call
+  `read {all: true}` when it opens, and use the `remaining` it returns to
+  update the badge rather than refetching alerts.
+- **Opening a thread** should call `read {threadId}`. This matters beyond
+  tidiness: the backend suppresses push for a notification already read, so
+  clearing it stops a buzz about a conversation somebody is looking at.
+- **Settings** — `screens/settings/` already exists and holds the sign-in
+  email. Push/email switches, quiet hours and per-kind mutes go there. Use
+  `GET /channels` to label the kinds honestly: `entry_received` does not push
+  at all, so a switch implying it does is a lie.
+
+### Testing it without waiting for a real notification
+
+The tests in `test/` need no device, and this should be no different. Test the
+repository against a fake `ApiClient` the way the others do — that covers the
+contract, which is the part that breaks.
+
+For the platform half, the useful checks are on a device:
+
+```bash
+# Is the backend actually able to send?  Needs the dispatch secret.
+curl -H "Authorization: Bearer $NOTIFICATION_DISPATCH_SECRET" \
+     https://api.aspire91.com/api/v1/notify/status
+# → {"supabaseServiceRole":true,"firebase":true,"ready":true}
+
+# Force a pass rather than waiting for the scheduler.
+curl -X POST -H "Authorization: Bearer $NOTIFICATION_DISPATCH_SECRET" \
+     https://api.aspire91.com/api/v1/notify/dispatch
+# → {"remindersQueued":0,"considered":1,"sent":1,"failed":0,"tokensDisabled":0}
+```
+
+`ready: false` tells you which half is missing before you spend an afternoon
+deciding it is the app. `tokensDisabled` going up means FCM is rejecting your
+token — usually a `google-services.json` from the wrong flavor.
+
+To generate a real notification end to end: raise a query against a coach from
+the seeker app, then dispatch. `query_received` pushes, and it is the shortest
+path that exercises a trigger, the queue, the worker and the tap.
+
+### The one that is easy to miss
+
+**A booked call notifies both sides**, and they are different notifications:
+
+- the **parent** gets `query_callback_scheduled` the moment a coach books the
+  time, and again if it moves;
+- the **coach** gets `query_callback_due` about thirty minutes before it is
+  due — queued by the worker, not by a trigger, because nothing is written at
+  the moment a call falls due.
+
+Its `body` is the parent's phone number, deliberately: the useful action on
+that notification is to dial. `url_launcher` is already a dependency and
+`screens/queries/` already dials.
+
+### Acceptance
+
+- [ ] A coach installs, signs in, and a query raised against them buzzes the
+      phone within one dispatch cycle.
+- [ ] Tapping it opens that query, not the tab.
+- [ ] Killing the app and tapping still opens that query
+      (`getInitialMessage`).
+- [ ] A notification arriving while the app is open is displayed, not dropped.
+- [ ] Signing out, then signing in on the same phone as a different account,
+      sends nothing to the first account.
+- [ ] Reading a thread in the app stops the buzz for it.
+- [ ] Turning push off in settings stops everything; email keeps working.
+- [ ] The seeker app never receives a `query_received`, and the coach app
+      never receives a `pitch_received`.
+- [ ] Refusing the permission leaves every screen working.
