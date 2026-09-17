@@ -11,6 +11,7 @@ import { MeModule } from "./me/me.module";
 import { OrganisersModule } from "./organisers/organisers.module";
 import { EnquiriesModule } from "./enquiries/enquiries.module";
 import { GroupsModule } from "./groups/groups.module";
+import { NotificationsModule } from "./notifications/notifications.module";
 import { NotifyModule } from "./notify/notify.module";
 import { TrialsModule } from "./trials/trials.module";
 import { SeekersModule } from "./seekers/seekers.module";
@@ -39,6 +40,7 @@ import { SupabaseModule } from "./supabase/supabase.module";
     EnquiriesModule,
     TrialsModule,
     GroupsModule,
+    NotificationsModule,
     NotifyModule,
     ProvidersModule,
     QueriesModule,

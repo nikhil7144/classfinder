@@ -269,10 +269,21 @@ Real deliverables that do not exist anywhere in the repo today.
   OTP link and the Google round trip must return into the app. Needs an
   `assetlinks.json` on `www.aspire91.com` and an Apple App Site Association
   file, plus the redirect allowlist in Supabase extended to the app scheme.
-- **Push notifications.** The web dispatches email via Resend
-  (`app/api/notifications/dispatch`). Mobile wants FCM and APNs, a device
-  token table, and a decision on which of the existing notification kinds push
-  rather than email.
+- **Push notifications.** **Backend done in 3W; the Flutter side is not.**
+  `device_tokens` holds one row per install keyed on the token rather than the
+  user, `notification_channels` carries the per-kind push/email decision as
+  data, and `notification_settings` carries the per-person one including quiet
+  hours. Six endpoints under `/api/v1/notifications` cover the list, read
+  state, device registration, and settings; the worker at
+  `POST /api/v1/notify/dispatch` sends over FCM — iOS through Firebase, not
+  APNs directly — and lives in the API rather than beside the email worker so
+  mobile does not ride the web deploy.
+
+  What the app has to do: register on **every** launch (FCM rotates tokens, and
+  an app that registers once goes quiet weeks later with nothing to say why),
+  call `devices/forget` on sign-out, send `appFlavor` so a coach's phone is
+  never sent a parent's notification, and route on the `url` in the push
+  payload's `data` rather than opening a browser.
 - **Wrong-flavor handling.** A coach who installs the seeker app, or a parent
   who installs the coach app, must be told plainly and pointed at the other —
   not dropped on `/choose-role`, which would offer to *delete* their listing

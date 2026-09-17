@@ -440,6 +440,77 @@ is five emails, which is how people learn to filter your mail.
 refuses to send while that still points at localhost, because a row marked sent
 is never retried.
 
+### Push (3W)
+
+The second delivery leg 2N left room for, and it needed no change to a single
+trigger: the rows queued for email are the rows pushed.
+
+- **Where it goes.** `device_tokens`, one row per install, unique on the
+  *token* rather than the user — a phone signing in as somebody else has to
+  move, not accumulate a second row that keeps buzzing for the account that
+  left. Registration is a definer function because that upsert touches a row
+  the caller may not own.
+- **Whether it goes.** `notification_channels` says which kinds push and which
+  only email, as data rather than as an `if` in the worker: bursty admin like
+  `entry_received` emails only, anything somebody is waiting on pushes.
+  `notification_settings` is the same decision per person, plus quiet hours —
+  which hold push and not email, because a mail arriving at 2am is not a buzz
+  at 2am. Every one of those rules is inside `pending_push_notifications()`;
+  the worker sends what it is given.
+- **Who sends it.** `POST /api/v1/notify/dispatch` in the API, not beside the
+  email worker in the Next app — push is a mobile concern and mobile should
+  not ride the web deploy, and a Firebase credential has no business in a
+  process that renders pages. It is the only thing in the API holding the
+  service role key, through a provider `NotifyModule` deliberately does not
+  export.
+- **iOS goes through Firebase.** APNs directly is a second protocol and a
+  second credential to rotate, for no gain a family would notice.
+- A dead token is not a failure. It is how an uninstall reaches us: FCM's 404
+  disables the row, and a notification whose every device is gone counts as
+  delivered rather than burning three attempts on nowhere to send it.
+
+**A call being booked** notifies in both directions, which 3H never did.
+`set_query_status()` moving a lead to `callback_scheduled` tells the parent
+once — a trigger, like everything since 2N — and `queue_callback_reminders()`
+tells the coach shortly before it is due. The second cannot be a trigger:
+nothing is written at the moment a time arrives, so the worker queues it on
+each pass and `callback_reminded_at` makes a repeat pass a no-op.
+
+**Environment:** `SUPABASE_SERVICE_ROLE_KEY`, `FIREBASE_SERVICE_ACCOUNT` (the
+console's JSON, raw or base64) and the same `NOTIFICATION_DISPATCH_SECRET`, so
+one scheduler configuration covers both legs. Unset means the endpoint refuses
+rather than half-sending.
+
+### The scheduler (3X), and what it found
+
+2N built a worker. 3W built a second one. **Neither phase built the thing that
+calls either**, and nothing else ever did — no `crons` block in either
+`vercel.json`, no `pg_cron` job. On 2026-09-17 the queue read 16 unsent
+against 2 sent, and the 2 were a hand-fired test.
+
+So every notification since 2N was queued correctly, addressed correctly, and
+delivered to nobody. The triggers were never the problem. The last mile was
+simply never anybody's job, which is the failure mode a worker invites: it
+looks finished from both ends.
+
+`db/2026-09-23-phase3x-dispatch-schedule.sql` is a `pg_cron` job calling both
+legs every five minutes through `pg_net`, with the secret and the two URLs in
+`private.app_settings` — the locked-down schema 3T introduced. Vercel Cron
+would have worked and is one dashboard field; it is not used because the
+schedule would then live somewhere the repo cannot see, which is the exact
+condition that produced the gap.
+
+Five minutes is argued, not picked: the email worker holds a row back for its
+first minute, chat mail debounces at thirty, and 3W's callback reminder has a
+thirty-minute lead. Five makes all three accurate to within what anybody
+notices.
+
+The backlog is a decision the migration deliberately does not make — push
+ignores anything over 24 hours, email has no such rule, and whether a
+three-week-old "New message from a parent" helps or embarrasses depends on
+numbers a migration cannot see. The runbook at the bottom of the file has the
+query and both options.
+
 ### Realtime
 
 Threads were polled every 15 seconds; they now use a Supabase Realtime channel
@@ -492,6 +563,9 @@ areas or branches, and **day- and place-wise availability**.
 | Suggested coaches for a parent, cached per requirement (2S) | done |
 | Who the learner is, and a kept history of interests (2T) | done |
 | Queries — ask a coach to call, worked as a lead (3H) | done |
+| Push notifications, device tokens, per-kind channels (3W) | backend done; Flutter side not started |
+| A booked call notifies both sides (3W) | done |
+| Something actually calls the workers (3X) | **done — nothing ever had; see below** |
 
 Parent-created demand, per the section above, plus the request → accept → chat
 pipeline it depends on. Chosen ahead of Spaces because it is what stops approved
@@ -1036,6 +1110,14 @@ is in **`MOBILE-PLAN.md`**.
 | Queue first, send from a worker | A mail outage must delay a notification, not fail the message that caused it |
 | Notification triggers swallow errors | A failed email must never roll back a confirmed trial class |
 | Chat mail debounced 30 min | One mail per conversation beats five, which is how people learn to filter you |
+| Device tokens unique on the token, not the user | A shared phone must move accounts, not keep buzzing for the one that left |
+| Which kinds push is a table, not code | It will be revised by whoever watches people uninstall, and a deploy is a poor way to stop sending something |
+| Quiet hours hold push, never email | A mail arriving at 2am is not a buzz at 2am |
+| The push worker lives in the API, not the web app | Mobile must not ride the web deploy, and a Firebase credential has no business in a process that renders pages |
+| iOS reached through Firebase, not APNs | A second protocol and a second credential to rotate, for nothing a family would notice |
+| A dead token is delivery, not failure | It is how an uninstall reaches us; retrying parks the row with an error that misdescribes it |
+| The callback reminder is a queuer, not a trigger | Nothing is written at the moment a call falls due |
+| The schedule is a migration, not a dashboard field | A worker nobody calls looks finished from both ends; 16 undelivered notifications is what that costs |
 | Only three tables published to Realtime | Each broadcast row is a family arranging where a child will be |
 | Parents state a requirement, not just a location | A coach's only demand feed was Groups, which needs neighbours who already know each other |
 | Groups answer the same questions as a parent | A group is a requirement several families share, not a different object |
