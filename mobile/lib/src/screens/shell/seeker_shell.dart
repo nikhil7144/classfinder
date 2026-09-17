@@ -38,7 +38,14 @@ class _SeekerShellState extends ConsumerState<SeekerShell> {
   Widget build(BuildContext context) {
     final profile = ref.watch(myProfileProvider);
 
-    if (profile.isLoading) {
+    // hasValue, not just isLoading: isLoading is also true while an already-
+    // loaded profile is being silently re-fetched — Home's pull-to-refresh
+    // does exactly that (ref.invalidate(myProfileProvider)). Checking
+    // isLoading alone tore down the whole shell — nav bar, all four tabs —
+    // and replaced it with this skeleton on every pull-to-refresh, mid-drag,
+    // which is what an "isLoading" gate is for on first launch, never for a
+    // background refresh of a screen already on-screen.
+    if (profile.isLoading && !profile.hasValue) {
       return const Scaffold(body: FormSkeleton(sections: 2));
     }
     // A failure to read the profile is not a reason to lock somebody out of

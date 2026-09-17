@@ -30,6 +30,11 @@ class ApiClient {
   final Dio _dio;
   final TokenReader _token;
 
+  /// Shared by every request that hits a 401 at once, so five tabs mounting
+  /// together (`HomeShell` builds all five children) refresh the session
+  /// once rather than racing five separate refreshes.
+  Future<bool>? _refreshing;
+
   Future<dynamic> get(String path, {Map<String, dynamic>? query}) => _send(
       () => _dio.get(path, queryParameters: _clean(query), options: _auth()));
 
@@ -64,10 +69,33 @@ class ApiClient {
     return out.isEmpty ? null : out;
   }
 
+  /// `supabase_flutter` hands back a *stored* access token on a cold start
+  /// and refreshes it in the background — a request that goes out in that
+  /// window 401s on a session that is actually fine. One retry after one
+  /// refresh tells the two apart: a token that merely needed a nudge
+  /// succeeds; a session that is genuinely gone still fails, and only then
+  /// do we sign out. Signing out on the first 401 would be the same bug
+  /// GateScreen used to show every launch.
   Future<dynamic> _send(Future<Response<dynamic>> Function() request) async {
-    final Response<dynamic> response;
+    final response = await _attempt(request);
+
+    if (response.statusCode == 401) {
+      if (await _refreshSessionOnce()) {
+        return _result(await _attempt(request));
+      }
+      // The refresh itself failed — this is the real "session is no longer
+      // valid", not a token that merely needed a nudge.
+      await supabase.auth.signOut();
+    }
+
+    return _result(response);
+  }
+
+  Future<Response<dynamic>> _attempt(
+    Future<Response<dynamic>> Function() request,
+  ) async {
     try {
-      response = await request();
+      return await request();
     } on DioException catch (e) {
       // No status means it never arrived: no network, DNS, a timeout, or the
       // service being down. "Try again" rather than "you did something wrong".
@@ -76,17 +104,37 @@ class ApiClient {
           "Couldn't reach Aspire91. Check your connection and try again.",
         );
       }
-      throw ApiException(
-        _message(e.response!.data, 'Something went wrong.'),
-        statusCode: e.response!.statusCode,
-      );
+      return e.response!;
     }
+  }
 
+  dynamic _result(Response<dynamic> response) {
     final status = response.statusCode ?? 0;
     if (status >= 200 && status < 300) return response.data;
 
     throw ApiException(_message(response.data, 'Something went wrong.'),
         statusCode: status);
+  }
+
+  /// One refresh shared by every concurrent 401, not one per request.
+  ///
+  /// Timed out explicitly: unlike every Dio call above, `refreshSession()`
+  /// carries no timeout of its own, and this Future is shared by every
+  /// in-flight request. A refresh that hangs — rather than fails outright —
+  /// would otherwise strand every screen waiting on the API on its skeleton
+  /// forever, with no error and no retry to press.
+  Future<bool> _refreshSessionOnce() {
+    return _refreshing ??= () async {
+      try {
+        await supabase.auth
+            .refreshSession()
+            .timeout(const Duration(seconds: 15));
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }()
+        .whenComplete(() => _refreshing = null);
   }
 
   /// The service's own sentence wherever it wrote one.
