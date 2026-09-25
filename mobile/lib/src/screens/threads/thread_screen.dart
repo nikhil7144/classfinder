@@ -37,6 +37,12 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
 
   ThreadKey get _key => ThreadKey(widget.thread.kind, widget.thread.threadId);
 
+  /// Not open, and not merely waiting on an answer either — declined, and
+  /// unable to resume. Matches the web's `!threadIsOpen(t) && t.status !==
+  /// "pending"`, the exact condition its ThreadPane falls through to
+  /// "This wasn't taken up, so the conversation is closed."
+  bool get _closed => !widget.thread.isOpen && !widget.thread.awaitingReply;
+
   @override
   void initState() {
     super.initState();
@@ -180,9 +186,12 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
                           !widget.thread.awaitingReply)
                         PhoneSharingRow(thread: widget.thread),
                       // Both kinds and both sides: a group pitch ends in a
-                      // first class as surely as an enquiry does.
-                      if (!widget.thread.awaitingReply)
-                        TrialCard(thread: widget.thread),
+                      // first class as surely as an enquiry does. Hidden once
+                      // the thread is closed for good (declined) — matches
+                      // the web's TrialCard, which returns null rather than
+                      // offer an action respond_to_trial will refuse because
+                      // the enquiry itself is what closed the door.
+                      if (!_closed) TrialCard(thread: widget.thread),
                       if (widget.thread.origin != null) ...[
                         _Origin(
                           origin: widget.thread.origin!,
@@ -217,6 +226,11 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
               // this says why rather than letting somebody type into a field
               // that will reject them.
               blocked: widget.thread.awaitingReply && !widget.thread.iAmSeeker,
+              // Declined: RLS on enquiry_messages/group_messages refuses the
+              // insert outright, which without this check surfaced as a raw
+              // "new row violates row-level security policy" error the one
+              // time somebody actually hit it.
+              closed: _closed,
               onSend: _send,
             ),
           ],
@@ -371,16 +385,22 @@ class _Composer extends StatelessWidget {
     required this.controller,
     required this.sending,
     required this.blocked,
+    required this.closed,
     required this.onSend,
   });
 
   final TextEditingController controller;
   final bool sending;
   final bool blocked;
+  final bool closed;
   final VoidCallback onSend;
 
   @override
   Widget build(BuildContext context) {
+    if (closed) {
+      return const _ClosedNotice();
+    }
+
     if (blocked) {
       return Container(
         width: double.infinity,
@@ -445,4 +465,24 @@ class _Composer extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Declined, and unable to resume — the web's exact wording, so a coach who
+/// uses both is not told two different things about the same conversation.
+class _ClosedNotice extends StatelessWidget {
+  const _ClosedNotice();
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: A91.border)),
+        ),
+        child: const Text(
+          "This wasn't taken up, so the conversation is closed.",
+          textAlign: TextAlign.center,
+          style: TextStyle(color: A91.faint, fontSize: 13, height: 1.5),
+        ),
+      );
 }

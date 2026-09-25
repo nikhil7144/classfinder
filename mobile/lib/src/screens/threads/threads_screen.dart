@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,11 +17,39 @@ import '../../widgets/states.dart';
 /// A group pitch and a direct enquiry are different rows underneath and the
 /// same thing to read, so they are not separated into tabs. The service has
 /// already resolved title, subtitle and unread for whoever is asking.
-class ThreadsScreen extends ConsumerWidget {
+class ThreadsScreen extends ConsumerStatefulWidget {
   const ThreadsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ThreadsScreen> createState() => _ThreadsScreenState();
+}
+
+class _ThreadsScreenState extends ConsumerState<ThreadsScreen> {
+  Timer? _poll;
+
+  @override
+  void initState() {
+    super.initState();
+    // The inbox has no push of its own — a brand new thread, or a message
+    // sent while this list isn't the open thread, only ever arrived by
+    // pulling to refresh. PLAN.md's own answer to the same gap on the web is
+    // a periodic poll (60s) beside Realtime; this is that fallback without
+    // yet building the broader subscription Realtime would need.
+    _poll = Timer.periodic(const Duration(seconds: 20), (_) {
+      if (!mounted) return;
+      ref.invalidate(inboxProvider);
+      ref.invalidate(alertsProvider);
+    });
+  }
+
+  @override
+  void dispose() {
+    _poll?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final inbox = ref.watch(inboxProvider);
 
     return Scaffold(
@@ -211,17 +241,8 @@ class _ThreadTile extends StatelessWidget {
                         ),
                       ),
                     ],
-                    if (thread.awaitingReply) ...[
-                      const SizedBox(height: 9),
-                      const Text(
-                        'Waiting on them',
-                        style: TextStyle(
-                          color: A91.warn,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                    const SizedBox(height: 8),
+                    _Badges(thread: thread),
                   ],
                 ),
               ),
@@ -240,6 +261,62 @@ class _ThreadTile extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Where this conversation came from, and whether it is still going —
+/// ported row for row from the web's ThreadInbox, so the same conversation
+/// reads the same on both: Group/Direct always, a group's own pending state,
+/// and Closed for a declined thread on either kind.
+class _Badges extends StatelessWidget {
+  const _Badges({required this.thread});
+
+  final Thread thread;
+
+  @override
+  Widget build(BuildContext context) {
+    final isGroup = thread.kind == 'group';
+
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        _Badge(isGroup ? 'Group' : 'Direct'),
+        if (isGroup && thread.status == 'pending')
+          _Badge(
+            thread.iAmSeeker ? 'Awaiting your reply' : 'Sent',
+            tone: A91.warn,
+          ),
+        if (thread.status == 'declined') const _Badge('Closed'),
+      ],
+    );
+  }
+}
+
+class _Badge extends StatelessWidget {
+  const _Badge(this.label, {this.tone});
+
+  final String label;
+
+  /// Null reads as the neutral badge — the web's cf-badge-neutral.
+  final Color? tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = tone ?? A91.faint;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+            color: color, fontSize: 10.5, fontWeight: FontWeight.w600),
       ),
     );
   }

@@ -33,6 +33,13 @@ class _PostCardState extends ConsumerState<PostCard> {
   SpacePost get _post => _optimistic ?? widget.post;
 
   Future<void> _react(Reaction tapped) async {
+    // The owner gets management controls instead of reactions — matches the
+    // web's canReact, which is the same `!mine`/`canManage` distinction this
+    // already carries. Reacting to your own post is a real gap otherwise:
+    // nothing on the service refuses it, since the RLS policy only asks
+    // whether the caller may write to space_reactions at all.
+    if (widget.canManage) return;
+
     // Tapping the one you already gave takes it back. The service does not
     // toggle — it says so — so the decision is made here.
     final next = _post.myReaction == tapped ? null : tapped;
@@ -146,6 +153,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                     reaction: r,
                     count: post.countFor(r),
                     mine: post.myReaction == r,
+                    disabled: widget.canManage,
                     onTap: () => _react(r),
                   ),
                 const Spacer(),
@@ -296,11 +304,13 @@ class _ReactionButton extends StatelessWidget {
     required this.count,
     required this.mine,
     required this.onTap,
+    this.disabled = false,
   });
 
   final Reaction reaction;
   final int count;
   final bool mine;
+  final bool disabled;
   final VoidCallback onTap;
 
   IconData get _icon => switch (reaction) {
@@ -314,19 +324,29 @@ class _ReactionButton extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(999),
-          onTap: onTap,
+          onTap: disabled ? null : onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(_icon, size: 17, color: mine ? A91.grad1 : A91.faint),
+                Icon(_icon,
+                    size: 17,
+                    color: disabled
+                        ? A91.faint.withValues(alpha: 0.5)
+                        : mine
+                            ? A91.grad1
+                            : A91.faint),
                 if (count > 0) ...[
                   const SizedBox(width: 6),
                   Text(
                     '$count',
                     style: TextStyle(
-                      color: mine ? A91.ink : A91.faint,
+                      color: disabled
+                          ? A91.faint.withValues(alpha: 0.5)
+                          : mine
+                              ? A91.ink
+                              : A91.faint,
                       fontSize: 12.5,
                       fontWeight: mine ? FontWeight.w700 : FontWeight.w500,
                     ),

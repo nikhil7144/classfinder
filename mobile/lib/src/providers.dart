@@ -285,12 +285,26 @@ final inboxProvider = FutureProvider<List<Thread>>(
 /// it has to invalidate the inbox afterwards to clear the dot and the badge,
 /// and a provider that quietly writes on every rebuild is the wrong place for
 /// that.
-final messagesProvider = FutureProvider.family<List<Message>, ThreadKey>(
+///
+/// autoDispose, deliberately: without it, the first read of a thread is
+/// cached for the rest of the app's life, so a message that arrives while
+/// ThreadScreen is closed — missed by incomingProvider below, which only
+/// listens while the screen is open — is never seen even after reopening the
+/// same thread, because reopening re-watches the same stale cached Future
+/// instead of asking again. Disposing on close is what makes every open a
+/// fresh read.
+final messagesProvider =
+    FutureProvider.autoDispose.family<List<Message>, ThreadKey>(
   (ref, key) => ref.watch(threadsRepositoryProvider).messages(key.kind, key.id),
 );
 
 /// New messages as they land, straight from Postgres.
-final incomingProvider = StreamProvider.family<Message, ThreadKey>((ref, key) {
+///
+/// autoDispose alongside messagesProvider: without it, every thread ever
+/// opened keeps its Realtime channel subscribed for the rest of the app's
+/// life, one Postgres connection each, never torn down.
+final incomingProvider =
+    StreamProvider.autoDispose.family<Message, ThreadKey>((ref, key) {
   return ref.watch(threadsRepositoryProvider).incoming(key.kind, key.id);
 });
 

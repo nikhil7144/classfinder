@@ -52,21 +52,33 @@ class MoreScreen extends ConsumerWidget {
                 MaterialPageRoute(builder: (_) => const ListingScreen()),
               ),
             ),
-            // Only once parents can actually reach the page. Before approval
-            // the profile answers notFound(), so sharing it any earlier hands
-            // a coach a link to a 404 and lets them send it to thirty people.
-            if (_listingIsLive(me))
-              _Item(
-                icon: Icons.ios_share,
-                title: 'Share your page',
-                subtitle: 'Send your listing to parents you already know.',
-                onTap: () => Share.share(
-                  '${me!.provider!.displayName ?? 'My classes'} on Aspire91 — '
-                  'classes, fees and timings: '
-                  '${Env.siteUrl}/provider/${me.provider!.id}',
-                  subject: 'My Aspire91 listing',
-                ),
-              ),
+            // Always shown, even before approval — a coach filling in their
+            // listing should see this is coming, not wonder whether the app
+            // has a share feature at all. Only the tap itself is gated:
+            // before approval the profile answers notFound(), so sharing the
+            // link any earlier would hand a coach a 404 to send to thirty
+            // people.
+            _Item(
+              icon: Icons.ios_share,
+              title: 'Share your page',
+              subtitle: _listingIsLive(me)
+                  ? 'Send your listing to parents you already know.'
+                  : 'Available once your listing is approved.',
+              onTap: _listingIsLive(me)
+                  ? () => Share.share(
+                        '${me!.provider!.displayName ?? 'My classes'} on '
+                        'Aspire91 — classes, fees and timings: '
+                        '${Env.siteUrl}/provider/${me.provider!.id}',
+                        subject: 'My Aspire91 listing',
+                      )
+                  : () => ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                              "You'll be able to share your page once it's "
+                              'approved.'),
+                        ),
+                      ),
+            ),
             _Item(
               icon: Icons.event_outlined,
               title: 'Your events',

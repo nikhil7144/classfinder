@@ -66,6 +66,13 @@ class Thread {
   /// the coach cannot write again — the composer is closed, and says so.
   bool get awaitingReply => status == 'pending';
 
+  /// Whether new messages can still be sent — ported from the web's
+  /// threadIsOpen(): a group thread once accepted, an enquiry once open.
+  /// Pending and declined are both not-open, for different reasons; declined
+  /// cannot resume at all, which is what the composer and TrialCard both need
+  /// to know before offering an action the service will refuse.
+  bool get isOpen => kind == 'group' ? status == 'accepted' : status == 'open';
+
   /// The last thing that happened, for sorting and for the timestamp shown.
   DateTime get lastActivity => lastMessageAt ?? createdAt;
 
