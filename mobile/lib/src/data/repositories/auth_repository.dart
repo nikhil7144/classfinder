@@ -21,6 +21,23 @@ import '../supabase.dart';
 class AuthRepository {
   const AuthRepository();
 
+  /// Store-review accounts. Supabase has no notion of a fixed OTP, so these
+  /// two are real accounts with a real password behind the scenes — the code
+  /// below never touches the real OTP system for anyone else, and no other
+  /// email can reach this path no matter what code is typed. Exact match
+  /// only: this exists so a reviewer can type it without an inbox, not so a
+  /// pattern gets guessed.
+  static const _demoAccounts = {
+    'aspirestudent@gmail.com': '123456',
+    'aspirecoach@gmail.com': '123456',
+  };
+
+  /// The password actually set on both accounts in Supabase. Being in the
+  /// binary is not a leak worth guarding against further: reaching it still
+  /// requires typing one of the two exact emails above, and both accounts
+  /// exist for exactly this purpose.
+  static const _demoPassword = 'Aspire91-Demo-2026!';
+
   /// `serverClientId` rather than a bare `GoogleSignIn()`: it is what makes
   /// the id token this returns acceptable to Supabase's Google provider,
   /// which is configured with that same web client. The Android/iOS client
@@ -50,6 +67,11 @@ class AuthRepository {
   /// into this app instead of the web's `/auth/callback` page — harmless to
   /// set even though nothing in the UI surfaces that link today.
   Future<void> sendCode(String email) async {
+    // Nothing to send — there is no real code, and no real inbox to send it
+    // to either way. The screen still moves to the code step exactly as it
+    // would for anyone else.
+    if (_demoAccounts.containsKey(email.trim().toLowerCase())) return;
+
     try {
       await supabase.auth.signInWithOtp(
         email: email.trim(),
@@ -113,6 +135,24 @@ class AuthRepository {
 
   /// Verify it. `type: email` is what signInWithOtp issues for a code.
   Future<void> verifyCode({required String email, required String code}) async {
+    final trimmedEmail = email.trim().toLowerCase();
+    final demoCode = _demoAccounts[trimmedEmail];
+    if (demoCode != null) {
+      if (code.trim() != demoCode) {
+        throw const ApiException(
+            "That code didn't work — check it and try again.");
+      }
+      try {
+        await supabase.auth.signInWithPassword(
+          email: trimmedEmail,
+          password: _demoPassword,
+        );
+      } on AuthException catch (e) {
+        throw ApiException(e.message);
+      }
+      return;
+    }
+
     try {
       final result = await supabase.auth.verifyOTP(
         email: email.trim(),
