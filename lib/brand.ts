@@ -23,6 +23,29 @@ export const BRAND = {
    */
   logo: "/aspire91-wordmark.png",
   /**
+   * The wordmark again, for a light ground.
+   *
+   * Raster artwork cannot take a colour token the way type can, so a second
+   * theme needs a second file: `logo` above is white type and disappears on a
+   * light ground. Named for the ground each one sits ON, because "the dark
+   * logo" is ambiguous — it is the dark-type file, and it is the one the LIGHT
+   * theme uses.
+   *
+   * Kept as an image rather than switching the wordmark to live type so that
+   * the web and the Flutter app keep showing the same artwork, which is the
+   * same reason mobile/pubspec.yaml copies these files instead of re-exporting
+   * them.
+   *
+   * Cropped from the full lockup that was supplied, for the reason the note
+   * above gives: the lockup bakes the slogan into the artwork, and the version
+   * in public/ as aspire91-lockup-on-light.png still does. Cropped to the
+   * wordmark's ink box so it is edge-to-edge like the dark file, which has no
+   * padding at all — otherwise the same h-12 would render the two at visibly
+   * different glyph sizes as the theme flipped. Aspects now 2.56 against 2.49,
+   * about 3px apart at navbar size.
+   */
+  logoOnLight: "/aspire91-wordmark-on-light.png",
+  /**
    * The slogan. Short, and says nothing about what the product does, so it
    * belongs beside the name rather than in a page description.
    */

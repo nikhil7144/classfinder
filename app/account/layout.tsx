@@ -94,7 +94,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                 <span className="flex items-center gap-2">
                   {item.label}
                   {Boolean(item.badge) && (
-                    <span className="rounded-full bg-accent-ink px-1.5 py-0.5 text-[0.7rem] font-bold text-[#1a0d06]">
+                    <span className="rounded-full bg-accent-ink px-1.5 py-0.5 text-[0.7rem] font-bold text-on-accent">
                       {item.badge}
                     </span>
                   )}

@@ -82,7 +82,7 @@ export function ServiceAreaPicker({
               type="button"
               onClick={() => toggle(a.id)}
               aria-label={`Remove ${a.name}`}
-              className="inline-flex items-center gap-1.5 rounded-full bg-accent-ink px-3.5 py-2 text-sm font-semibold text-[#1a0d06]"
+              className="inline-flex items-center gap-1.5 rounded-full bg-accent-ink px-3.5 py-2 text-sm font-semibold text-on-accent"
             >
               {a.name}
               <span className="text-xs opacity-70">{cityNameById[a.cityId]}</span>

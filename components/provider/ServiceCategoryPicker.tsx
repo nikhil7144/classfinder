@@ -214,7 +214,7 @@ export default function ServiceCategoryPicker({
               type="button"
               onClick={() => toggle(item.id)}
               aria-label={`Remove ${item.name}`}
-              className="inline-flex items-center gap-1.5 rounded-full bg-accent-ink px-3.5 py-2 text-sm font-semibold text-[#1a0d06]"
+              className="inline-flex items-center gap-1.5 rounded-full bg-accent-ink px-3.5 py-2 text-sm font-semibold text-on-accent"
             >
               {item.name}
               <span aria-hidden="true">×</span>

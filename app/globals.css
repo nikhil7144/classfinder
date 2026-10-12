@@ -4,16 +4,40 @@
    Charcoal & Coral — the approved Aspire91 design system.
    https://claude.ai/code/artifact/03ec9968-92f5-4144-ab03-c044ea3fa035
 
-   A layered charcoal ground, one coral->gold gradient owning every primary
-   CTA, teal reserved strictly for approved/verified/success, and a taxonomy
-   palette kept clear of the CTA gradient so category dots never read as
-   buttons.
+   A layered ground, one coral->gold gradient owning every primary CTA, teal
+   reserved strictly for approved/verified/success, and a taxonomy palette
+   kept clear of the CTA gradient so category dots never read as buttons.
 
-   The app commits to this single dark look rather than shipping two themes,
-   so every colour is painted explicitly and nothing is left to inherit.
+   THEMES
+   The system ships two grounds. Dark is the brand's committed look and stays
+   the default: it is what :root paints with no attribute present, which is
+   also what a visitor with JavaScript off gets. Light is opt-in, selected by
+   stamping data-theme="light" on <html>.
+
+   components/ThemeScript.tsx stamps a concrete light|dark before first paint
+   so there is no flash of the wrong ground, and components/ThemeToggle.tsx
+   lets a visitor pick Light / Dark / Auto, Auto following the operating
+   system. Nothing here reads the clock — an OS that already runs its own
+   day/night schedule is a better signal than a hardcoded sunset hour, and it
+   does not flip the page out from under someone reading at dusk.
+
+   RULES FOR ADDING COLOUR
+   1. Never put a raw hex or a Tailwind palette utility (bg-gray-100,
+      text-white) in a component. Only tokens flip with the theme; those do
+      not, and /admin is the standing example of what that costs.
+   2. Every token below exists in BOTH blocks. One defined in only one block
+      resolves to an invalid value in the other theme, not to a fallback.
+   3. Contrast is checked, not eyeballed. Every text token clears WCAG AA
+      (4.5:1) against bg, surface, surface-2 AND surface-3 in both themes.
+      Measuring against white alone is how --muted/--faint shipped too light
+      the first time; see the note on --muted below.
    --------------------------------------------------------------------- */
 
-:root {
+/* --- Dark: the default ground, and the no-JavaScript baseline. --------- */
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
   --bg: #0c0e10;
   --surface: #17191c;
   --surface-2: #1f2226;
@@ -33,8 +57,21 @@
   --muted: #b3bcc2;
   --faint: #8b949b;
 
+  /* Gradient FILL stops. Deliberately identical in both themes — the brand
+     gradient is coral->gold on white just as it is on charcoal. Their
+     foreground twins --coral/--gold below are the ones that darken. */
   --grad-1: #ff6b4d;
   --grad-2: #ffb238;
+  /* Text sitting ON the gradient, and on an --accent-ink fill. */
+  --on-gradient: #1a0d06;
+  --on-accent: #1a0d06;
+
+  /* Accent FOREGROUNDS — links, eyebrows, borders, icon glyphs. Equal to the
+     gradient stops here; a dark ground is the case where fill and text
+     colour happen to coincide, which is why the two roles shared one token
+     until a light theme forced them apart. */
+  --coral: #ff6b4d;
+  --gold: #ffb238;
   --accent-ink: #ffd9a8;
 
   --teal: #17b893;
@@ -43,6 +80,34 @@
   --danger: #f4655f;
   --danger-soft: #35191b;
   --warn: #f5c244;
+  /* Was a bare #3a2f12 inside .cf-badge-warn — the one state tint that never
+     got a token, and so the one that would not have flipped. */
+  --warn-soft: #3a2f12;
+
+  /* Images fade into the page ground at their lower edge, so the scrim has
+     to be the ground colour at zero alpha. A transparent black fades through
+     grey on a light ground and dirties the photo. Carried as raw channels
+     because it is consumed as rgba(var(--scrim), a). */
+  --scrim: 12, 14, 16;
+
+  /* Elevation. Dark barely uses it — a black shadow on a near-black ground is
+     close to invisible by construction, which is correct here: dark separates
+     planes by lightness and its 1px border, and these values only deepen the
+     contact edge. The same tokens do the real work in light, where lightness
+     has run out. */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.34);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.45);
+  /* The coral glow under the primary CTA. Specified by the approved Charcoal &
+     Coral proposal and never implemented — globals.css carried no box-shadow
+     at all, so the one element meant to lift off every screen never did, in
+     either theme. Identical in both: it is the gradient's own light. */
+  --shadow-cta: 0 10px 26px -8px rgba(255, 107, 77, 0.55);
+
+  /* Carried as a whole colour, not a strength, because its one consumer is an
+     SVG feDropShadow flood-color. */
+  --illus-shadow: rgba(0, 0, 0, 0.45);
 
   /* Taxonomy — one colour per service group. Dance and music were added
      after the original proposal; rose and violet extend the set without
@@ -61,6 +126,99 @@
   --board: #38bdf8;
 }
 
+/* --- Light ------------------------------------------------------------
+   Not an inversion. Three groups had to be redrawn rather than flipped,
+   because each is read AGAINST the ground rather than filled:
+
+   - The accent foregrounds. --gold at #ffb238 is 1.8:1 on white, and it is
+     the colour under 26 text-gold links plus every .cf-eyebrow. Darkened to
+     an amber that still reads as the same accent.
+   - The taxonomy set. These are not only dots; they are the text colour in
+     108 eyebrow spots via style={{ color: tone }}, so the dark-ground values
+     come down roughly a third in lightness. The ${tone} tint backgrounds
+     follow for free: a 13% wash of a dark tone over white lands pale, and
+     the same tone then reads on top of it.
+   - The state tints. teal-soft/danger-soft/warn-soft are dark washes; their
+     light twins are pale washes under the same darkened foreground.
+
+   surface-3 is the binding constraint throughout, not white. It is the
+   darkest ground a light theme has, and nine tokens cleared AA on white
+   while failing on surface-3 before being darkened — the same trap the
+   --muted note above records.
+   --------------------------------------------------------------------- */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* Warm putty, not cool grey. A white card is then not only lighter than its
+     ground but COOLER than it, so the two planes separate by temperature as
+     well as luminance — and the ground/card ratio rises from 1.073 to 1.117.
+     Warm also flatters the coral->gold gradient in a way cool grey does not. */
+  --bg: #f4f2f0;
+  --surface: #ffffff;
+  --surface-2: #faf9f8;
+  --surface-3: #efedea;
+  /* Softer than the cool ramp's #d7dde2: with a real shadow carrying the
+     elevation, a hard line around every card reads as a wireframe. */
+  --border: #e3dfdb;
+  --border-soft: #f0ece8;
+
+  --ink: #14171a;
+  --muted: #4b545a;
+  --faint: #5d666c;
+
+  --grad-1: #ff6b4d;
+  --grad-2: #ffb238;
+  --on-gradient: #1a0d06;
+  /* Diverges from dark: the accent-ink fill is now dark, so its text is the
+     pale one. The pair swaps roles; the tokens stay the same two names. */
+  --on-accent: #fff5ee;
+
+  --coral: #b33a1d;
+  --gold: #8f5803;
+  --accent-ink: #7c2d12;
+
+  --teal: #0d6961;
+  --teal-soft: #d6f3ec;
+
+  --danger: #c0362f;
+  --danger-soft: #fde8e6;
+  --warn: #855708;
+  --warn-soft: #fdf0d2;
+
+  --scrim: 244, 242, 240;
+
+  /* Tinted warm (41,30,24), never pure black — black on a warm ground greys
+     it and the card looks dirty rather than lifted. Two layers each from -sm
+     up: a tight contact shadow for the edge, a wide soft one for the lift.
+     0.45 black, which dark uses, would be a bruise here. */
+  --shadow-xs: 0 1px 2px rgba(41, 30, 24, 0.05);
+  --shadow-sm: 0 1px 2px rgba(41, 30, 24, 0.04), 0 8px 20px rgba(41, 30, 24, 0.06);
+  --shadow-md: 0 2px 4px rgba(41, 30, 24, 0.05), 0 14px 30px rgba(41, 30, 24, 0.1);
+  --shadow-lg: 0 18px 40px rgba(41, 30, 24, 0.16);
+  --shadow-cta: 0 10px 26px -8px rgba(255, 107, 77, 0.55);
+
+  --illus-shadow: rgba(16, 24, 32, 0.18);
+
+  --sport: #2c5fc4;
+  --wellness: #0d6b4b;
+  --mind: #6d4bd1;
+  --indoor: #7d5905;
+  --dance: #b02f66;
+  --music: #4a52d4;
+  --subject: #0a6880;
+  --exam: #bc2f6e;
+  --acting: #a1540f;
+  --board: #0a6f95;
+}
+
+/* --- Tailwind aliases -------------------------------------------------
+   --color-coral/--color-gold point at the FOREGROUND tokens, not at the
+   gradient stops they used to alias. Every text-gold, border-gold and
+   fill-gold in the app is a foreground, and no utility ever built the
+   gradient — .cf-btn-primary composes it from --grad-1/--grad-2 directly —
+   so the split costs no class renames, and is what lets a gold link darken
+   for light mode while the CTA stays coral->gold on both grounds.
+   --------------------------------------------------------------------- */
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
@@ -73,15 +231,18 @@
   --color-muted: var(--muted);
   --color-faint: var(--faint);
 
-  --color-coral: var(--grad-1);
-  --color-gold: var(--grad-2);
+  --color-coral: var(--coral);
+  --color-gold: var(--gold);
   --color-accent-ink: var(--accent-ink);
+  --color-on-accent: var(--on-accent);
+  --color-on-gradient: var(--on-gradient);
 
   --color-teal: var(--teal);
   --color-teal-soft: var(--teal-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
 
   --color-sport: var(--sport);
   --color-wellness: var(--wellness);
@@ -99,10 +260,6 @@
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 }
 
-html {
-  color-scheme: dark;
-}
-
 body {
   margin: 0;
   background: var(--bg);
@@ -114,7 +271,7 @@ body {
 
 ::selection {
   background: var(--grad-1);
-  color: #1a0d06;
+  color: var(--on-gradient);
 }
 
 /* ---------------------------------------------------------------------
@@ -127,7 +284,9 @@ body {
   font-size: 0.72rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--grad-2);
+  /* --gold, not --grad-2: this is text on the page ground, so it must darken
+     in light mode where the gradient stop must not. */
+  color: var(--gold);
 }
 
 .cf-display {
@@ -141,6 +300,8 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 1.25rem;
+  /* Near-invisible on charcoal, and the whole of the hierarchy on white. */
+  box-shadow: var(--shadow-sm);
 }
 
 .cf-input {
@@ -178,10 +339,11 @@ body {
   padding: 0.8rem 1.5rem;
   font-weight: 700;
   font-size: 0.9rem;
-  color: #1a0d06;
+  color: var(--on-gradient);
   cursor: pointer;
   background: linear-gradient(100deg, var(--grad-1), var(--grad-2));
-  transition: filter 0.15s ease, transform 0.15s ease;
+  box-shadow: var(--shadow-cta);
+  transition: filter 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 .cf-btn-primary:hover:not(:disabled) {
   filter: brightness(1.07);
@@ -189,6 +351,8 @@ body {
 .cf-btn-primary:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+  /* A disabled button that still glows reads as pressable. */
+  box-shadow: none;
 }
 
 .cf-btn-ghost {
@@ -232,7 +396,7 @@ body {
 .cf-pill[data-selected="true"] {
   background: var(--accent-ink);
   border-color: var(--accent-ink);
-  color: #1a0d06;
+  color: var(--on-accent);
   font-weight: 600;
 }
 
@@ -249,7 +413,7 @@ body {
   color: var(--teal);
 }
 .cf-badge-warn {
-  background: #3a2f12;
+  background: var(--warn-soft);
   color: var(--warn);
 }
 .cf-badge-danger {
@@ -261,8 +425,23 @@ body {
   color: var(--muted);
 }
 
+/* The wordmark is raster artwork, so unlike type it cannot take --ink and
+   follow the theme: each ground needs its own file. components/BrandLogo.tsx
+   renders both and these two rules pick one, which keeps the choice in CSS
+   where it resolves before first paint. Dark is the default here as
+   everywhere, so the light file is the one that has to be switched on. */
+.cf-logo-on-light {
+  display: none;
+}
+:root[data-theme="light"] .cf-logo-on-light {
+  display: block;
+}
+:root[data-theme="light"] .cf-logo-on-dark {
+  display: none;
+}
+
 :focus-visible {
-  outline: 2px solid var(--grad-2);
+  outline: 2px solid var(--gold);
   outline-offset: 2px;
 }
 
