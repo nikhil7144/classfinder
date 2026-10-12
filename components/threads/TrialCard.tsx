@@ -222,7 +222,7 @@ export default function TrialCard({
 
           The pane clips it, and it scrolls itself, so it cannot escape. */}
       {(expanded || proposing) && (
-        <div className="absolute inset-x-0 top-full z-20 max-h-[22rem] overflow-y-auto border-b border-line bg-surface-2 px-5 py-4 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+        <div className="absolute inset-x-0 top-full z-20 max-h-[22rem] overflow-y-auto border-b border-line bg-surface-2 px-5 py-4 shadow-[var(--shadow-lg)]">
           {live && (
             <div className="rounded-2xl border border-line bg-surface p-4">
               <p className="font-semibold text-ink">{trialWhen(live.scheduled_at)}</p>

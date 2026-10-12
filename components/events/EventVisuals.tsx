@@ -34,12 +34,17 @@ export function EventBanner({ bannerUrl, title, group, className = "" }: BannerP
       <div className={`relative overflow-hidden bg-surface-2 ${className}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={bannerUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
-        {/* The ground the poster sits on is dark, so the bottom of every
-            image is faded into it — otherwise a bright photo ends in a hard
-            line halfway down the card. */}
+        {/* The bottom of every image is faded into the card ground —
+            otherwise a bright photo ends in a hard line halfway down the
+            card. Fades to --scrim, the ground colour, not to black: a
+            transparent black passes through grey on a light ground and
+            dirties the photo on the way. */}
         <div
           className="pointer-events-none absolute inset-0"
-          style={{ background: "linear-gradient(to top, rgba(12,14,16,0.85), rgba(12,14,16,0) 60%)" }}
+          style={{
+            background:
+              "linear-gradient(to top, rgba(var(--scrim), 0.85), rgba(var(--scrim), 0) 60%)",
+          }}
         />
       </div>
     );
@@ -56,7 +61,10 @@ export function EventBanner({ bannerUrl, title, group, className = "" }: BannerP
     <div
       className={`relative overflow-hidden ${className}`}
       style={{
-        background: `radial-gradient(120% 120% at 15% 0%, ${tone}33 0%, rgba(12,14,16,0) 55%), linear-gradient(140deg, var(--surface-2), var(--surface))`,
+        // color-mix, not `${tone}33`: groupTone returns "var(--sport)", so
+        // appending hex alpha produced "var(--sport)33" — not a colour, so
+        // the whole stop was dropped and the wash never rendered.
+        background: `radial-gradient(120% 120% at 15% 0%, color-mix(in srgb, ${tone} 20%, transparent) 0%, rgba(var(--scrim), 0) 55%), linear-gradient(140deg, var(--surface-2), var(--surface))`,
       }}
       aria-hidden
     >
@@ -83,7 +91,15 @@ export function DateTile({ iso, group }: { iso: string; group?: string | null })
 
   return (
     <div className="w-14 shrink-0 overflow-hidden rounded-2xl border border-line bg-surface-2 text-center">
-      <div className="py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider" style={{ background: `${tone}22`, color: tone }}>
+      <div
+        className="py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider"
+        // Same `${tone}22` bug as the banner wash above; the month strip has
+        // been drawing on bare surface-2 rather than its taxonomy tint.
+        style={{
+          background: `color-mix(in srgb, ${tone} 13%, transparent)`,
+          color: tone,
+        }}
+      >
         {month}
       </div>
       <div className="px-1 py-1">

@@ -129,7 +129,7 @@ export default function ServicePicker({
               type="button"
               onClick={() => choose(s.id)}
               aria-label={`Remove ${s.name}`}
-              className="inline-flex items-center gap-1.5 rounded-full bg-accent-ink px-3 py-1.5 text-xs font-semibold text-[#1a0d06]"
+              className="inline-flex items-center gap-1.5 rounded-full bg-accent-ink px-3 py-1.5 text-xs font-semibold text-on-accent"
             >
               {s.name}
               <span aria-hidden="true">×</span>

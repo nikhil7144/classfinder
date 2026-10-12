@@ -59,7 +59,7 @@ export default function GroupTabs({ groupId, active, unread = 0, threadCount = 0
           >
             {tab.label}
             {tab.badge ? (
-              <span className="ml-2 rounded-full bg-accent-ink px-1.5 py-0.5 text-[0.7rem] font-bold text-[#1a0d06]">
+              <span className="ml-2 rounded-full bg-accent-ink px-1.5 py-0.5 text-[0.7rem] font-bold text-on-accent">
                 {tab.badge}
               </span>
             ) : tab.key === "messages" && threadCount > 0 ? (

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import FeedItem from "@/components/spaces/FeedItem";
+import HeroMotif from "@/components/HeroMotif";
 import HomeAudiences from "@/components/HomeAudiences";
 import MatchedSpacesRail from "@/components/spaces/MatchedSpacesRail";
 import { BRAND } from "@/lib/brand";
@@ -24,6 +25,17 @@ const VERTICALS = [
   { label: "Mind & Indoor Games", tone: "mind", blurb: "Chess, abacus, vedic maths, carrom" },
 ];
 
+/** Named subjects, not vertical names — a parent recognises "Bharatanatyam"
+    faster than "Dance", and these sit above the vertical grid that follows. */
+const HERO_CHIPS = [
+  { label: "Cricket", tone: "sport" },
+  { label: "Bharatanatyam", tone: "dance" },
+  { label: "Guitar", tone: "music" },
+  { label: "Maths", tone: "subject" },
+  { label: "Chess", tone: "mind" },
+  { label: "JEE", tone: "exam" },
+];
+
 const toneVar: Record<string, string> = {
   sport: "var(--sport)",
   dance: "var(--dance)",
@@ -37,7 +49,12 @@ const toneVar: Record<string, string> = {
 export default function GuestHome({ cities, selectedCity, posts }: Props) {
   return (
     <main className="min-h-screen bg-bg">
-      <section className="mx-auto max-w-4xl px-6 pt-24 pb-16 text-center">
+      <section className="relative overflow-hidden px-6 pt-24 pb-16 text-center">
+        <HeroMotif />
+
+        {/* Above the motif, and the reason the section is a positioning
+            context at all. */}
+        <div className="relative mx-auto max-w-4xl">
         <p className="cf-eyebrow">{BRAND.name}</p>
 
         <h1 className="cf-display mx-auto mt-5 max-w-3xl text-[clamp(2.3rem,5.5vw,3.6rem)] leading-[1.08] text-ink">
@@ -79,6 +96,27 @@ export default function GuestHome({ cities, selectedCity, posts }: Props) {
             Log in
           </Link>
         </p>
+
+        {/* Real categories rather than decoration: they give the hero
+            something with edges in it, and say what is actually inside
+            before a visitor has scrolled to the grid below. */}
+        <div className="mt-11 flex flex-wrap items-center justify-center gap-2">
+          {HERO_CHIPS.map((c) => (
+            <Link
+              key={c.label}
+              href="/search"
+              className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 text-[0.8rem] font-semibold text-muted shadow-[var(--shadow-xs)] transition hover:border-faint hover:text-ink"
+            >
+              <span
+                aria-hidden="true"
+                className="h-1.5 w-1.5 shrink-0 rounded-full"
+                style={{ background: toneVar[c.tone] }}
+              />
+              {c.label}
+            </Link>
+          ))}
+        </div>
+        </div>
       </section>
 
       <MatchedSpacesRail />

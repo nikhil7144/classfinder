@@ -378,7 +378,7 @@ export default function ThreadPane({ thread, me, onChanged, onBack }: Props) {
             <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                  mine ? "bg-accent-ink text-[#1a0d06]" : "border border-line bg-surface-2 text-ink"
+                  mine ? "bg-accent-ink text-on-accent" : "border border-line bg-surface-2 text-ink"
                 }`}
               >
                 {m.body}

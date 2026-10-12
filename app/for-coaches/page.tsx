@@ -232,7 +232,15 @@ function RequestCard() {
           <stop offset="1" stopColor="#ffb238" />
         </linearGradient>
         <filter id="a91soft" x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="18" stdDeviation="24" floodColor="#000" floodOpacity="0.45" />
+          {/* Themed: 0.45 black under the card is a bruise on a light ground.
+              Set through style so it can take a custom property — flood-color
+              as a plain attribute cannot. */}
+          <feDropShadow
+            dx="0"
+            dy="18"
+            stdDeviation="24"
+            style={{ floodColor: "var(--illus-shadow)" }}
+          />
         </filter>
       </defs>
 
@@ -256,9 +264,9 @@ function RequestCard() {
       <circle cx="372" cy="92" r="23" fill="url(#a91coral)" />
       <path
         d="M372 82c-4.2 0-7.5 3.3-7.5 7.4 0 5.2 7.5 12.6 7.5 12.6s7.5-7.4 7.5-12.6c0-4.1-3.3-7.4-7.5-7.4z"
-        fill="none" stroke="#1a0d06" strokeWidth="1.8"
+        fill="none" stroke="var(--on-gradient)" strokeWidth="1.8"
       />
-      <circle cx="372" cy="89.4" r="2.6" fill="#1a0d06" />
+      <circle cx="372" cy="89.4" r="2.6" fill="var(--on-gradient)" />
 
       <line x1="74" y1="148" x2="354" y2="148" stroke="var(--border)" />
 
@@ -299,7 +307,7 @@ function RequestCard() {
         +2 families together
       </text>
       <rect x="270" y="330" width="84" height="30" rx="15" fill="url(#a91coral)" />
-      <text x="312" y="350" textAnchor="middle" fontFamily="var(--font-manrope), sans-serif" fontWeight="700" fontSize="13" fill="#1a0d06">
+      <text x="312" y="350" textAnchor="middle" fontFamily="var(--font-manrope), sans-serif" fontWeight="700" fontSize="13" fill="var(--on-gradient)">
         Reply
       </text>
     </svg>

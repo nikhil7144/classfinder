@@ -3,6 +3,7 @@ import { Manrope, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import Footer from "@/components/Footer";
 import BrowseLinks from "@/components/seo/BrowseLinks";
 import Navbar from "@/components/Navbar";
+import ThemeScript from "@/components/ThemeScript";
 import { BRAND } from "@/lib/brand";
 import "./globals.css";
 
@@ -52,10 +53,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    // suppressHydrationWarning: ThemeScript stamps data-theme on this element
+    // before React hydrates, and the server has no way to know the visitor's
+    // stored choice, so it always renders the attribute absent.
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${manrope.variable} ${jakarta.variable} ${jetbrains.variable} antialiased`}
       >
+        {/* First child of body on purpose — it must run while the parser is
+            still blocked, before anything below has been painted. */}
+        <ThemeScript />
         <Navbar />
         {children}
         <BrowseLinks />

@@ -4,6 +4,7 @@ import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import BrandLogo from "@/components/BrandLogo";
 import { BRAND } from "@/lib/brand";
 import { usePathname } from "next/navigation";
 
@@ -40,7 +41,7 @@ export default function Footer() {
       <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
           <Link href="/" className="inline-flex transition">
-            <img src={BRAND.logo} alt={BRAND.name} className="h-12 w-auto" />
+            <BrandLogo />
           </Link>
           <p className="cf-eyebrow mt-2">{BRAND.slogan}</p>
           <p className="mt-4 max-w-xl text-sm leading-7 text-muted">{BRAND.legalName}</p>
