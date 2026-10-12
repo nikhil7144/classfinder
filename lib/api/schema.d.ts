@@ -866,6 +866,134 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What has happened, newest first
+         * @description Paged on time rather than an offset: notifications arrive while somebody is scrolling, and an offset would shuffle the page under their thumb each time one did. Pass the previous page's nextBefore to continue.
+         */
+        get: operations["NotificationsController_list_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark notifications read
+         * @description Three readings, narrowest first: `ids` for specific ones, `threadId` for a conversation, `all` for the lot. A body naming none of them is refused rather than treated as `all` — clearing everything by accident cannot be undone. Returns the unread count afterwards, so a badge does not need a second call.
+         */
+        post: operations["NotificationsController_read_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Devices registered on this account
+         * @description Never includes the tokens themselves — they are send credentials, not data.
+         */
+        get: operations["NotificationsController_devices_v1"];
+        put?: never;
+        /**
+         * Register this device for push
+         * @description Call on every launch, not only the first. FCM rotates tokens, and an app that registers once goes quiet weeks later with nothing anywhere to say why. Re-registering also brings back a device FCM had previously told us to give up on. Safe to repeat: the token is the key, so the same device signing in as somebody else moves rather than doubling up.
+         */
+        post: operations["NotificationsController_register_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/devices/forget": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Stop push to this device, or to all of them
+         * @description Call on sign-out. The token belongs to the device rather than the session, so an app that signs out without this leaves the next person to use that phone receiving the last person's messages. Omit the token to cover every device on the account.
+         */
+        post: operations["NotificationsController_forget_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What this person wants to be told about
+         * @description Answers with the defaults for somebody who has never changed anything, rather than 404ing — a client should not have to treat 'never touched it' as a separate case.
+         */
+        get: operations["NotificationsController_settings_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change them
+         * @description A real PATCH: fields you leave out keep their current values. Quiet hours hold push only — an email arriving at 2am is not a buzz at 2am — and need a start and an end or neither.
+         */
+        patch: operations["NotificationsController_updateSettings_v1"];
+        trace?: never;
+    };
+    "/api/v1/notifications/channels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Which kinds push and which email
+         * @description The product's decision, not the caller's, which is why it is a read and not a setting. A settings screen uses it to say 'we'll email this one' rather than implying a switch that does nothing.
+         */
+        get: operations["NotificationsController_channels_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/providers/search": {
         parameters: {
             query?: never;
@@ -2183,6 +2311,146 @@ export interface components {
             societyName: string | null;
             /** @description Whether the group is sharing a number at all. */
             shared: boolean;
+        };
+        NotificationDto: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "enquiry_received" | "approach_received" | "pitch_received" | "message_received" | "trial_proposed" | "trial_answered" | "query_received" | "query_callback_scheduled" | "query_callback_due" | "entry_received" | "entry_cancelled" | "event_cancelled";
+            /** @description One line. Already written for a lock screen. */
+            title: string;
+            /** @description A preview, capped at 140 characters when it was queued — never the whole thing. */
+            body: string | null;
+            /**
+             * @description Where it points, as a web path. A mobile client maps it to its own route rather than opening a browser; the path is the same on both so one trigger serves both clients.
+             * @example /dashboard/queries?query=6f1b…
+             */
+            url: string;
+            /**
+             * @description Set when this is about a conversation, so a client can mark that thread read.
+             * @enum {string|null}
+             */
+            threadKind?: "group" | "enquiry" | null;
+            /** Format: uuid */
+            threadId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            readAt: string | null;
+            /** @description Convenience for a list that dots the unread ones. */
+            unread: boolean;
+        };
+        NotificationListDto: {
+            items: components["schemas"]["NotificationDto"][];
+            /** @description How many of the returned page are unread. */
+            unread: number;
+            /**
+             * Format: date-time
+             * @description Pass back as `before` for the next page. Null when this page is the end. Keyed on the timestamp rather than an offset, so a notification arriving mid-scroll cannot shift the page under somebody's thumb.
+             */
+            nextBefore: string | null;
+        };
+        MarkReadDto: {
+            /** @description Specific notifications — swiping one away, or clearing what a screen showed. */
+            ids?: string[];
+            /**
+             * Format: uuid
+             * @description Everything about one conversation — what opening a thread means.
+             */
+            threadId?: string;
+            /** @description Everything. What opening the bell means. Ignored if ids or threadId are given, because a request that says both is a client bug and the narrower reading is the safe one. */
+            all?: boolean;
+        };
+        MarkReadResultDto: {
+            /** @description Unread notifications left after the call, for the badge. */
+            remaining: number;
+        };
+        RegisterDeviceDto: {
+            /** @description The FCM registration token. iOS reaches APNs through Firebase, so it is one field. */
+            token: string;
+            /** @enum {string} */
+            platform: "ios" | "android" | "web";
+            /**
+             * @description Which app this install is. The two flavours are separate builds, and a coach's phone must never be sent a parent's notification because both happen to be installed.
+             * @enum {string}
+             */
+            appFlavor: "provider" | "seeker";
+            /** @example en-IN */
+            locale?: string;
+        };
+        RegisteredDeviceDto: {
+            /** Format: uuid */
+            id: string;
+        };
+        ForgetDeviceDto: {
+            /** @description The device signing out. Omit to stop push to every device on this account — which is what somebody does after losing a phone. */
+            token?: string;
+        };
+        ForgetDeviceResultDto: {
+            /** @description Devices this turned off. */
+            forgotten: number;
+        };
+        DeviceDto: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            platform: "ios" | "android" | "web";
+            /** @enum {string} */
+            appFlavor: "provider" | "seeker";
+            /**
+             * Format: date-time
+             * @description Last time this device registered — each launch.
+             */
+            lastSeenAt: string;
+            /** @description Why push to this device stopped: 'signed out', or what FCM said. */
+            disabledReason: string | null;
+        };
+        NotificationSettingsDto: {
+            pushEnabled: boolean;
+            emailEnabled: boolean;
+            /** @description Kinds this person has turned off individually, whatever the defaults say. */
+            mutedKinds: ("enquiry_received" | "approach_received" | "pitch_received" | "message_received" | "trial_proposed" | "trial_answered" | "query_received" | "query_callback_scheduled" | "query_callback_due" | "entry_received" | "entry_cancelled" | "event_cancelled")[];
+            /**
+             * @description Start of the window where push is held. Email is unaffected.
+             * @example 22:00
+             */
+            quietHoursStart: string | null;
+            /** @example 07:00 */
+            quietHoursEnd: string | null;
+            /**
+             * @description The zone quiet hours are read in.
+             * @example Asia/Kolkata
+             */
+            timezone: string;
+        };
+        UpdateNotificationSettingsDto: {
+            pushEnabled?: boolean;
+            emailEnabled?: boolean;
+            mutedKinds?: ("enquiry_received" | "approach_received" | "pitch_received" | "message_received" | "trial_proposed" | "trial_answered" | "query_received" | "query_callback_scheduled" | "query_callback_due" | "entry_received" | "entry_cancelled" | "event_cancelled")[];
+            /**
+             * @description Send with quietHoursEnd, or send both as null to clear the window.
+             * @example 22:00
+             */
+            quietHoursStart?: string | null;
+            /** @example 07:00 */
+            quietHoursEnd?: string | null;
+            /** @example Asia/Kolkata */
+            timezone?: string;
+        };
+        NotificationChannelDto: {
+            /** @enum {string} */
+            kind: "enquiry_received" | "approach_received" | "pitch_received" | "message_received" | "trial_proposed" | "trial_answered" | "query_received" | "query_callback_scheduled" | "query_callback_due" | "entry_received" | "entry_cancelled" | "event_cancelled";
+            /** @description Whether this kind buzzes a phone. */
+            pushes: boolean;
+            /** @description Whether this kind is emailed. */
+            emails: boolean;
+            /**
+             * @description Which app buzzes. A coach who is also a parent has both installed, and the kind is what knows which one should light up. Email ignores it — there is one inbox.
+             * @enum {string}
+             */
+            audience: "provider" | "seeker" | "either";
+            /** @description Why it is set that way. Useful on a settings screen; kept honest in the table. */
+            note: string | null;
         };
         ProviderSearchResultDto: {
             /** Format: uuid */
@@ -3815,6 +4083,180 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GroupContactDto"];
+                };
+            };
+        };
+    };
+    NotificationsController_list_v1: {
+        parameters: {
+            query?: {
+                limit?: number;
+                /** @description Only notifications older than this. The previous page's `nextBefore`. */
+                before?: string;
+                /** @description Only the ones not yet read. */
+                unreadOnly?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationListDto"];
+                };
+            };
+        };
+    };
+    NotificationsController_read_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarkReadDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarkReadResultDto"];
+                };
+            };
+        };
+    };
+    NotificationsController_devices_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceDto"][];
+                };
+            };
+        };
+    };
+    NotificationsController_register_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterDeviceDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisteredDeviceDto"];
+                };
+            };
+        };
+    };
+    NotificationsController_forget_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ForgetDeviceDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ForgetDeviceResultDto"];
+                };
+            };
+        };
+    };
+    NotificationsController_settings_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationSettingsDto"];
+                };
+            };
+        };
+    };
+    NotificationsController_updateSettings_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateNotificationSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationSettingsDto"];
+                };
+            };
+        };
+    };
+    NotificationsController_channels_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationChannelDto"][];
                 };
             };
         };
