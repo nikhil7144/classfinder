@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import FeedItem from "@/components/spaces/FeedItem";
 import HeroMotif from "@/components/HeroMotif";
@@ -127,11 +128,18 @@ export default function GuestHome({ cities, selectedCity, posts }: Props) {
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {VERTICALS.map((v) => (
             <Link key={v.label} href="/search" className="cf-card block p-6 transition hover:border-faint">
-              <div className="flex items-center gap-2.5">
-                <span
-                  aria-hidden="true"
-                  className="h-2.5 w-2.5 shrink-0 rounded-full"
-                  style={{ background: toneVar[v.tone] }}
+              <div className="flex items-center gap-3">
+                {/* next/image, not <img>: the source art is a 256px PNG so the
+                    seven of them are 648KB raw, and this serves a ~48px WebP
+                    instead. alt is empty because the heading beside it already
+                    names the category — a screen reader would otherwise hear
+                    "Sports" twice. */}
+                <Image
+                  src={`/icons/activities/${v.tone}.png`}
+                  alt=""
+                  width={44}
+                  height={44}
+                  className="h-11 w-11 shrink-0"
                 />
                 <h2 className="font-display text-base font-bold text-ink">{v.label}</h2>
               </div>
