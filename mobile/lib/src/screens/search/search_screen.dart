@@ -154,7 +154,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
+                  Text(
                     'Nobody here yet',
                     style: TextStyle(
                         color: A91.ink,
@@ -169,7 +169,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         : 'Nothing within $widest km. Try a different area, or '
                             'clear what you are looking for.',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: A91.muted, height: 1.6),
+                    style: TextStyle(color: A91.muted, height: 1.6),
                   ),
                   // Widening is the answer more often than not, so it is a
                   // button rather than a suggestion.
@@ -180,8 +180,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           () => _query = _query.copyWith(radiusKm: widest)),
                       child: Text(
                         'Search within $widest km',
-                        style: const TextStyle(
-                            color: A91.grad2, fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                            color: A91.gold, fontWeight: FontWeight.w700),
                       ),
                     ),
                   ],
@@ -299,17 +299,17 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               child: TextButton.icon(
                 onPressed: _locating ? null : _locate,
                 icon: _locating
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 15,
                         width: 15,
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: A91.faint),
                       )
-                    : const Icon(Icons.my_location, size: 17, color: A91.grad2),
+                    : Icon(Icons.my_location, size: 17, color: A91.gold),
                 label: Text(
                   _locating ? 'Locating…' : 'Use my location',
-                  style: const TextStyle(
-                      color: A91.grad2, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                      color: A91.gold, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -318,7 +318,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 padding: const EdgeInsets.only(left: 12, bottom: 6),
                 child: Text(
                   _locationNote!,
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: A91.faint, fontSize: 12, height: 1.45),
                 ),
               ),

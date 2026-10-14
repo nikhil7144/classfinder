@@ -112,7 +112,7 @@ class _ChooseRoleScreenState extends ConsumerState<ChooseRoleScreen> {
                     style: Theme.of(context).textTheme.headlineLarge,
                   ),
                   const SizedBox(height: 10),
-                  const Text(
+                  Text(
                     'This sets up your account. It is not something you can casually '
                     'change later, so pick the one that fits.',
                     style: TextStyle(color: A91.muted, height: 1.55),
@@ -132,7 +132,7 @@ class _ChooseRoleScreenState extends ConsumerState<ChooseRoleScreen> {
                     const SizedBox(height: 4),
                     Text(
                       _error!,
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: A91.danger, fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 12),
@@ -191,7 +191,7 @@ class _WrongAppEscape extends StatelessWidget {
             : 'Are you a coach or academy? This is the families app. Install '
                 'Aspire91 for Coaches and sign in with the same email — nothing '
                 'is set up until you choose here.',
-        style: const TextStyle(color: A91.faint, height: 1.55, fontSize: 13),
+        style: TextStyle(color: A91.faint, height: 1.55, fontSize: 13),
       ),
     );
   }
@@ -226,7 +226,7 @@ class _Choice extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             // The selected border is coral, which is the one decorative use of
             // it the palette allows: it marks the thing about to be acted on.
-            border: Border.all(color: selected ? A91.grad1 : A91.border),
+            border: Border.all(color: selected ? A91.coral : A91.border),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -236,7 +236,7 @@ class _Choice extends StatelessWidget {
                     ? Icons.radio_button_checked
                     : Icons.radio_button_unchecked,
                 size: 20,
-                color: selected ? A91.grad1 : A91.faint,
+                color: selected ? A91.coral : A91.faint,
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -245,7 +245,7 @@ class _Choice extends StatelessWidget {
                   children: [
                     Text(
                       option.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: A91.ink,
                         fontWeight: FontWeight.w700,
                         fontSize: 15.5,
@@ -254,7 +254,7 @@ class _Choice extends StatelessWidget {
                     const SizedBox(height: 5),
                     Text(
                       option.body,
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: A91.muted, height: 1.5, fontSize: 13.5),
                     ),
                   ],

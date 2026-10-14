@@ -55,7 +55,7 @@ class _PostCardState extends ConsumerState<PostCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: A91.surface3,
-          content: Text(e.message, style: const TextStyle(color: A91.ink)),
+          content: Text(e.message, style: TextStyle(color: A91.ink)),
         ),
       );
     }
@@ -67,18 +67,18 @@ class _PostCardState extends ConsumerState<PostCard> {
       builder: (context) => AlertDialog(
         backgroundColor: A91.surface,
         title: const Text('Delete this post?'),
-        content: const Text(
+        content: Text(
           'It goes from your Space for good. Reactions go with it.',
           style: TextStyle(color: A91.muted, height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Keep it', style: TextStyle(color: A91.muted)),
+            child: Text('Keep it', style: TextStyle(color: A91.muted)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete',
+            child: Text('Delete',
                 style:
                     TextStyle(color: A91.danger, fontWeight: FontWeight.w700)),
           ),
@@ -97,7 +97,7 @@ class _PostCardState extends ConsumerState<PostCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: A91.surface3,
-          content: Text(e.message, style: const TextStyle(color: A91.ink)),
+          content: Text(e.message, style: TextStyle(color: A91.ink)),
         ),
       );
     }
@@ -131,14 +131,14 @@ class _PostCardState extends ConsumerState<PostCard> {
                 if (post.body != null && post.body!.trim().isNotEmpty) ...[
                   Text(
                     post.body!.trim(),
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: A91.ink, height: 1.5, fontSize: 14.5),
                   ),
                   const SizedBox(height: 12),
                 ],
                 Text(
                   _when(post.createdAt),
-                  style: const TextStyle(color: A91.faint, fontSize: 11.5),
+                  style: TextStyle(color: A91.faint, fontSize: 11.5),
                 ),
               ],
             ),
@@ -160,7 +160,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                 if (widget.canManage)
                   IconButton(
                     onPressed: _delete,
-                    icon: const Icon(Icons.delete_outline,
+                    icon: Icon(Icons.delete_outline,
                         size: 19, color: A91.faint),
                     tooltip: 'Delete',
                   ),
@@ -219,7 +219,7 @@ class _Photo extends StatelessWidget {
               : Container(
                   color: A91.surface2,
                   alignment: Alignment.center,
-                  child: const SizedBox(
+                  child: SizedBox(
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(
@@ -231,7 +231,7 @@ class _Photo extends StatelessWidget {
           errorBuilder: (context, _, __) => Container(
             color: A91.surface2,
             alignment: Alignment.center,
-            child: const Icon(Icons.image_not_supported_outlined,
+            child: Icon(Icons.image_not_supported_outlined,
                 color: A91.faint, size: 26),
           ),
         ),
@@ -282,7 +282,7 @@ class _HiddenNotice extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Only you can see this post',
               style: TextStyle(
                   color: A91.danger, fontWeight: FontWeight.w700, fontSize: 13),
@@ -290,7 +290,7 @@ class _HiddenNotice extends StatelessWidget {
             if (reason != null) ...[
               const SizedBox(height: 4),
               Text(reason!,
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: A91.muted, fontSize: 12.5, height: 1.45)),
             ],
           ],
@@ -335,7 +335,7 @@ class _ReactionButton extends StatelessWidget {
                     color: disabled
                         ? A91.faint.withValues(alpha: 0.5)
                         : mine
-                            ? A91.grad1
+                            ? A91.coral
                             : A91.faint),
                 if (count > 0) ...[
                   const SizedBox(width: 6),

@@ -68,7 +68,7 @@ class CoachCard extends StatelessWidget {
                                 coach.displayName ?? 'Unnamed',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: A91.ink,
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
@@ -85,7 +85,7 @@ class CoachCard extends StatelessWidget {
                                   color: A91.warn.withValues(alpha: 0.14),
                                   borderRadius: BorderRadius.circular(999),
                                 ),
-                                child: const Text(
+                                child: Text(
                                   'Featured',
                                   style: TextStyle(
                                       color: A91.warn,
@@ -102,7 +102,7 @@ class CoachCard extends StatelessWidget {
                             coach.nearestAreaName!,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 color: A91.muted, fontSize: 12.5),
                           ),
                         ],
@@ -112,7 +112,7 @@ class CoachCard extends StatelessWidget {
                             [distance, experience]
                                 .whereType<String>()
                                 .join('  ·  '),
-                            style: const TextStyle(
+                            style: TextStyle(
                                 color: A91.faint, fontSize: 11.5),
                           ),
                         ],
@@ -124,7 +124,7 @@ class CoachCard extends StatelessWidget {
                     Text(
                       fees,
                       textAlign: TextAlign.right,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: A91.ink,
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -140,7 +140,7 @@ class CoachCard extends StatelessWidget {
                   coach.helpStatement!.trim(),
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: A91.muted, fontSize: 13.5, height: 1.5),
                 ),
               ],
@@ -198,7 +198,7 @@ class _Avatar extends StatelessWidget {
           ? null
           : Text(
               letter.toUpperCase(),
-              style: const TextStyle(
+              style: TextStyle(
                 color: A91.faint,
                 fontWeight: FontWeight.w700,
                 fontSize: 19,

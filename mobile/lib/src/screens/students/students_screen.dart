@@ -29,7 +29,7 @@ class StudentsScreen extends ConsumerWidget {
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
-          color: A91.grad1,
+          color: A91.coral,
           backgroundColor: A91.surface,
           onRefresh: () async => ref.refresh(demandFeedProvider.future),
           child: feed.when(
@@ -110,7 +110,7 @@ class _Header extends StatelessWidget {
                   ?.copyWith(fontSize: 27),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Parents who have said what they want, and groups of neighbours who '
               'agreed on it together. Nearest first, and the ones you have not '
               'answered at the top.',

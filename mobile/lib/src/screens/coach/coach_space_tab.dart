@@ -35,7 +35,7 @@ class CoachSpaceTab extends ConsumerWidget {
         },
       ),
       data: (space) => RefreshIndicator(
-        color: A91.grad1,
+        color: A91.coral,
         backgroundColor: A91.surface,
         onRefresh: () async {
           ref.invalidate(spaceProvider(providerId));
@@ -130,7 +130,7 @@ class _HeaderState extends ConsumerState<_Header> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: A91.surface3,
-          content: Text(e.message, style: const TextStyle(color: A91.ink)),
+          content: Text(e.message, style: TextStyle(color: A91.ink)),
         ),
       );
     } finally {
@@ -150,7 +150,7 @@ class _HeaderState extends ConsumerState<_Header> {
                   if (widget.space.headline != null)
                     Text(
                       widget.space.headline!,
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: A91.ink,
                           fontSize: 15,
                           fontWeight: FontWeight.w700),
@@ -161,7 +161,7 @@ class _HeaderState extends ConsumerState<_Header> {
                     '${widget.space.postCount == 1 ? 'post' : 'posts'}'
                     '  ·  ${widget.space.followerCount} '
                     '${widget.space.followerCount == 1 ? 'follower' : 'followers'}',
-                    style: const TextStyle(color: A91.faint, fontSize: 12.5),
+                    style: TextStyle(color: A91.faint, fontSize: 12.5),
                   ),
                 ],
               ),
@@ -181,7 +181,7 @@ class _HeaderState extends ConsumerState<_Header> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(
-                          color: _isFollowing ? A91.border : A91.grad1),
+                          color: _isFollowing ? A91.border : A91.coral),
                     ),
                     child: Text(
                       _isFollowing ? 'Following' : 'Follow',

@@ -43,7 +43,7 @@ class SpaceScreen extends ConsumerWidget {
             if (space == null) return const _NoListingYet();
 
             return RefreshIndicator(
-              color: A91.grad1,
+              color: A91.coral,
               backgroundColor: A91.surface,
               onRefresh: () async {
                 ref.invalidate(mySpaceProvider);
@@ -108,7 +108,7 @@ class SpaceScreen extends ConsumerWidget {
                   builder: (_) => ComposerScreen(space: space.value!),
                 ),
               ),
-              backgroundColor: A91.grad1,
+              backgroundColor: A91.coral,
               foregroundColor: A91.onAccent,
               icon: const Icon(Icons.add),
               label: const Text('Post',
@@ -170,14 +170,14 @@ class _Stat extends StatelessWidget {
         children: [
           Text(
             '$value',
-            style: const TextStyle(
+            style: TextStyle(
               color: A91.ink,
               fontSize: 20,
               fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(width: 6),
-          Text(label, style: const TextStyle(color: A91.faint, fontSize: 13)),
+          Text(label, style: TextStyle(color: A91.faint, fontSize: 13)),
         ],
       );
 }
@@ -201,7 +201,7 @@ class _Suspended extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Your Space is hidden',
               style: TextStyle(
                   color: A91.danger,
@@ -214,7 +214,7 @@ class _Suspended extends StatelessWidget {
                   'Families cannot see it at the moment. Write to '
                       'support@aspire91.com and we will go through it with you.',
               style:
-                  const TextStyle(color: A91.muted, fontSize: 13, height: 1.5),
+                  TextStyle(color: A91.muted, fontSize: 13, height: 1.5),
             ),
           ],
         ),

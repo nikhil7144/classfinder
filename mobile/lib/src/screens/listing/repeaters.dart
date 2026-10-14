@@ -40,7 +40,7 @@ class _RepeaterRow extends StatelessWidget {
             ),
             IconButton(
               onPressed: onRemove,
-              icon: const Icon(Icons.close, size: 18, color: A91.faint),
+              icon: Icon(Icons.close, size: 18, color: A91.faint),
               tooltip: 'Remove',
             ),
           ],
@@ -59,10 +59,10 @@ class _AddButton extends StatelessWidget {
         alignment: Alignment.centerLeft,
         child: TextButton.icon(
           onPressed: onTap,
-          icon: const Icon(Icons.add, size: 18, color: A91.grad2),
+          icon: Icon(Icons.add, size: 18, color: A91.gold),
           label: Text(label,
-              style: const TextStyle(
-                  color: A91.grad2, fontWeight: FontWeight.w600)),
+              style: TextStyle(
+                  color: A91.gold, fontWeight: FontWeight.w600)),
         ),
       );
 }
@@ -193,7 +193,7 @@ class AvailabilityEditor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (places.isEmpty) {
-      return const Text(
+      return Text(
         'Add where you teach first — your branches, or the areas you serve — '
         'then you can say when you are available at each one.',
         style: TextStyle(color: A91.faint, fontSize: 13, height: 1.5),

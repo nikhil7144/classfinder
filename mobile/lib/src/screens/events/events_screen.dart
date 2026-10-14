@@ -27,7 +27,7 @@ class EventsScreen extends ConsumerWidget {
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
-          color: A91.grad1,
+          color: A91.coral,
           backgroundColor: A91.surface,
           onRefresh: () async {
             ref.invalidate(myEventsProvider);
@@ -84,7 +84,7 @@ class EventsScreen extends ConsumerWidget {
         onPressed: () => Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const EventFormScreen()),
         ),
-        backgroundColor: A91.grad1,
+        backgroundColor: A91.coral,
         foregroundColor: A91.onAccent,
         icon: const Icon(Icons.add),
         label: const Text('New event',
@@ -100,7 +100,7 @@ class EventsScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
               child: Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   color: A91.faint,
                   fontSize: 12.5,
                   fontWeight: FontWeight.w700,
@@ -200,7 +200,7 @@ class _EventCard extends StatelessWidget {
                       children: [
                         Text(
                           '${at.day}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: A91.ink,
                             fontSize: 19,
                             fontWeight: FontWeight.w800,
@@ -209,7 +209,7 @@ class _EventCard extends StatelessWidget {
                         ),
                         Text(
                           _months[at.month - 1],
-                          style: const TextStyle(
+                          style: TextStyle(
                               color: A91.faint,
                               fontSize: 11,
                               fontWeight: FontWeight.w600),
@@ -226,7 +226,7 @@ class _EventCard extends StatelessWidget {
                           event.title.isEmpty ? 'Untitled event' : event.title,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: A91.ink,
                             fontSize: 15.5,
                             fontWeight: FontWeight.w700,
@@ -244,7 +244,7 @@ class _EventCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style:
-                              const TextStyle(color: A91.faint, fontSize: 12.5),
+                              TextStyle(color: A91.faint, fontSize: 12.5),
                         ),
                       ],
                     ),
@@ -271,8 +271,8 @@ class _EventCard extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
-                    const Icon(Icons.how_to_reg_outlined,
-                        size: 17, color: A91.grad2),
+                    Icon(Icons.how_to_reg_outlined,
+                        size: 17, color: A91.gold),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -280,15 +280,15 @@ class _EventCard extends StatelessWidget {
                             ? 'Nobody has entered yet'
                             : '${event.entriesCount} '
                                 '${event.entriesCount == 1 ? 'entry' : 'entries'}',
-                        style: const TextStyle(color: A91.muted, fontSize: 13),
+                        style: TextStyle(color: A91.muted, fontSize: 13),
                       ),
                     ),
-                    const Text('Register',
+                    Text('Register',
                         style: TextStyle(
-                            color: A91.grad2,
+                            color: A91.gold,
                             fontSize: 12.5,
                             fontWeight: FontWeight.w700)),
-                    const Icon(Icons.chevron_right, size: 18, color: A91.faint),
+                    Icon(Icons.chevron_right, size: 18, color: A91.faint),
                   ],
                 ),
               ),

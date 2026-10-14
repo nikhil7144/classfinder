@@ -117,7 +117,7 @@ class _QueryCardState extends ConsumerState<QueryCard> {
       if (!mounted) return;
       setState(() => _writing = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: A91.surface3,
           content: Text('Sent. It is in your messages.',
               style: TextStyle(color: A91.ink)),
@@ -139,16 +139,16 @@ class _QueryCardState extends ConsumerState<QueryCard> {
         content: Text(
           'Close ${_q.contactName}’s request without taking it on? They '
           'will not be told, and it moves to Finished.',
-          style: const TextStyle(color: A91.muted, height: 1.5),
+          style: TextStyle(color: A91.muted, height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Keep it', style: TextStyle(color: A91.muted)),
+            child: Text('Keep it', style: TextStyle(color: A91.muted)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Close it',
+            child: Text('Close it',
                 style:
                     TextStyle(color: A91.danger, fontWeight: FontWeight.w700)),
           ),
@@ -168,7 +168,7 @@ class _QueryCardState extends ConsumerState<QueryCard> {
       decoration: BoxDecoration(
         color: A91.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _q.unread ? A91.grad1 : A91.border),
+        border: Border.all(color: _q.unread ? A91.coral : A91.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,7 +182,7 @@ class _QueryCardState extends ConsumerState<QueryCard> {
                   children: [
                     Text(
                       _q.contactName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: A91.ink,
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
@@ -194,7 +194,7 @@ class _QueryCardState extends ConsumerState<QueryCard> {
                         if (_q.serviceName != null) _q.serviceName!,
                         _onDate(_q.createdAt),
                       ].join(' · '),
-                      style: const TextStyle(color: A91.faint, fontSize: 12),
+                      style: TextStyle(color: A91.faint, fontSize: 12),
                     ),
                   ],
                 ),
@@ -206,7 +206,7 @@ class _QueryCardState extends ConsumerState<QueryCard> {
             const SizedBox(height: 14),
             Text(
               _q.details!.trim(),
-              style: const TextStyle(
+              style: TextStyle(
                   color: A91.muted, fontSize: 13.5, height: 1.55),
             ),
           ],
@@ -216,11 +216,11 @@ class _QueryCardState extends ConsumerState<QueryCard> {
             const SizedBox(height: 12),
             Row(
               children: [
-                const Icon(Icons.event_outlined, size: 15, color: A91.warn),
+                Icon(Icons.event_outlined, size: 15, color: A91.warn),
                 const SizedBox(width: 7),
                 Text(
                   'Call booked — ${_when(_q.callbackAt!)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: A91.warn,
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600),
@@ -231,7 +231,7 @@ class _QueryCardState extends ConsumerState<QueryCard> {
           if (_error != null) ...[
             const SizedBox(height: 12),
             Text(_error!,
-                style: const TextStyle(color: A91.danger, fontSize: 12.5)),
+                style: TextStyle(color: A91.danger, fontSize: 12.5)),
           ],
           const SizedBox(height: 14),
           Wrap(
@@ -291,7 +291,7 @@ class _QueryCardState extends ConsumerState<QueryCard> {
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'They will see this came from their request, so it will not '
               'arrive out of the blue.',
               style: TextStyle(color: A91.faint, fontSize: 11.5, height: 1.45),
@@ -363,12 +363,12 @@ class _CallButton extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.call, size: 18, color: A91.grad2),
+                Icon(Icons.call, size: 18, color: A91.gold),
                 const SizedBox(width: 11),
                 Expanded(
                   child: Text(
                     phone,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: A91.ink,
                       fontSize: 15.5,
                       fontWeight: FontWeight.w600,
@@ -376,9 +376,9 @@ class _CallButton extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Text('Call',
+                Text('Call',
                     style: TextStyle(
-                        color: A91.grad2,
+                        color: A91.gold,
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700)),
               ],
@@ -444,7 +444,7 @@ class _Action extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: primary ? A91.grad1 : A91.border),
+                border: Border.all(color: primary ? A91.coral : A91.border),
               ),
               child: Text(
                 label,

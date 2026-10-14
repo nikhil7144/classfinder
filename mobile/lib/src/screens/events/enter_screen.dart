@@ -132,7 +132,7 @@ class _EnterScreenState extends ConsumerState<EnterScreen> {
   Widget _confirmation() => ListView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
         children: [
-          const Icon(Icons.check_circle_outline, color: A91.teal, size: 40),
+          Icon(Icons.check_circle_outline, color: A91.teal, size: 40),
           const SizedBox(height: 16),
           Text(
             'That is done',
@@ -145,7 +145,7 @@ class _EnterScreenState extends ConsumerState<EnterScreen> {
             '$_name is entered in ${widget.category.name} at '
             '${widget.event.title}. You will find it under Your entries, with '
             'a receipt number.',
-            style: const TextStyle(color: A91.muted, height: 1.6),
+            style: TextStyle(color: A91.muted, height: 1.6),
           ),
           const SizedBox(height: 24),
           PrimaryButton(
@@ -235,7 +235,7 @@ class _EnterScreenState extends ConsumerState<EnterScreen> {
               padding: const EdgeInsets.only(bottom: 12, left: 4),
               child: Text(
                 _error!,
-                style: const TextStyle(
+                style: TextStyle(
                     color: A91.danger, fontSize: 13.5, height: 1.5),
               ),
             ),
@@ -244,7 +244,7 @@ class _EnterScreenState extends ConsumerState<EnterScreen> {
             fee == null || fee == 0
                 ? 'Free to enter.'
                 : '₹$fee payable to the organiser. Nothing is charged here.',
-            style: const TextStyle(color: A91.muted, fontSize: 13),
+            style: TextStyle(color: A91.muted, fontSize: 13),
           ),
           const SizedBox(height: 14),
           PrimaryButton(
@@ -273,7 +273,7 @@ class _EnterScreenState extends ConsumerState<EnterScreen> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: _consent ? A91.grad1 : A91.borderSoft,
+                  color: _consent ? A91.coral : A91.borderSoft,
                 ),
               ),
               child: Row(
@@ -283,11 +283,11 @@ class _EnterScreenState extends ConsumerState<EnterScreen> {
                   Checkbox(
                     value: _consent,
                     onChanged: (v) => setState(() => _consent = v ?? false),
-                    activeColor: A91.grad1,
+                    activeColor: A91.coral,
                     visualDensity: VisualDensity.compact,
                   ),
                   const SizedBox(width: 6),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'I am taking part myself, or I am the parent or guardian '
                       'of everyone named above and I agree to their name and '
@@ -346,7 +346,7 @@ class _DateField extends StatelessWidget {
           if (value != null)
             IconButton(
               onPressed: onClear,
-              icon: const Icon(Icons.close, size: 18, color: A91.faint),
+              icon: Icon(Icons.close, size: 18, color: A91.faint),
               tooltip: 'Clear',
             ),
         ],

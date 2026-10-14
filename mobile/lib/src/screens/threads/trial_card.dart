@@ -98,7 +98,7 @@ class _TrialCardState extends ConsumerState<TrialCard> {
                   Text('How did it go?',
                       style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     'Only you see your answer. The other side records theirs '
                     'separately.',
                     style: TextStyle(
@@ -110,7 +110,7 @@ class _TrialCardState extends ConsumerState<TrialCard> {
             for (final outcome in TrialOutcome.values)
               ListTile(
                 title:
-                    Text(outcome.label, style: const TextStyle(color: A91.ink)),
+                    Text(outcome.label, style: TextStyle(color: A91.ink)),
                 onTap: () => Navigator.pop(context, outcome),
               ),
             const SizedBox(height: 8),
@@ -162,7 +162,7 @@ class _TrialCardState extends ConsumerState<TrialCard> {
           if (_error != null) ...[
             const SizedBox(height: 10),
             Text(_error!,
-                style: const TextStyle(color: A91.danger, fontSize: 12.5)),
+                style: TextStyle(color: A91.danger, fontSize: 12.5)),
           ],
         ],
       ),
@@ -171,7 +171,7 @@ class _TrialCardState extends ConsumerState<TrialCard> {
 
   Widget _none() => Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Text(
               'Not arranged yet.',
               style: TextStyle(color: A91.muted, fontSize: 13.5),
@@ -197,7 +197,7 @@ class _TrialCardState extends ConsumerState<TrialCard> {
                 children: [
                   Text(
                     when,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: A91.ink,
                       fontSize: 14.5,
                       fontWeight: FontWeight.w700,
@@ -211,7 +211,7 @@ class _TrialCardState extends ConsumerState<TrialCard> {
                       if (trial.studentCount != null)
                         '${trial.studentCount} coming',
                     ].join(' · '),
-                    style: const TextStyle(color: A91.faint, fontSize: 12),
+                    style: TextStyle(color: A91.faint, fontSize: 12),
                   ),
                 ],
               ),
@@ -224,7 +224,7 @@ class _TrialCardState extends ConsumerState<TrialCard> {
           Text(
             trial.placeNote!.trim(),
             style:
-                const TextStyle(color: A91.muted, fontSize: 12.5, height: 1.45),
+                TextStyle(color: A91.muted, fontSize: 12.5, height: 1.45),
           ),
         ],
         const SizedBox(height: 12),
@@ -239,7 +239,7 @@ class _TrialCardState extends ConsumerState<TrialCard> {
       return [
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
                 'Waiting for them to confirm.',
                 style: TextStyle(color: A91.warn, fontSize: 12.5),
@@ -291,7 +291,7 @@ class _TrialCardState extends ConsumerState<TrialCard> {
       return [
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
                 'Did it happen?',
                 style: TextStyle(color: A91.muted, fontSize: 12.5),
@@ -308,7 +308,7 @@ class _TrialCardState extends ConsumerState<TrialCard> {
       return [
         Text(
           'You said: ${trial.myOutcome!.label.toLowerCase()}.',
-          style: const TextStyle(color: A91.faint, fontSize: 12.5),
+          style: TextStyle(color: A91.faint, fontSize: 12.5),
         ),
       ];
     }
@@ -407,7 +407,7 @@ class _Action extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: primary ? A91.grad1 : A91.border),
+                border: Border.all(color: primary ? A91.coral : A91.border),
               ),
               child: Text(
                 label,

@@ -35,11 +35,11 @@ class CoachScreen extends ConsumerWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          bottom: const TabBar(
-            indicatorColor: A91.grad1,
+          bottom: TabBar(
+            indicatorColor: A91.coral,
             labelColor: A91.ink,
             unselectedLabelColor: A91.faint,
-            tabs: [Tab(text: 'Profile'), Tab(text: 'Space')],
+            tabs: const [Tab(text: 'Profile'), Tab(text: 'Space')],
           ),
         ),
         body: coach.when(
@@ -99,13 +99,13 @@ class _ProfileTab extends ConsumerWidget {
                   if (coach.categoryName != null) ...[
                     const SizedBox(height: 4),
                     Text(coach.categoryName!,
-                        style: const TextStyle(color: A91.muted, fontSize: 13)),
+                        style: TextStyle(color: A91.muted, fontSize: 13)),
                   ],
                   if (experience != null || fees != null) ...[
                     const SizedBox(height: 6),
                     Text(
                       [experience, fees].whereType<String>().join('  ·  '),
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: A91.ink,
                           fontSize: 13.5,
                           fontWeight: FontWeight.w600),
@@ -130,7 +130,7 @@ class _ProfileTab extends ConsumerWidget {
             child: Text(
               coach.helpStatement!.trim(),
               style:
-                  const TextStyle(color: A91.ink, height: 1.55, fontSize: 14.5),
+                  TextStyle(color: A91.ink, height: 1.55, fontSize: 14.5),
             ),
           ),
         ],
@@ -139,7 +139,7 @@ class _ProfileTab extends ConsumerWidget {
             title: 'About',
             child: Text(
               coach.bio!.trim(),
-              style: const TextStyle(color: A91.muted, height: 1.6),
+              style: TextStyle(color: A91.muted, height: 1.6),
             ),
           ),
         if (coach.services.isNotEmpty)
@@ -181,19 +181,19 @@ class _ProfileTab extends ConsumerWidget {
                         if (place.label != null)
                           Text(
                             place.label!,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 color: A91.ink,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600),
                           ),
                         Text(place.where,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 color: A91.muted, fontSize: 13)),
                         if (place.address != null &&
                             place.address!.trim().isNotEmpty)
                           Text(
                             place.address!.trim(),
-                            style: const TextStyle(
+                            style: TextStyle(
                                 color: A91.faint, fontSize: 12, height: 1.45),
                           ),
                       ],
@@ -224,7 +224,7 @@ class _ProfileTab extends ConsumerWidget {
                             child: Text(
                               '${weekDayLabels[slot.day] ?? slot.day}  '
                               '${slot.start}–${slot.end}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                   color: A91.muted, fontSize: 13.5),
                             ),
                           ),
@@ -239,7 +239,7 @@ class _ProfileTab extends ConsumerWidget {
             title: 'About the fees',
             child: Text(
               coach.feesNote!.trim(),
-              style: const TextStyle(color: A91.muted, height: 1.6),
+              style: TextStyle(color: A91.muted, height: 1.6),
             ),
           ),
         if (coach.certifications.isNotEmpty)
@@ -255,7 +255,7 @@ class _ProfileTab extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(c.name,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 color: A91.ink,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600)),
@@ -264,7 +264,7 @@ class _ProfileTab extends ConsumerWidget {
                               .where((s) => s.trim().isNotEmpty)
                               .join(' · '),
                           style:
-                              const TextStyle(color: A91.faint, fontSize: 12.5),
+                              TextStyle(color: A91.faint, fontSize: 12.5),
                         ),
                       ],
                     ),
@@ -290,7 +290,7 @@ class _ContactBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) => Container(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: A91.bg,
           border: Border(top: BorderSide(color: A91.border)),
         ),
@@ -393,7 +393,7 @@ class _Photo extends StatelessWidget {
           ? null
           : Text(
               letter.toUpperCase(),
-              style: const TextStyle(
+              style: TextStyle(
                   color: A91.faint, fontWeight: FontWeight.w700, fontSize: 26),
             ),
     );
@@ -446,7 +446,7 @@ class _Chip extends StatelessWidget {
               const SizedBox(width: 7),
             ],
             Text(label,
-                style: const TextStyle(color: A91.muted, fontSize: 12.5)),
+                style: TextStyle(color: A91.muted, fontSize: 12.5)),
           ],
         ),
       );

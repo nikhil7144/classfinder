@@ -8,7 +8,7 @@ class Loading extends StatelessWidget {
   const Loading({super.key});
 
   @override
-  Widget build(BuildContext context) => const Center(
+  Widget build(BuildContext context) => Center(
         child: SizedBox(
           height: 26,
           width: 26,
@@ -38,7 +38,7 @@ class ErrorState extends StatelessWidget {
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: A91.muted, height: 1.55),
+                style: TextStyle(color: A91.muted, height: 1.55),
               ),
               if (onRetry != null) ...[
                 const SizedBox(height: 20),
@@ -72,7 +72,7 @@ class EmptyState extends StatelessWidget {
               Text(
                 body,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: A91.muted, height: 1.6),
+                style: TextStyle(color: A91.muted, height: 1.6),
               ),
             ],
           ),

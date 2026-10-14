@@ -60,6 +60,12 @@ dependencies:
   # does, rather than a hand-ported approximation of it.
   flutter_svg: ^2.3.0
 
+  # Persists the Light/Dark/System choice — mobile's equivalent of the web's
+  # localStorage cf-theme key. Read once in main(), before runApp(), so the
+  # first frame already paints the right ground; the web gets the same
+  # guarantee from ThemeScript's blocking inline script.
+  shared_preferences: ^2.3.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

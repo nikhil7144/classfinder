@@ -26,7 +26,7 @@ class GroupsScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Your groups')),
       body: SafeArea(
         child: RefreshIndicator(
-          color: A91.grad1,
+          color: A91.coral,
           backgroundColor: A91.surface,
           onRefresh: () async {
             ref.invalidate(myGroupsProvider);
@@ -70,7 +70,7 @@ class GroupsScreen extends ConsumerWidget {
         onPressed: () => Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const GroupFormScreen()),
         ),
-        backgroundColor: A91.grad1,
+        backgroundColor: A91.coral,
         foregroundColor: A91.onAccent,
         icon: const Icon(Icons.add),
         label: const Text('Start a group',
@@ -134,7 +134,7 @@ class _GroupCard extends StatelessWidget {
                       children: [
                         Text(
                           group.serviceName ?? 'A group',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: A91.ink,
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -149,7 +149,7 @@ class _GroupCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style:
-                              const TextStyle(color: A91.faint, fontSize: 12.5),
+                              TextStyle(color: A91.faint, fontSize: 12.5),
                         ),
                       ],
                     ),
@@ -159,7 +159,7 @@ class _GroupCard extends StatelessWidget {
                   if (group.pendingRequests > 0)
                     _Pill(
                       text: '${group.pendingRequests} waiting',
-                      tone: A91.grad1,
+                      tone: A91.coral,
                     )
                   else if (dormant != null)
                     _Pill(text: dormant, tone: A91.faint)
@@ -170,18 +170,18 @@ class _GroupCard extends StatelessWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  const Icon(Icons.group_outlined, size: 15, color: A91.faint),
+                  Icon(Icons.group_outlined, size: 15, color: A91.faint),
                   const SizedBox(width: 7),
                   Text(
                     '${group.memberCount} '
                     '${group.memberCount == 1 ? 'family' : 'families'} · '
                     'wants ${group.studentCount} '
                     '${group.studentCount == 1 ? 'place' : 'places'}',
-                    style: const TextStyle(color: A91.muted, fontSize: 12.5),
+                    style: TextStyle(color: A91.muted, fontSize: 12.5),
                   ),
                   const Spacer(),
                   if (group.isCreator)
-                    const Text(
+                    Text(
                       'Yours',
                       style: TextStyle(
                           color: A91.faint,

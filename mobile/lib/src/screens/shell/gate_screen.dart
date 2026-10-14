@@ -132,7 +132,7 @@ class _Message extends ConsumerWidget {
                         style: Theme.of(context).textTheme.headlineLarge),
                     const SizedBox(height: 12),
                     Text(body,
-                        style: const TextStyle(color: A91.muted, height: 1.6)),
+                        style: TextStyle(color: A91.muted, height: 1.6)),
                     const SizedBox(height: 28),
                     PrimaryButton(
                       label: 'Sign out',

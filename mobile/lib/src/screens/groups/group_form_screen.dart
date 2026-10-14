@@ -252,7 +252,7 @@ class _FormState extends ConsumerState<_Form> {
                 padding: const EdgeInsets.only(bottom: 12, left: 4),
                 child: Text(
                   _error!,
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: A91.danger, fontSize: 13.5, height: 1.5),
                 ),
               ),
@@ -262,7 +262,7 @@ class _FormState extends ConsumerState<_Form> {
               onPressed: _saving ? null : _save,
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'You will get a link to send your neighbours. Coaches only see '
               'the group once enough families have joined.',
               textAlign: TextAlign.center,
@@ -302,7 +302,7 @@ class _Counter extends StatelessWidget {
             child: Text(
               '$value',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 color: A91.ink,
                 fontSize: 19,
                 fontWeight: FontWeight.w800,
@@ -381,7 +381,7 @@ class _Switch extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: A91.ink,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -390,7 +390,7 @@ class _Switch extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         body,
-                        style: const TextStyle(
+                        style: TextStyle(
                             color: A91.faint, fontSize: 12, height: 1.45),
                       ),
                     ],
@@ -400,7 +400,7 @@ class _Switch extends StatelessWidget {
                   value: value,
                   onChanged: onChanged,
                   activeThumbColor: A91.onAccent,
-                  activeTrackColor: A91.grad1,
+                  activeTrackColor: A91.coral,
                 ),
               ],
             ),

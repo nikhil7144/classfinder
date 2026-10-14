@@ -24,7 +24,7 @@ class MyEntriesScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Your entries')),
       body: SafeArea(
         child: RefreshIndicator(
-          color: A91.grad1,
+          color: A91.coral,
           backgroundColor: A91.surface,
           onRefresh: () async {
             ref.invalidate(myEntriesProvider);
@@ -102,7 +102,7 @@ class _SectionLabel extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(4, 6, 4, 10),
         child: Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
               color: A91.faint, fontSize: 12.5, fontWeight: FontWeight.w700),
         ),
       );
@@ -145,16 +145,16 @@ class _EntryCardState extends ConsumerState<_EntryCard> {
           '${widget.entry.participantName} comes off the list. The organiser '
           'is told. If you have already paid, ask them about the fee — '
           'nothing is refunded here.',
-          style: const TextStyle(color: A91.muted, height: 1.5),
+          style: TextStyle(color: A91.muted, height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Keep it', style: TextStyle(color: A91.muted)),
+            child: Text('Keep it', style: TextStyle(color: A91.muted)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Withdraw',
+            child: Text('Withdraw',
                 style:
                     TextStyle(color: A91.danger, fontWeight: FontWeight.w700)),
           ),
@@ -176,7 +176,7 @@ class _EntryCardState extends ConsumerState<_EntryCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: A91.surface3,
-          content: Text(e.message, style: const TextStyle(color: A91.ink)),
+          content: Text(e.message, style: TextStyle(color: A91.ink)),
         ),
       );
     } finally {
@@ -225,7 +225,7 @@ class _EntryCardState extends ConsumerState<_EntryCard> {
                           '${at.day} ${_months[at.month - 1]} ${at.year}',
                         if (e.categoryName != null) e.categoryName!,
                       ].join(' · '),
-                      style: const TextStyle(color: A91.faint, fontSize: 12.5),
+                      style: TextStyle(color: A91.faint, fontSize: 12.5),
                     ),
                   ],
                 ),
@@ -236,19 +236,19 @@ class _EntryCardState extends ConsumerState<_EntryCard> {
           const SizedBox(height: 12),
           Row(
             children: [
-              const Icon(Icons.person_outline, size: 15, color: A91.faint),
+              Icon(Icons.person_outline, size: 15, color: A91.faint),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   e.isTeam
                       ? '${e.participantName} and ${e.members.length} more'
                       : e.participantName,
-                  style: const TextStyle(color: A91.muted, fontSize: 13),
+                  style: TextStyle(color: A91.muted, fontSize: 13),
                 ),
               ),
               Text(
                 e.receiptNo,
-                style: const TextStyle(
+                style: TextStyle(
                     color: A91.faint, fontSize: 11.5, letterSpacing: 0.4),
               ),
             ],
@@ -260,7 +260,7 @@ class _EntryCardState extends ConsumerState<_EntryCard> {
                   ? 'You withdrew this one.'
                   : 'The organiser removed this entry.'
                       '${e.cancelledReason != null ? ' ${e.cancelledReason}' : ''}',
-              style: const TextStyle(color: A91.faint, fontSize: 12.5),
+              style: TextStyle(color: A91.faint, fontSize: 12.5),
             ),
           ] else if (!gone) ...[
             const SizedBox(height: 12),
@@ -270,7 +270,7 @@ class _EntryCardState extends ConsumerState<_EntryCard> {
                 opacity: _busy ? 0.5 : 1,
                 child: GestureDetector(
                   onTap: _busy ? null : _withdraw,
-                  child: const Text(
+                  child: Text(
                     'Withdraw',
                     style: TextStyle(
                         color: A91.faint,

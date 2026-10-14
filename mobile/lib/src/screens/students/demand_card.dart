@@ -101,7 +101,7 @@ class DemandCard extends StatelessWidget {
                       demand.serviceNames.isEmpty
                           ? 'A family nearby'
                           : demand.serviceNames.join(', '),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: A91.ink,
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
@@ -146,7 +146,7 @@ class DemandCard extends StatelessWidget {
                   demand.notes!.trim(),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: A91.muted, height: 1.5, fontSize: 13.5),
                 ),
               ],
@@ -155,7 +155,7 @@ class DemandCard extends StatelessWidget {
                 // Not an error and not a failure — just already done. The feed
                 // sorts these below the untouched ones, and saying so stops a
                 // coach wondering why the button is gone.
-                const _Badge(label: 'You have written', tone: A91.faint),
+                _Badge(label: 'You have written', tone: A91.faint),
               ],
             ],
           ),
@@ -183,7 +183,7 @@ class _Line extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(color: A91.muted, fontSize: 13.5),
+              style: TextStyle(color: A91.muted, fontSize: 13.5),
               overflow: TextOverflow.ellipsis,
             ),
           ),

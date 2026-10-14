@@ -1,6 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'data/api.dart';
+import 'data/theme_prefs.dart';
 import 'data/models/me.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/models/demand.dart';
@@ -307,6 +309,26 @@ final incomingProvider =
     StreamProvider.autoDispose.family<Message, ThreadKey>((ref, key) {
   return ref.watch(threadsRepositoryProvider).incoming(key.kind, key.id);
 });
+
+/// Light / Dark / System. build() returns `initialThemeMode` — set in
+/// main(), before runApp(), from theme_prefs.dart's loadThemeMode() — so the
+/// very first read already carries the stored choice rather than defaulting
+/// to System and correcting itself a frame later.
+class ThemeModeNotifier extends Notifier<ThemeMode> {
+  @override
+  ThemeMode build() => initialThemeMode;
+
+  /// The whole of a change: paint it, persist it. Call sites never write to
+  /// theme_prefs.dart directly, the same reason a screen never touches a
+  /// repository's storage layer on its own.
+  Future<void> set(ThemeMode mode) async {
+    state = mode;
+    await writeThemeMode(mode);
+  }
+}
+
+final themeModeProvider =
+    NotifierProvider<ThemeModeNotifier, ThemeMode>(ThemeModeNotifier.new);
 
 /// The badge numbers. Re-read whenever the inbox is, so a thread opened on
 /// this device does not leave a stale count on the tab behind it.

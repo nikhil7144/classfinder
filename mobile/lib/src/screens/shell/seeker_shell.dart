@@ -147,7 +147,7 @@ class _Welcome extends StatelessWidget {
                       style: Theme.of(context).textTheme.headlineLarge,
                     ),
                     const SizedBox(height: 12),
-                    const Text(
+                    Text(
                       'Your area and what you want taught. Coaches near you '
                       'can then find you — and you can search for them '
                       'yourself either way.',

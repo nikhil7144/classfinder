@@ -84,13 +84,13 @@ class _PhotoFieldState extends ConsumerState<PhotoField> {
             const SizedBox(height: 10),
             ListTile(
               leading:
-                  const Icon(Icons.photo_camera_outlined, color: A91.muted),
+                  Icon(Icons.photo_camera_outlined, color: A91.muted),
               title: const Text('Take a photo'),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             ListTile(
               leading:
-                  const Icon(Icons.photo_library_outlined, color: A91.muted),
+                  Icon(Icons.photo_library_outlined, color: A91.muted),
               title: const Text('Choose from gallery'),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
@@ -131,7 +131,7 @@ class _PhotoFieldState extends ConsumerState<PhotoField> {
                 ),
                 alignment: Alignment.center,
                 child: _busy
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
@@ -139,7 +139,7 @@ class _PhotoFieldState extends ConsumerState<PhotoField> {
                       )
                     : has
                         ? null
-                        : const Icon(Icons.add_a_photo_outlined,
+                        : Icon(Icons.add_a_photo_outlined,
                             color: A91.faint, size: 24),
               ),
             ),
@@ -150,13 +150,13 @@ class _PhotoFieldState extends ConsumerState<PhotoField> {
                 children: [
                   Text(
                     has ? 'Looking good.' : 'Add a photo of yourself.',
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: A91.ink,
                         fontSize: 14,
                         fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 5),
-                  const Text(
+                  Text(
                     'Parents are choosing who to trust with their child. A face '
                     'does more than anything else on this page.',
                     style:
@@ -166,10 +166,10 @@ class _PhotoFieldState extends ConsumerState<PhotoField> {
                     const SizedBox(height: 6),
                     GestureDetector(
                       onTap: _busy ? null : _choose,
-                      child: const Text(
+                      child: Text(
                         'Change',
                         style: TextStyle(
-                            color: A91.grad2,
+                            color: A91.gold,
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600),
                       ),
@@ -183,7 +183,7 @@ class _PhotoFieldState extends ConsumerState<PhotoField> {
         if (_error != null) ...[
           const SizedBox(height: 10),
           Text(_error!,
-              style: const TextStyle(color: A91.danger, fontSize: 12.5)),
+              style: TextStyle(color: A91.danger, fontSize: 12.5)),
         ],
       ],
     );

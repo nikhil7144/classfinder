@@ -148,7 +148,7 @@ class _ContactSheetState extends ConsumerState<_ContactSheet> {
                 ? '$name has your number and will ring you. You will see it in '
                     'your requests.'
                 : 'It is with $name now. Their reply will be in your messages.',
-            style: const TextStyle(color: A91.muted, height: 1.55),
+            style: TextStyle(color: A91.muted, height: 1.55),
           ),
           const SizedBox(height: 20),
           PrimaryButton(
@@ -173,7 +173,7 @@ class _ContactSheetState extends ConsumerState<_ContactSheet> {
                 : 'One message to start. They see your name, and your number '
                     'only if you say so.',
             style:
-                const TextStyle(color: A91.faint, fontSize: 12.5, height: 1.5),
+                TextStyle(color: A91.faint, fontSize: 12.5, height: 1.5),
           ),
           const SizedBox(height: 18),
           if (_isCall) ...[
@@ -218,7 +218,7 @@ class _ContactSheetState extends ConsumerState<_ContactSheet> {
                 helperText: _message.text.trim().length < _minMessage
                     ? 'At least $_minMessage characters — they are deciding on this.'
                     : null,
-                helperStyle: const TextStyle(color: A91.faint, fontSize: 12),
+                helperStyle: TextStyle(color: A91.faint, fontSize: 12),
               ),
             ),
             const SizedBox(height: 10),
@@ -230,12 +230,12 @@ class _ContactSheetState extends ConsumerState<_ContactSheet> {
               dense: true,
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
-              activeColor: A91.grad1,
-              title: const Text(
+              activeColor: A91.coral,
+              title: Text(
                 'Let them see my number',
                 style: TextStyle(color: A91.muted, fontSize: 13),
               ),
-              subtitle: const Text(
+              subtitle: Text(
                 'Just this coach, and you can take it back later.',
                 style: TextStyle(color: A91.faint, fontSize: 11.5),
               ),
@@ -244,7 +244,7 @@ class _ContactSheetState extends ConsumerState<_ContactSheet> {
           if (_error != null) ...[
             const SizedBox(height: 10),
             Text(_error!,
-                style: const TextStyle(color: A91.danger, fontSize: 13)),
+                style: TextStyle(color: A91.danger, fontSize: 13)),
           ],
           const SizedBox(height: 16),
           PrimaryButton(

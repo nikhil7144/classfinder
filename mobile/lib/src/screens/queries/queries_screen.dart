@@ -63,7 +63,7 @@ class _QueriesScreenState extends ConsumerState<QueriesScreen> {
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
-          color: A91.grad1,
+          color: A91.coral,
           backgroundColor: A91.surface,
           onRefresh: () async {
             ref.invalidate(alertsProvider);
@@ -166,7 +166,7 @@ class _Header extends StatelessWidget {
                   ?.copyWith(fontSize: 27),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'They gave a number rather than starting a conversation. Ring '
               'them, book a time, or write instead.',
               style: TextStyle(color: A91.faint, fontSize: 13, height: 1.5),
@@ -217,7 +217,7 @@ class _Pill extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: selected ? A91.grad1 : A91.border),
+              border: Border.all(color: selected ? A91.coral : A91.border),
             ),
             child: Text(
               label,

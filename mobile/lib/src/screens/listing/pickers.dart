@@ -161,7 +161,7 @@ class _PickSheetState extends State<_PickSheet> {
                     const SizedBox(height: 6),
                     Text(
                       widget.subtitle!,
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: A91.faint, fontSize: 12.5, height: 1.5),
                     ),
                   ],
@@ -169,7 +169,7 @@ class _PickSheetState extends State<_PickSheet> {
                   TextField(
                     controller: _search,
                     onChanged: (_) => setState(() {}),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Search',
                       isDense: true,
                       prefixIcon:
@@ -182,7 +182,7 @@ class _PickSheetState extends State<_PickSheet> {
             const SizedBox(height: 8),
             Expanded(
               child: visible.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text('Nothing matches that.',
                           style: TextStyle(color: A91.faint)),
                     )
@@ -204,14 +204,14 @@ class _PickSheetState extends State<_PickSheet> {
                         child: Text(
                           '${_chosen.length} selected',
                           style:
-                              const TextStyle(color: A91.faint, fontSize: 13),
+                              TextStyle(color: A91.faint, fontSize: 13),
                         ),
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(context, _chosen),
-                        child: const Text('Done',
+                        child: Text('Done',
                             style: TextStyle(
-                                color: A91.grad2, fontWeight: FontWeight.w700)),
+                                color: A91.gold, fontWeight: FontWeight.w700)),
                       ),
                     ],
                   ),
@@ -253,7 +253,7 @@ class _PickSheetState extends State<_PickSheet> {
                 ))
           : Icon(
               on ? Icons.check_box : Icons.check_box_outline_blank,
-              color: on ? A91.grad1 : A91.faint,
+              color: on ? A91.coral : A91.faint,
               size: 21,
             ),
       title: Row(
@@ -279,7 +279,7 @@ class _PickSheetState extends State<_PickSheet> {
           ),
           if (option.dimmed) ...[
             const SizedBox(width: 8),
-            const Text('opening soon',
+            Text('opening soon',
                 style: TextStyle(color: A91.faint, fontSize: 10.5)),
           ],
         ],
@@ -287,9 +287,9 @@ class _PickSheetState extends State<_PickSheet> {
       subtitle: option.sublabel == null
           ? null
           : Text(option.sublabel!,
-              style: const TextStyle(color: A91.faint, fontSize: 12)),
+              style: TextStyle(color: A91.faint, fontSize: 12)),
       trailing: widget.single && on
-          ? const Icon(Icons.check, color: A91.grad1, size: 19)
+          ? Icon(Icons.check, color: A91.coral, size: 19)
           : null,
     );
   }

@@ -75,11 +75,11 @@ class _ApproachBannerState extends ConsumerState<ApproachBanner> {
         children: [
           Text(
             '$who wants to teach your child',
-            style: const TextStyle(
+            style: TextStyle(
                 color: A91.ink, fontSize: 14.5, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 5),
-          const Text(
+          Text(
             'They found your requirement and wrote first. Until you answer they '
             'cannot write again, and they cannot see your name or number.',
             style: TextStyle(color: A91.muted, fontSize: 12.5, height: 1.5),
@@ -92,12 +92,12 @@ class _ApproachBannerState extends ConsumerState<ApproachBanner> {
             dense: true,
             contentPadding: EdgeInsets.zero,
             controlAffinity: ListTileControlAffinity.leading,
-            activeColor: A91.grad1,
-            title: const Text(
+            activeColor: A91.coral,
+            title: Text(
               'Let them see my number',
               style: TextStyle(color: A91.muted, fontSize: 13),
             ),
-            subtitle: const Text(
+            subtitle: Text(
               'Just this coach, and you can take it back later.',
               style: TextStyle(color: A91.faint, fontSize: 11.5),
             ),
@@ -105,7 +105,7 @@ class _ApproachBannerState extends ConsumerState<ApproachBanner> {
           if (_error != null) ...[
             const SizedBox(height: 6),
             Text(_error!,
-                style: const TextStyle(color: A91.danger, fontSize: 12.5)),
+                style: TextStyle(color: A91.danger, fontSize: 12.5)),
           ],
           const SizedBox(height: 10),
           Row(
@@ -171,7 +171,7 @@ class _PhoneSharingRowState extends ConsumerState<PhoneSharingRow> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: A91.surface3,
-          content: Text(e.message, style: const TextStyle(color: A91.ink)),
+          content: Text(e.message, style: TextStyle(color: A91.ink)),
         ),
       );
     } finally {
@@ -203,8 +203,8 @@ class _PhoneSharingRowState extends ConsumerState<PhoneSharingRow> {
               onTap: _busy ? null : () => _toggle(!shared),
               child: Text(
                 shared ? 'Stop sharing' : 'Let them call me',
-                style: const TextStyle(
-                    color: A91.grad2,
+                style: TextStyle(
+                    color: A91.gold,
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600),
               ),

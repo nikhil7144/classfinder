@@ -79,11 +79,11 @@ class _EntryTileState extends ConsumerState<EntryTile> {
                   const SizedBox(height: 6),
                   Text(
                     '₹${_e.amountDue!.toStringAsFixed(0)} due',
-                    style: const TextStyle(color: A91.faint, fontSize: 13),
+                    style: TextStyle(color: A91.faint, fontSize: 13),
                   ),
                 ],
                 const SizedBox(height: 18),
-                const Text('How did it arrive?',
+                Text('How did it arrive?',
                     style: TextStyle(
                         color: A91.ink,
                         fontSize: 13.5,
@@ -152,7 +152,7 @@ class _EntryTileState extends ConsumerState<EntryTile> {
               Text(
                 '${_e.participantName} comes off the register. The family is '
                 'told.',
-                style: const TextStyle(color: A91.muted, height: 1.5),
+                style: TextStyle(color: A91.muted, height: 1.5),
               ),
               const SizedBox(height: 14),
               TextField(
@@ -170,12 +170,12 @@ class _EntryTileState extends ConsumerState<EntryTile> {
                   dense: true,
                   contentPadding: EdgeInsets.zero,
                   controlAffinity: ListTileControlAffinity.leading,
-                  activeColor: A91.grad1,
-                  title: const Text(
+                  activeColor: A91.coral,
+                  title: Text(
                     'They are owed a refund',
                     style: TextStyle(color: A91.muted, fontSize: 13),
                   ),
-                  subtitle: const Text(
+                  subtitle: Text(
                     'Marks it as owed. It does not move any money.',
                     style: TextStyle(color: A91.faint, fontSize: 11.5),
                   ),
@@ -186,11 +186,11 @@ class _EntryTileState extends ConsumerState<EntryTile> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Keep it', style: TextStyle(color: A91.muted)),
+              child: Text('Keep it', style: TextStyle(color: A91.muted)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Remove',
+              child: Text('Remove',
                   style: TextStyle(
                       color: A91.danger, fontWeight: FontWeight.w700)),
             ),
@@ -256,7 +256,7 @@ class _EntryTileState extends ConsumerState<EntryTile> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style:
-                              const TextStyle(color: A91.faint, fontSize: 11.5),
+                              TextStyle(color: A91.faint, fontSize: 11.5),
                         ),
                       ],
                     ),
@@ -277,7 +277,7 @@ class _EntryTileState extends ConsumerState<EntryTile> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (_e.isTeam) ...[
-                    const Text('The team',
+                    Text('The team',
                         style: TextStyle(
                             color: A91.faint,
                             fontSize: 11,
@@ -287,7 +287,7 @@ class _EntryTileState extends ConsumerState<EntryTile> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 4),
                         child: Text('· ${m.name}',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 color: A91.muted, fontSize: 13)),
                       ),
                     const SizedBox(height: 12),
@@ -309,7 +309,7 @@ class _EntryTileState extends ConsumerState<EntryTile> {
                     if (_error != null) ...[
                       const SizedBox(height: 8),
                       Text(_error!,
-                          style: const TextStyle(
+                          style: TextStyle(
                               color: A91.danger, fontSize: 12.5)),
                     ],
                     const SizedBox(height: 10),
@@ -369,7 +369,7 @@ class _PaymentChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (entry.isCancelled) {
-      return const _Pill(text: 'Removed', tone: A91.faint);
+      return _Pill(text: 'Removed', tone: A91.faint);
     }
 
     final tone = switch (entry.paymentStatus) {
@@ -420,10 +420,10 @@ class _Note extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(text, style: const TextStyle(color: A91.muted, fontSize: 12.5)),
+          Text(text, style: TextStyle(color: A91.muted, fontSize: 12.5)),
           if (detail != null && detail!.trim().isNotEmpty)
             Text(detail!.trim(),
-                style: const TextStyle(color: A91.faint, fontSize: 12)),
+                style: TextStyle(color: A91.faint, fontSize: 12)),
         ],
       );
 }
@@ -450,7 +450,7 @@ class _Chip extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: selected ? A91.grad1 : A91.border),
+              border: Border.all(color: selected ? A91.coral : A91.border),
             ),
             child: Text(
               label,
@@ -491,7 +491,7 @@ class _Action extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: primary ? A91.grad1 : A91.border),
+                border: Border.all(color: primary ? A91.coral : A91.border),
               ),
               child: Text(
                 label,

@@ -48,7 +48,7 @@ class Section extends StatelessWidget {
                   Container(
                     height: 7,
                     width: 7,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: A91.warn,
                       shape: BoxShape.circle,
                     ),
@@ -59,7 +59,7 @@ class Section extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 subtitle!,
-                style: const TextStyle(
+                style: TextStyle(
                     color: A91.faint, fontSize: 12.5, height: 1.5),
               ),
             ],
@@ -95,7 +95,7 @@ class Field extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: A91.ink,
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
@@ -103,7 +103,7 @@ class Field extends StatelessWidget {
                 ),
                 if (optional) ...[
                   const SizedBox(width: 7),
-                  const Text('optional',
+                  Text('optional',
                       style: TextStyle(color: A91.faint, fontSize: 11.5)),
                 ],
               ],
@@ -112,7 +112,7 @@ class Field extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 hint!,
-                style: const TextStyle(
+                style: TextStyle(
                     color: A91.faint, fontSize: 12, height: 1.45),
               ),
             ],
@@ -225,7 +225,7 @@ class PickerField extends StatelessWidget {
                   ),
                 ),
               ),
-              const Icon(Icons.expand_more, color: A91.faint, size: 20),
+              Icon(Icons.expand_more, color: A91.faint, size: 20),
             ],
           ),
         ),
@@ -265,7 +265,7 @@ class ToggleChip extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
               border: Border.all(
-                color: selected ? A91.grad1 : A91.border,
+                color: selected ? A91.coral : A91.border,
                 width: selected ? 1.3 : 1,
               ),
             ),

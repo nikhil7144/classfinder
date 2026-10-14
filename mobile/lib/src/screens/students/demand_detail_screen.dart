@@ -112,7 +112,7 @@ class _DemandDetailScreenState extends ConsumerState<DemandDetailScreen> {
               _d.isGroup
                   ? '${_d.memberCount} families, together'
                   : 'One family',
-              style: const TextStyle(color: A91.muted),
+              style: TextStyle(color: A91.muted),
             ),
             const SizedBox(height: 22),
             _Facts(demand: _d),
@@ -130,7 +130,7 @@ class _DemandDetailScreenState extends ConsumerState<DemandDetailScreen> {
                 ),
                 child: Text(
                   _d.notes!.trim(),
-                  style: const TextStyle(color: A91.muted, height: 1.6),
+                  style: TextStyle(color: A91.muted, height: 1.6),
                 ),
               ),
             ],
@@ -221,13 +221,13 @@ class _Facts extends StatelessWidget {
                   width: 118,
                   child: Text(
                     label,
-                    style: const TextStyle(color: A91.faint, fontSize: 13),
+                    style: TextStyle(color: A91.faint, fontSize: 13),
                   ),
                 ),
                 Expanded(
                   child: Text(
                     value,
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: A91.ink, height: 1.45, fontSize: 14),
                   ),
                 ),
@@ -272,7 +272,7 @@ class _Composer extends StatelessWidget {
               : 'One message. They decide whether to answer — until they do, you '
                   'cannot write again, and you will not see their name or number.',
           style:
-              const TextStyle(color: A91.muted, height: 1.55, fontSize: 13.5),
+              TextStyle(color: A91.muted, height: 1.55, fontSize: 13.5),
         ),
         const SizedBox(height: 14),
         TextField(
@@ -289,7 +289,7 @@ class _Composer extends StatelessWidget {
             helperText: short
                 ? 'At least $_minMessage characters — they are judging a stranger on this.'
                 : null,
-            helperStyle: const TextStyle(color: A91.faint, fontSize: 12),
+            helperStyle: TextStyle(color: A91.faint, fontSize: 12),
           ),
         ),
         if (error != null) ...[
@@ -297,7 +297,7 @@ class _Composer extends StatelessWidget {
           Text(
             error!,
             style:
-                const TextStyle(color: A91.danger, fontWeight: FontWeight.w500),
+                TextStyle(color: A91.danger, fontWeight: FontWeight.w500),
           ),
         ],
         const SizedBox(height: 14),
@@ -315,7 +315,7 @@ class _Sent extends StatelessWidget {
   const _Sent();
 
   @override
-  Widget build(BuildContext context) => const _Notice(
+  Widget build(BuildContext context) => _Notice(
         tone: A91.teal,
         title: 'Sent',
         body: 'It is with them now. You will see their reply in your messages, '
@@ -327,7 +327,7 @@ class _AlreadyWritten extends StatelessWidget {
   const _AlreadyWritten();
 
   @override
-  Widget build(BuildContext context) => const _Notice(
+  Widget build(BuildContext context) => _Notice(
         tone: A91.faint,
         title: 'You have already written',
         body: 'One message each until they answer. Their reply will appear in '
@@ -361,7 +361,7 @@ class _Notice extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(body,
-                style: const TextStyle(
+                style: TextStyle(
                     color: A91.muted, height: 1.55, fontSize: 13.5)),
           ],
         ),

@@ -146,7 +146,7 @@ class _ListingFormState extends ConsumerState<_ListingForm> {
             widget.initial.id == null
                 ? 'Sent for approval. We will let you know.'
                 : 'Saved.',
-            style: const TextStyle(color: A91.ink),
+            style: TextStyle(color: A91.ink),
           ),
         ),
       );
@@ -178,7 +178,7 @@ class _ListingFormState extends ConsumerState<_ListingForm> {
                 padding: const EdgeInsets.only(bottom: 12, left: 4),
                 child: Text(
                   _error!,
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: A91.danger, fontSize: 13.5, height: 1.5),
                 ),
               ),
@@ -191,7 +191,7 @@ class _ListingFormState extends ConsumerState<_ListingForm> {
               onPressed: _saving ? null : _save,
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'An admin reads every new listing before families see it. '
               'Editing an approved one does not send it back.',
               textAlign: TextAlign.center,
@@ -659,10 +659,10 @@ class _MultiPick extends StatelessWidget {
         const SizedBox(height: 10),
         GestureDetector(
           onTap: onTap,
-          child: const Text(
+          child: Text(
             'Change',
             style: TextStyle(
-                color: A91.grad2, fontSize: 12.5, fontWeight: FontWeight.w600),
+                color: A91.gold, fontSize: 12.5, fontWeight: FontWeight.w600),
           ),
         ),
       ],
@@ -682,7 +682,7 @@ class _StatusBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (listing.id == null) {
-      return const _Banner(
+      return _Banner(
         tone: A91.faint,
         title: 'Not published yet',
         body: 'Fill this in and send it. An admin reads every new listing '
@@ -690,7 +690,7 @@ class _StatusBanner extends StatelessWidget {
       );
     }
     if (listing.isSuspended) {
-      return const _Banner(
+      return _Banner(
         tone: A91.danger,
         title: 'Taken down',
         body: 'Your listing is not visible to families. Write to '
@@ -698,13 +698,13 @@ class _StatusBanner extends StatelessWidget {
       );
     }
     if (!listing.approved) {
-      return const _Banner(
+      return _Banner(
         tone: A91.warn,
         title: 'Waiting for approval',
         body: 'We are reading it. You can keep editing in the meantime.',
       );
     }
-    return const _Banner(
+    return _Banner(
       tone: A91.teal,
       title: 'Live',
       body: 'Families can find you. Edits go up without waiting for approval '
@@ -739,7 +739,7 @@ class _Banner extends StatelessWidget {
             ),
             const SizedBox(height: 5),
             Text(body,
-                style: const TextStyle(
+                style: TextStyle(
                     color: A91.muted, fontSize: 13, height: 1.5)),
           ],
         ),

@@ -116,17 +116,17 @@ class _Body extends ConsumerWidget {
           const SizedBox(height: 10),
           Text(
             event.about.trim(),
-            style: const TextStyle(color: A91.muted, height: 1.6),
+            style: TextStyle(color: A91.muted, height: 1.6),
           ),
         ],
         const SizedBox(height: 26),
         if (event.status == EventStatus.cancelled)
-          const _Notice(
+          _Notice(
             tone: A91.danger,
             text: 'This event has been cancelled.',
           )
         else if (event.bookingMode == 'none')
-          const _Notice(
+          _Notice(
             tone: A91.faint,
             text: 'This one is an announcement — there is nothing to enter '
                 'here. Ask the organiser how to take part.',
@@ -139,7 +139,7 @@ class _Body extends ConsumerWidget {
             text: 'Entries open ${_moment(event.bookingOpensAt!)}.',
           )
         else if (closed)
-          const _Notice(
+          _Notice(
             tone: A91.faint,
             text: 'Entries have closed for this one.',
           )
@@ -159,7 +159,7 @@ class _Categories extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (event.categories.isEmpty) {
-      return const _Notice(
+      return _Notice(
         tone: A91.faint,
         text: 'The organiser has not set up what can be entered yet.',
       );
@@ -174,7 +174,7 @@ class _Categories extends StatelessWidget {
         for (final category in event.categories)
           _CategoryCard(event: event, category: category),
         const SizedBox(height: 14),
-        const Text(
+        Text(
           'Fees are paid to the organiser. Nothing is charged here.',
           style: TextStyle(color: A91.faint, fontSize: 12, height: 1.5),
         ),
@@ -234,7 +234,7 @@ class _CategoryCard extends StatelessWidget {
                     children: [
                       Text(
                         category.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: A91.ink,
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
@@ -243,7 +243,7 @@ class _CategoryCard extends StatelessWidget {
                       if (limits.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         Text(limits,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 color: A91.faint, fontSize: 12.5)),
                       ],
                     ],
@@ -252,7 +252,7 @@ class _CategoryCard extends StatelessWidget {
                 const SizedBox(width: 12),
                 Text(
                   fee == null || fee == 0 ? 'Free' : '₹$fee',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: A91.ink,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -260,7 +260,7 @@ class _CategoryCard extends StatelessWidget {
                 ),
                 if (!full) ...[
                   const SizedBox(width: 6),
-                  const Icon(Icons.chevron_right, size: 20, color: A91.faint),
+                  Icon(Icons.chevron_right, size: 20, color: A91.faint),
                 ],
               ],
             ),
@@ -281,7 +281,7 @@ class _External extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _Notice(
+          _Notice(
             tone: A91.faint,
             text: 'The organiser takes entries on their own site.',
           ),
@@ -296,11 +296,11 @@ class _External extends StatelessWidget {
                     await launchUrl(uri, mode: LaunchMode.externalApplication);
                   }
                 },
-                icon: const Icon(Icons.open_in_new, size: 17, color: A91.grad2),
-                label: const Text(
+                icon: Icon(Icons.open_in_new, size: 17, color: A91.gold),
+                label: Text(
                   'Open their booking page',
                   style:
-                      TextStyle(color: A91.grad2, fontWeight: FontWeight.w600),
+                      TextStyle(color: A91.gold, fontWeight: FontWeight.w600),
                 ),
               ),
             ),

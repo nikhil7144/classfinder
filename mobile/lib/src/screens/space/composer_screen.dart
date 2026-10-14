@@ -106,13 +106,13 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
             const SizedBox(height: 10),
             ListTile(
               leading:
-                  const Icon(Icons.photo_camera_outlined, color: A91.muted),
+                  Icon(Icons.photo_camera_outlined, color: A91.muted),
               title: const Text('Take a photo'),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             ListTile(
               leading:
-                  const Icon(Icons.photo_library_outlined, color: A91.muted),
+                  Icon(Icons.photo_library_outlined, color: A91.muted),
               title: const Text('Choose from gallery'),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
@@ -207,7 +207,7 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Text(
                   _error!,
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: A91.danger, fontSize: 13.5, height: 1.5),
                 ),
               ),
@@ -218,7 +218,7 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
               onPressed: _ready && !_uploading ? _publish : null,
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Anyone who opens your Space can see this. Do not post another '
               "family's child without asking them first.",
               textAlign: TextAlign.center,
@@ -244,7 +244,7 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
           ),
           alignment: Alignment.center,
           child: _uploading
-              ? const SizedBox(
+              ? SizedBox(
                   height: 24,
                   width: 24,
                   child: CircularProgressIndicator(
@@ -252,12 +252,12 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
                 )
               : _local != null
                   ? null
-                  : const Column(
+                  : Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.add_photo_alternate_outlined,
                             color: A91.faint, size: 30),
-                        SizedBox(height: 10),
+                        const SizedBox(height: 10),
                         Text('Take or choose a photo',
                             style: TextStyle(color: A91.faint, fontSize: 13.5)),
                       ],
@@ -286,7 +286,7 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
           ),
         ),
         if (typed && id == null)
-          const Text(
+          Text(
             "That doesn't look like a YouTube link. Paste the link from the "
             'video itself.',
             style: TextStyle(color: A91.danger, fontSize: 12.5, height: 1.45),
@@ -301,13 +301,13 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.check_circle_outline,
+                Icon(Icons.check_circle_outline,
                     color: A91.teal, size: 19),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     'Video found — $id',
-                    style: const TextStyle(color: A91.teal, fontSize: 13),
+                    style: TextStyle(color: A91.teal, fontSize: 13),
                   ),
                 ),
               ],

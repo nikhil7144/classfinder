@@ -143,7 +143,7 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
             if (widget.thread.subtitle != null)
               Text(
                 widget.thread.subtitle!,
-                style: const TextStyle(fontSize: 11.5, color: A91.faint),
+                style: TextStyle(fontSize: 11.5, color: A91.faint),
               ),
           ],
         ),
@@ -215,7 +215,7 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   _error!,
-                  style: const TextStyle(color: A91.danger, fontSize: 13),
+                  style: TextStyle(color: A91.danger, fontSize: 13),
                 ),
               ),
             _Composer(
@@ -282,16 +282,16 @@ class _Origin extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Expanded(child: Divider(color: A91.border)),
+        Expanded(child: Divider(color: A91.border)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
             '$who for a call$about on ${_onDate(origin.askedAt)}',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: A91.faint, fontSize: 11.5),
+            style: TextStyle(color: A91.faint, fontSize: 11.5),
           ),
         ),
-        const Expanded(child: Divider(color: A91.border)),
+        Expanded(child: Divider(color: A91.border)),
       ],
     );
   }
@@ -315,7 +315,7 @@ class _Opening extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'HOW THIS STARTED',
               style: TextStyle(
                 color: A91.faint,
@@ -325,7 +325,7 @@ class _Opening extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 7),
-            Text(text, style: const TextStyle(color: A91.muted, height: 1.5)),
+            Text(text, style: TextStyle(color: A91.muted, height: 1.5)),
           ],
         ),
       );
@@ -366,12 +366,12 @@ class _Bubble extends StatelessWidget {
             Text(
               message.body,
               style:
-                  const TextStyle(color: A91.ink, height: 1.45, fontSize: 14.5),
+                  TextStyle(color: A91.ink, height: 1.45, fontSize: 14.5),
             ),
             const SizedBox(height: 3),
             Text(
               '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
-              style: const TextStyle(color: A91.faint, fontSize: 10.5),
+              style: TextStyle(color: A91.faint, fontSize: 10.5),
             ),
           ],
         ),
@@ -405,10 +405,10 @@ class _Composer extends StatelessWidget {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           border: Border(top: BorderSide(color: A91.border)),
         ),
-        child: const Text(
+        child: Text(
           'One message until they answer. You will be able to write again once '
           'they do.',
           textAlign: TextAlign.center,
@@ -421,7 +421,7 @@ class _Composer extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 10, 10, 12),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(top: BorderSide(color: A91.border)),
       ),
       child: Row(
@@ -446,12 +446,12 @@ class _Composer extends StatelessWidget {
           IconButton.filled(
             onPressed: canSend ? onSend : null,
             style: IconButton.styleFrom(
-              backgroundColor: canSend ? A91.grad1 : A91.surface2,
+              backgroundColor: canSend ? A91.coral : A91.surface2,
               foregroundColor: canSend ? A91.onAccent : A91.faint,
               padding: const EdgeInsets.all(12),
             ),
             icon: sending
-                ? const SizedBox(
+                ? SizedBox(
                     height: 18,
                     width: 18,
                     child: CircularProgressIndicator(
@@ -476,10 +476,10 @@ class _ClosedNotice extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           border: Border(top: BorderSide(color: A91.border)),
         ),
-        child: const Text(
+        child: Text(
           "This wasn't taken up, so the conversation is closed.",
           textAlign: TextAlign.center,
           style: TextStyle(color: A91.faint, fontSize: 13, height: 1.5),

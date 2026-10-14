@@ -149,7 +149,7 @@ class _FormState extends ConsumerState<_Form> {
           backgroundColor: A91.surface3,
           content: Text(
             widget.initial.id == null ? 'All set.' : 'Saved.',
-            style: const TextStyle(color: A91.ink),
+            style: TextStyle(color: A91.ink),
           ),
         ),
       );
@@ -177,7 +177,7 @@ class _FormState extends ConsumerState<_Form> {
                 padding: const EdgeInsets.only(bottom: 12, left: 4),
                 child: Text(
                   _error!,
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: A91.danger, fontSize: 13.5, height: 1.5),
                 ),
               ),
@@ -537,21 +537,21 @@ class _LocationRow extends StatelessWidget {
             child: TextButton.icon(
               onPressed: busy ? null : onTap,
               icon: busy
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 15,
                       width: 15,
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: A91.faint),
                     )
-                  : const Icon(Icons.my_location, size: 17, color: A91.grad2),
+                  : Icon(Icons.my_location, size: 17, color: A91.gold),
               label: Text(
                 busy
                     ? 'Locating…'
                     : has
                         ? 'Update my location'
                         : 'Use my location',
-                style: const TextStyle(
-                    color: A91.grad2, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                    color: A91.gold, fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -560,7 +560,7 @@ class _LocationRow extends StatelessWidget {
               padding: const EdgeInsets.only(left: 12),
               child: Text(
                 note!,
-                style: const TextStyle(
+                style: TextStyle(
                     color: A91.faint, fontSize: 12, height: 1.45),
               ),
             ),
@@ -604,7 +604,7 @@ class _Switch extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: A91.ink,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -613,7 +613,7 @@ class _Switch extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         body,
-                        style: const TextStyle(
+                        style: TextStyle(
                             color: A91.faint, fontSize: 12, height: 1.45),
                       ),
                     ],
@@ -623,7 +623,7 @@ class _Switch extends StatelessWidget {
                   value: value,
                   onChanged: onChanged,
                   activeThumbColor: A91.onAccent,
-                  activeTrackColor: A91.grad1,
+                  activeTrackColor: A91.coral,
                 ),
               ],
             ),
@@ -673,10 +673,10 @@ class _MultiPick extends StatelessWidget {
         const SizedBox(height: 10),
         GestureDetector(
           onTap: onTap,
-          child: const Text(
+          child: Text(
             'Change',
             style: TextStyle(
-                color: A91.grad2, fontSize: 12.5, fontWeight: FontWeight.w600),
+                color: A91.gold, fontSize: 12.5, fontWeight: FontWeight.w600),
           ),
         ),
       ],

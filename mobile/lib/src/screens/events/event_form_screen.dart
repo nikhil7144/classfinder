@@ -137,7 +137,7 @@ class _FormState extends ConsumerState<_Form> {
             publish
                 ? 'Published. Families in the city can see it.'
                 : 'Saved as a draft.',
-            style: const TextStyle(color: A91.ink),
+            style: TextStyle(color: A91.ink),
           ),
         ),
       );
@@ -204,7 +204,7 @@ class _FormState extends ConsumerState<_Form> {
           if (!_isNew && widget.initial.status == EventStatus.published)
             TextButton(
               onPressed: _saving ? null : () => _setStatus(EventStatus.draft),
-              child: const Text('Withdraw',
+              child: Text('Withdraw',
                   style: TextStyle(color: A91.muted, fontSize: 13)),
             ),
         ],
@@ -458,7 +458,7 @@ class _FormState extends ConsumerState<_Form> {
                 padding: const EdgeInsets.only(bottom: 12, left: 4),
                 child: Text(
                   _error!,
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: A91.danger, fontSize: 13.5, height: 1.5),
                 ),
               ),
@@ -476,7 +476,7 @@ class _FormState extends ConsumerState<_Form> {
               ),
             ],
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'A draft is yours alone. Publishing puts it in front of families '
               'in that city.',
               textAlign: TextAlign.center,
@@ -540,7 +540,7 @@ class _Clearable extends StatelessWidget {
           if (value != null)
             IconButton(
               onPressed: onClear,
-              icon: const Icon(Icons.close, size: 18, color: A91.faint),
+              icon: Icon(Icons.close, size: 18, color: A91.faint),
               tooltip: 'Clear',
             ),
         ],
@@ -574,11 +574,11 @@ class _Secondary extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: A91.grad1),
+                border: Border.all(color: A91.coral),
               ),
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                     color: A91.accentInk,
                     fontWeight: FontWeight.w700,
                     fontSize: 14.5),

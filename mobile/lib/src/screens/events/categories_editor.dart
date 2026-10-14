@@ -45,11 +45,11 @@ class CategoriesEditor extends StatelessWidget {
                 items.add(EventCategory(sortOrder: items.length));
                 onChanged();
               },
-              icon: const Icon(Icons.add, size: 18, color: A91.grad2),
+              icon: Icon(Icons.add, size: 18, color: A91.gold),
               label: Text(
                 items.isEmpty ? 'Add a category' : 'Add another',
-                style: const TextStyle(
-                    color: A91.grad2, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                    color: A91.gold, fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -191,7 +191,7 @@ class _Row extends StatelessWidget {
                     '${category.entriesCount} '
                     '${category.entriesCount == 1 ? 'family has' : 'families have'} '
                     'entered this one.',
-                    style: const TextStyle(color: A91.faint, fontSize: 11.5),
+                    style: TextStyle(color: A91.faint, fontSize: 11.5),
                   ),
                 ],
                 const SizedBox(height: 8),
@@ -228,7 +228,7 @@ class _Small extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: A91.faint, fontSize: 11.5)),
+          Text(label, style: TextStyle(color: A91.faint, fontSize: 11.5)),
           const SizedBox(height: 5),
           TextInput(
             initial: value,

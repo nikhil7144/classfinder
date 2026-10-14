@@ -172,7 +172,7 @@ class _Item extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: A91.ink,
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
@@ -189,7 +189,7 @@ class _Item extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right, size: 20, color: A91.faint),
+                Icon(Icons.chevron_right, size: 20, color: A91.faint),
               ],
             ),
           ),
@@ -206,7 +206,7 @@ class _SignOut extends StatelessWidget {
   Widget build(BuildContext context) => Center(
         child: TextButton(
           onPressed: onTap,
-          child: const Text(
+          child: Text(
             'Sign out',
             style: TextStyle(color: A91.faint, fontSize: 13.5),
           ),

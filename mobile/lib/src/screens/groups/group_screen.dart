@@ -71,7 +71,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: A91.surface,
         title: const Text('Leave this group?'),
-        content: const Text(
+        content: Text(
           'You stop seeing the coaches who pitch to it. The group carries on '
           'without you.',
           style: TextStyle(color: A91.muted, height: 1.5),
@@ -79,11 +79,11 @@ class _GroupScreenState extends ConsumerState<GroupScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Stay', style: TextStyle(color: A91.muted)),
+            child: Text('Stay', style: TextStyle(color: A91.muted)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Leave',
+            child: Text('Leave',
                 style:
                     TextStyle(color: A91.danger, fontWeight: FontWeight.w700)),
           ),
@@ -116,7 +116,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen> {
       ),
       body: SafeArea(
         child: RefreshIndicator(
-          color: A91.grad1,
+          color: A91.coral,
           backgroundColor: A91.surface,
           onRefresh: () async {
             ref.invalidate(groupPitchesProvider(_g.id));
@@ -133,7 +133,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen> {
                   padding: const EdgeInsets.only(top: 12, left: 4),
                   child: Text(
                     _error!,
-                    style: const TextStyle(color: A91.danger, fontSize: 13),
+                    style: TextStyle(color: A91.danger, fontSize: 13),
                   ),
                 ),
               ],
@@ -190,7 +190,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen> {
               if (_g.societyName != null) _g.societyName!,
               if (_g.areaName != null) _g.areaName!,
             ].join(' · '),
-            style: const TextStyle(
+            style: TextStyle(
                 color: A91.ink, fontSize: 15, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
@@ -198,7 +198,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen> {
             '${_g.memberCount} ${_g.memberCount == 1 ? 'family' : 'families'} '
             'so far, asking for ${_g.studentCount} '
             '${_g.studentCount == 1 ? 'place' : 'places'}',
-            style: const TextStyle(color: A91.muted, fontSize: 13),
+            style: TextStyle(color: A91.muted, fontSize: 13),
           ),
           const SizedBox(height: 12),
           // Why coaches cannot see it, when they cannot. A group that is
@@ -270,7 +270,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen> {
                   'group and will write when they can take it.'
               : 'Coaches cannot see this group at the moment, so nobody can '
                   'pitch to it.',
-          style: const TextStyle(color: A91.muted, fontSize: 13, height: 1.55),
+          style: TextStyle(color: A91.muted, fontSize: 13, height: 1.55),
         ),
       );
 }
@@ -308,7 +308,7 @@ class _PitchCardState extends ConsumerState<_PitchCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: A91.surface3,
-          content: Text(e.message, style: const TextStyle(color: A91.ink)),
+          content: Text(e.message, style: TextStyle(color: A91.ink)),
         ),
       );
     } finally {
@@ -363,7 +363,7 @@ class _PitchCardState extends ConsumerState<_PitchCard> {
       decoration: BoxDecoration(
         color: A91.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: waiting ? A91.grad1 : A91.border),
+        border: Border.all(color: waiting ? A91.coral : A91.border),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -384,7 +384,7 @@ class _PitchCardState extends ConsumerState<_PitchCard> {
                       Expanded(
                         child: Text(
                           pitch.providerName ?? 'A coach',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: A91.ink,
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
@@ -395,7 +395,7 @@ class _PitchCardState extends ConsumerState<_PitchCard> {
                         Text(
                           pitch.status.label,
                           style:
-                              const TextStyle(color: A91.faint, fontSize: 11.5),
+                              TextStyle(color: A91.faint, fontSize: 11.5),
                         ),
                     ],
                   ),
@@ -406,7 +406,7 @@ class _PitchCardState extends ConsumerState<_PitchCard> {
                       pitch.pitch!.trim(),
                       maxLines: waiting ? 6 : 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: A91.muted, fontSize: 13.5, height: 1.5),
                     ),
                   ],
@@ -441,8 +441,8 @@ class _PitchCardState extends ConsumerState<_PitchCard> {
             ),
           ] else if (waiting) ...[
             const Divider(height: 1),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 11, 16, 12),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 11, 16, 12),
               child: Text(
                 'Waiting on whoever started the group to answer.',
                 style: TextStyle(color: A91.faint, fontSize: 12.5),
@@ -483,7 +483,7 @@ class _Avatar extends StatelessWidget {
           ? null
           : Text(
               letter.toUpperCase(),
-              style: const TextStyle(
+              style: TextStyle(
                   color: A91.faint, fontWeight: FontWeight.w700, fontSize: 16),
             ),
     );
@@ -539,7 +539,7 @@ class _Action extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: primary ? A91.grad1 : A91.border),
+                border: Border.all(color: primary ? A91.coral : A91.border),
               ),
               child: Text(
                 label,

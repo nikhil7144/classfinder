@@ -55,7 +55,7 @@ class _ThreadsScreenState extends ConsumerState<ThreadsScreen> {
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
-          color: A91.grad1,
+          color: A91.coral,
           backgroundColor: A91.surface,
           onRefresh: () async {
             ref.invalidate(alertsProvider);
@@ -214,7 +214,7 @@ class _ThreadTile extends StatelessWidget {
                         Text(
                           _when(thread.lastActivity),
                           style:
-                              const TextStyle(color: A91.faint, fontSize: 11.5),
+                              TextStyle(color: A91.faint, fontSize: 11.5),
                         ),
                       ],
                     ),
@@ -225,7 +225,7 @@ class _ThreadTile extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style:
-                            const TextStyle(color: A91.faint, fontSize: 12.5),
+                            TextStyle(color: A91.faint, fontSize: 12.5),
                       ),
                     ],
                     if (preview.isNotEmpty) ...[
@@ -252,8 +252,8 @@ class _ThreadTile extends StatelessWidget {
                   margin: const EdgeInsets.only(top: 6),
                   height: 8,
                   width: 8,
-                  decoration: const BoxDecoration(
-                    color: A91.grad1,
+                  decoration: BoxDecoration(
+                    color: A91.coral,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -350,7 +350,7 @@ class _Avatar extends StatelessWidget {
           ? null
           : Text(
               letter.toUpperCase(),
-              style: const TextStyle(
+              style: TextStyle(
                 color: A91.faint,
                 fontWeight: FontWeight.w700,
                 fontSize: 16,

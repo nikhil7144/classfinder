@@ -51,8 +51,8 @@ class _BrowseEventsScreenState extends ConsumerState<BrowseEventsScreen> {
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const MyEntriesScreen()),
             ),
-            child: const Text('Your entries',
-                style: TextStyle(color: A91.grad2, fontSize: 13)),
+            child: Text('Your entries',
+                style: TextStyle(color: A91.gold, fontSize: 13)),
           ),
         ],
       ),
@@ -77,7 +77,7 @@ class _BrowseEventsScreenState extends ConsumerState<BrowseEventsScreen> {
             final events = ref.watch(cityEventsProvider(_cityId!));
 
             return RefreshIndicator(
-              color: A91.grad1,
+              color: A91.coral,
               backgroundColor: A91.surface,
               onRefresh: () async {
                 ref.invalidate(cityEventsProvider(_cityId!));
@@ -226,7 +226,7 @@ class EventCard extends StatelessWidget {
                   children: [
                     Text(
                       '${at.day}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: A91.ink,
                         fontSize: 19,
                         fontWeight: FontWeight.w800,
@@ -235,7 +235,7 @@ class EventCard extends StatelessWidget {
                     ),
                     Text(
                       _months[at.month - 1],
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: A91.faint,
                           fontSize: 11,
                           fontWeight: FontWeight.w600),
@@ -252,7 +252,7 @@ class EventCard extends StatelessWidget {
                       event.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: A91.ink,
                         fontSize: 15.5,
                         fontWeight: FontWeight.w700,
@@ -269,7 +269,7 @@ class EventCard extends StatelessWidget {
                       ].join(' · '),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: A91.faint, fontSize: 12.5),
+                      style: TextStyle(color: A91.faint, fontSize: 12.5),
                     ),
                     if (fees.isNotEmpty) ...[
                       const SizedBox(height: 6),
@@ -277,7 +277,7 @@ class EventCard extends StatelessWidget {
                         fees.first == 0
                             ? 'Free to enter'
                             : 'From ₹${fees.first}',
-                        style: const TextStyle(
+                        style: TextStyle(
                             color: A91.muted,
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600),

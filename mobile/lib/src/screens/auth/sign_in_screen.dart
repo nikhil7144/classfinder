@@ -134,7 +134,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     onCode
                         ? 'We sent a code to ${_email.text.trim()}.'
                         : 'We will email you a code. No password to remember.',
-                    style: const TextStyle(color: A91.muted, height: 1.55),
+                    style: TextStyle(color: A91.muted, height: 1.55),
                   ),
                   const SizedBox(height: 28),
                   if (_error != null) ...[
@@ -189,8 +189,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                       children: [
                         Expanded(
                             child: Divider(color: A91.muted.withValues(alpha: 0.3))),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 12),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: Text('or', style: TextStyle(color: A91.muted)),
                         ),
                         Expanded(
@@ -212,7 +212,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: A91.ink,
                         backgroundColor: A91.surface2,
-                        side: const BorderSide(color: A91.border),
+                        side: BorderSide(color: A91.border),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: const StadiumBorder(),
                         textStyle: const TextStyle(
@@ -246,7 +246,7 @@ class _ErrorBanner extends StatelessWidget {
         child: Text(
           message,
           style:
-              const TextStyle(color: A91.danger, fontWeight: FontWeight.w500),
+              TextStyle(color: A91.danger, fontWeight: FontWeight.w500),
         ),
       );
 }

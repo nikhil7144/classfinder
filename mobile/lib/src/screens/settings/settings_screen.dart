@@ -71,8 +71,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(4, 4, 4, 16),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 4, 4, 16),
               child: Text(
                 'You sign in with a one-time code sent to your email, or with '
                 "Google — there's no password to manage.",
@@ -97,7 +97,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                     child: Text(
                       current.isEmpty ? '…' : current,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: A91.ink,
                         fontSize: 13.5,
                         fontFamily: 'monospace',
@@ -120,7 +120,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     padding: const EdgeInsets.only(bottom: 12, left: 2),
                     child: Text(
                       _error!,
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: A91.danger, fontSize: 13, height: 1.5),
                     ),
                   ),
@@ -135,7 +135,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                     child: Text(
                       _sent!,
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: A91.teal, fontSize: 13, height: 1.5),
                     ),
                   ),
@@ -146,6 +146,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       _next.trim().isEmpty || _busy ? null : _changeEmail,
                 ),
               ],
+            ),
+            const Section(
+              title: 'Appearance',
+              subtitle: 'Follows your phone by default. Pick one to stop.',
+              children: [_ThemeModePicker()],
             ),
             const Section(
               title: 'Legal',
@@ -172,7 +177,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     onPressed: () => confirmSignOut(context, ref),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: A91.muted,
-                      side: const BorderSide(color: A91.border),
+                      side: BorderSide(color: A91.border),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 13),
                       shape: RoundedRectangleBorder(
@@ -202,18 +207,18 @@ Future<void> confirmSignOut(BuildContext context, WidgetRef ref) async {
     builder: (context) => AlertDialog(
       backgroundColor: A91.surface,
       title: const Text('Sign out?'),
-      content: const Text(
+      content: Text(
         'You will need your email to get back in.',
         style: TextStyle(color: A91.muted, height: 1.5),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: const Text('Stay', style: TextStyle(color: A91.muted)),
+          child: Text('Stay', style: TextStyle(color: A91.muted)),
         ),
         TextButton(
           onPressed: () => Navigator.pop(context, true),
-          child: const Text(
+          child: Text(
             'Sign out',
             style: TextStyle(color: A91.danger, fontWeight: FontWeight.w700),
           ),
@@ -224,6 +229,82 @@ Future<void> confirmSignOut(BuildContext context, WidgetRef ref) async {
   // The router listens to the auth stream, so signing out is all this has to
   // do — the app moves on its own.
   if (sure == true) await ref.read(authRepositoryProvider).signOut();
+}
+
+/// Light / Dark / Auto — the mobile equivalent of the web's ThemeToggle.
+///
+/// Three segments, not a single on/off switch: "Auto" is a real, persisted
+/// choice meaning "follow the phone", distinct from having picked light or
+/// dark outright. Collapsing it into a boolean would mean someone who wants
+/// their evenings dark has to repick it every night, which is the one thing
+/// System already does for free.
+class _ThemeModePicker extends ConsumerWidget {
+  const _ThemeModePicker();
+
+  static const _options = [
+    (ThemeMode.light, 'Light'),
+    (ThemeMode.dark, 'Dark'),
+    (ThemeMode.system, 'Auto'),
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final current = ref.watch(themeModeProvider);
+
+    return Row(
+      children: [
+        for (final (mode, label) in _options) ...[
+          if (mode != _options.first.$1) const SizedBox(width: 8),
+          Expanded(
+            child: _Segment(
+              label: label,
+              selected: current == mode,
+              onTap: () => ref.read(themeModeProvider.notifier).set(mode),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _Segment extends StatelessWidget {
+  const _Segment({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+        color: selected ? A91.surface3 : Colors.transparent,
+        borderRadius: BorderRadius.circular(999),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(999),
+          onTap: onTap,
+          child: Container(
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(vertical: 11),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                  color: selected ? A91.coral : A91.border),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: selected ? A91.ink : A91.muted,
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ),
+        ),
+      );
 }
 
 /// A row that opens a legal page in the phone's own browser.
@@ -261,10 +342,10 @@ class _LegalLink extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(label,
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: A91.ink, fontWeight: FontWeight.w500)),
                 ),
-                const Icon(Icons.open_in_new, size: 17, color: A91.muted),
+                Icon(Icons.open_in_new, size: 17, color: A91.muted),
               ],
             ),
           ),

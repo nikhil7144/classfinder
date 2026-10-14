@@ -40,7 +40,7 @@ class PrimaryButton extends StatelessWidget {
               height: 52,
               child: Center(
                 child: busy
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
@@ -50,7 +50,7 @@ class PrimaryButton extends StatelessWidget {
                       )
                     : Text(
                         label,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: A91.onAccent,
                           fontWeight: FontWeight.w700,
                           fontSize: 15,

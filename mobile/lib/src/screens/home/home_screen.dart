@@ -31,7 +31,7 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
-          color: A91.grad1,
+          color: A91.coral,
           backgroundColor: A91.surface,
           onRefresh: () async {
             ref.invalidate(alertsProvider);
@@ -83,14 +83,14 @@ class _Header extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               'in ${reference.areaLabel(profile!.areaId!)}',
-              style: const TextStyle(color: A91.muted, fontSize: 13.5),
+              style: TextStyle(color: A91.muted, fontSize: 13.5),
             ),
           ],
           // The one switch worth surfacing here: off means no coach will ever
           // see them, and somebody who set it months ago will not remember.
           if (profile != null && !profile!.openToOffers) ...[
             const SizedBox(height: 14),
-            const _Notice(
+            _Notice(
               tone: A91.warn,
               text: 'Coaches cannot see you at the moment. Turn that back on '
                   'under You, and they can get in touch.',
@@ -152,11 +152,11 @@ class _WaitingOnYou extends ConsumerWidget {
                 padding: const EdgeInsets.only(bottom: 5),
                 child: Text(
                   '$count $label',
-                  style: const TextStyle(color: A91.muted, fontSize: 13.5),
+                  style: TextStyle(color: A91.muted, fontSize: 13.5),
                 ),
               ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'They are all in Messages.',
               style: TextStyle(color: A91.faint, fontSize: 12.5),
             ),
@@ -212,7 +212,7 @@ class _Suggested extends ConsumerWidget {
                     result.ranked
                         ? 'Matched against what you said you wanted.'
                         : 'Closest first.',
-                    style: const TextStyle(color: A91.faint, fontSize: 12.5),
+                    style: TextStyle(color: A91.faint, fontSize: 12.5),
                   ),
                 ],
               ),
@@ -305,8 +305,8 @@ class _SuggestionCard extends StatelessWidget {
                 suggestion.reason!.trim(),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    color: A91.grad2, fontSize: 11.5, height: 1.4),
+                style: TextStyle(
+                    color: A91.gold, fontSize: 11.5, height: 1.4),
               ),
             ),
         ],

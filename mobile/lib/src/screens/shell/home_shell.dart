@@ -105,7 +105,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             icon: Badge(
               isLabelVisible: waiting > 0,
               label: Text('$waiting'),
-              backgroundColor: A91.grad1,
+              backgroundColor: A91.coral,
               textColor: A91.onAccent,
               child: const Icon(Icons.call_outlined),
             ),
@@ -116,7 +116,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             icon: Badge(
               isLabelVisible: unread > 0,
               label: Text('$unread'),
-              backgroundColor: A91.grad1,
+              backgroundColor: A91.coral,
               textColor: A91.onAccent,
               child: const Icon(Icons.chat_bubble_outline),
             ),

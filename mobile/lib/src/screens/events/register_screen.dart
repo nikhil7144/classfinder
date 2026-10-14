@@ -85,7 +85,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               widget.event.title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 11.5, color: A91.faint),
+              style: TextStyle(fontSize: 11.5, color: A91.faint),
             ),
           ],
         ),
@@ -103,7 +103,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             final shown = _filter(all);
 
             return RefreshIndicator(
-              color: A91.grad1,
+              color: A91.coral,
               backgroundColor: A91.surface,
               onRefresh: () async {
                 ref.invalidate(entriesProvider(widget.event.id!));
@@ -210,7 +210,7 @@ class _Total extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 1),
-          Text(label, style: const TextStyle(color: A91.faint, fontSize: 11.5)),
+          Text(label, style: TextStyle(color: A91.faint, fontSize: 11.5)),
         ],
       );
 }
@@ -239,7 +239,7 @@ class _Filters extends StatelessWidget {
           children: [
             TextField(
               controller: search,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Find a name or a receipt number',
                 isDense: true,
                 prefixIcon: Icon(Icons.search, color: A91.faint, size: 20),
@@ -301,7 +301,7 @@ class _Chip extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: selected ? A91.grad1 : A91.border),
+              border: Border.all(color: selected ? A91.coral : A91.border),
             ),
             child: Text(
               label,
