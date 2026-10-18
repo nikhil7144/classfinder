@@ -1,0 +1,143 @@
+<style>
+  :root {
+    --bg: #0C0E10;
+    --surface: #17191C;
+    --surface-2: #1F2226;
+    --line: #2B2F33;
+    --ink: #F2F3F4;
+    --muted: #B3BCC2;
+    --faint: #8B949B;
+    --grad-1: #FF6B4D;
+    --grad-2: #FFB238;
+    --on-grad: #1A0D06;
+    --gold: #FFB238;
+    --teal: #17B893;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #222; }
+
+  .post {
+    width: 1080px;
+    height: 1080px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: Manrope, "Segoe UI", system-ui, sans-serif;
+    padding: 72px 72px 64px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* The logo's own rising swoosh, as a quiet backdrop. */
+  .motif { position: absolute; inset: 0; pointer-events: none; }
+
+  .top { display: flex; align-items: center; justify-content: space-between; position: relative; }
+  .top img { height: 54px; width: auto; display: block; }
+  .eyebrow {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 19px; letter-spacing: .18em; text-transform: uppercase; color: var(--gold);
+  }
+
+  h1 {
+    position: relative;
+    margin-top: 64px;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-weight: 800;
+    font-size: 72px;
+    line-height: 1.03;
+    letter-spacing: -.028em;
+  }
+  h1 .dim { color: var(--faint); font-weight: 700; }
+  h1 .grad {
+    background: linear-gradient(100deg, var(--grad-1), var(--grad-2));
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  .card {
+    position: relative;
+    margin-top: 52px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    padding: 34px 36px 30px;
+    box-shadow: 0 30px 70px rgba(0,0,0,.5);
+  }
+  .card .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+  .card .tag {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 16px; letter-spacing: .16em; text-transform: uppercase; color: var(--teal);
+  }
+  .card h2 { font-family: "Plus Jakarta Sans", sans-serif; font-size: 34px; font-weight: 700; margin-top: 10px; }
+  .card .where { color: var(--muted); font-size: 21px; margin-top: 6px; }
+  .card .pin { width: 64px; height: 64px; border-radius: 999px; flex-shrink: 0; background: linear-gradient(135deg, var(--grad-1), var(--grad-2)); }
+
+  .rows { margin-top: 26px; padding-top: 24px; border-top: 1px solid var(--line); display: grid; gap: 14px; }
+  .row { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; }
+  .row .k { color: var(--muted); font-size: 21px; }
+  .row .v { font-family: "Plus Jakarta Sans", sans-serif; font-weight: 700; font-size: 22px; }
+
+  .foot {
+    position: relative;
+    margin-top: auto;
+    padding-top: 34px;
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  }
+  .foot .claim { font-size: 23px; color: var(--muted); }
+  .foot .claim b { color: var(--ink); font-weight: 700; }
+  .url {
+    font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 28px;
+    color: var(--on-grad); background: linear-gradient(100deg, var(--grad-1), var(--grad-2));
+    padding: 18px 30px; border-radius: 999px; white-space: nowrap;
+  }
+</style>
+
+<div class="post">
+  <svg class="motif" viewBox="0 0 1080 1080" aria-hidden="true">
+    <defs>
+      <linearGradient id="sw" x1="0" y1="1" x2="1" y2="0">
+        <stop offset="0" stop-color="#3B9BFF"></stop>
+        <stop offset=".5" stop-color="#17B893"></stop>
+        <stop offset="1" stop-color="#7DDC6B"></stop>
+      </linearGradient>
+    </defs>
+    <g fill="none" stroke="url(#sw)" stroke-linecap="round">
+      <path d="M-120 1180 C 260 1060, 600 820, 820 540 S 1180 140, 1360 20" stroke-width="3" opacity=".26"></path>
+      <path d="M-160 1280 C 300 1150, 690 900, 920 610 S 1280 200, 1460 90" stroke-width="2" opacity=".17"></path>
+      <path d="M-200 1380 C 340 1240, 780 980, 1020 680 S 1380 260, 1560 160" stroke-width="1.5" opacity=".11"></path>
+    </g>
+    <path d="M1004 108 l13 27 30 4 -22 21 5 30 -26 -14 -26 14 5 -30 -22 -21 30 -4z" fill="#FFB238" opacity=".2"></path>
+    <circle cx="150" cy="940" r="7" fill="#17B893" opacity=".22"></circle>
+  </svg>
+
+  <div class="top">
+    <img src="wordmark-dark.png" alt="Aspire91">
+    <span class="eyebrow">For coaches &amp; academies</span>
+  </div>
+
+  <h1>
+    <span class="dim">Other apps give you<br>one parent&#39;s number.</span><br>
+    Aspire91 gives you<br><span class="grad">a whole group.</span>
+  </h1>
+
+  <div class="card">
+    <div class="head">
+      <div>
+        <p class="tag">Group request</p>
+        <h2>Cricket &middot; beginner</h2>
+        <p class="where">Indirapuram &middot; 1.2 km from you</p>
+      </div>
+      <span class="pin"></span>
+    </div>
+    <div class="rows">
+      <div class="row"><span class="k">Learners</span><span class="v">4 children, ages 8&ndash;10</span></div>
+      <div class="row"><span class="k">Where</span><span class="v">Their society clubhouse</span></div>
+      <div class="row"><span class="k">Days</span><span class="v">Sat, Sun &middot; mornings</span></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <p class="claim">Free listing. <b>No commission on your fees.</b></p>
+    <span class="url">www.aspire91.com</span>
+  </div>
+</div>

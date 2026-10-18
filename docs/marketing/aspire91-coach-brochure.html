@@ -1,0 +1,503 @@
+<title>Coach Brochure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+  /* A printed brochure, so one light palette painted explicitly: the light
+     half of Charcoal & Coral, which is what the product itself uses. */
+  :root {
+    --paper: #F4F2F0;
+    --sheet: #FFFFFF;
+    --warm: #FAF9F8;
+    --ink: #14171A;
+    --muted: #4B545A;
+    --faint: #5D666C;
+    --line: #E3DFDB;
+    --line-soft: #F0ECE8;
+
+    --coral: #B33A1D;
+    --gold: #8F5803;
+    --grad-1: #FF6B4D;
+    --grad-2: #FFB238;
+    --on-grad: #1A0D06;
+
+    --teal: #0D6961;
+    --teal-tint: #D6F3EC;
+    --accent-ink: #7C2D12;
+
+    --sport: #2C5FC4;
+    --dance: #B02F66;
+    --music: #4A52D4;
+    --subject: #0A6880;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 400 14px/1.55 Manrope, "Segoe UI", system-ui, sans-serif;
+    padding-inline: 16px;
+    padding-block: 24px 48px;
+  }
+  h1, h2, h3, h4 { font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif; margin: 0; text-wrap: balance; color: var(--ink); }
+  p { margin: 0; }
+
+  .sheet {
+    width: 100%;
+    max-width: 210mm;
+    margin: 0 auto 28px;
+    background: var(--sheet);
+    box-shadow: 0 1px 2px rgba(41, 30, 24, .06), 0 12px 32px rgba(41, 30, 24, .08);
+    padding: 13mm 14mm 12mm;
+    display: flex;
+    flex-direction: column;
+    gap: 6mm;
+    position: relative;
+    overflow: hidden;
+  }
+  .runner { display: flex; justify-content: space-between; align-items: center; font: 500 10px/1 "JetBrains Mono", ui-monospace, monospace; letter-spacing: .15em; text-transform: uppercase; color: var(--faint); }
+  .runner img { height: 26px; width: auto; }
+  .foot { margin-top: auto; display: flex; justify-content: space-between; font-size: 10.5px; color: var(--faint); border-top: 1px solid var(--line); padding-top: 3mm; }
+  .eyebrow { font: 500 10.5px/1.2 "JetBrains Mono", ui-monospace, monospace; letter-spacing: .15em; text-transform: uppercase; color: var(--gold); }
+  .sectionhead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .sectionhead h2 { font-size: 20px; }
+
+  /* ---------- Page 1 ---------- */
+  .cover { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr); gap: 8mm; align-items: start; }
+  .cover h1 { font-size: 32px; line-height: 1.07; font-weight: 800; letter-spacing: -.022em; }
+  .cover h1 em { font-style: normal; color: var(--coral); }
+  .cover .lede { margin-top: 4mm; font-size: 14px; line-height: 1.55; color: var(--ink); }
+  .cover .sub { margin-top: 3mm; font-size: 12.5px; line-height: 1.5; color: var(--muted); }
+
+  .reqcard { border: 1.5px solid var(--ink); border-radius: 14px; overflow: hidden; background: var(--sheet); }
+  .reqcard .top { padding: 4mm 4.5mm 3mm; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; border-bottom: 1px solid var(--line-soft); }
+  .reqcard .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); display: inline-block; margin-right: 6px; }
+  .reqcard h4 { font-size: 14px; }
+  .reqcard .where { font-size: 11px; color: var(--muted); margin-top: 1mm; }
+  .reqcard .pin { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--grad-1), var(--grad-2)); flex-shrink: 0; }
+  .reqcard dl { margin: 0; padding: 3.5mm 4.5mm; display: grid; grid-template-columns: auto 1fr; gap: 2.2mm 4mm; font-size: 11.5px; }
+  .reqcard dt { color: var(--muted); }
+  .reqcard dd { margin: 0; text-align: right; font-weight: 700; font-family: "Plus Jakarta Sans", sans-serif; }
+  .reqcard .cta { padding: 3mm 4.5mm 4mm; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line-soft); }
+  .reqcard .cta span { font-size: 11px; color: var(--muted); }
+  .reqcard .btn { font: 700 11.5px/1 Manrope, sans-serif; color: var(--on-grad); background: linear-gradient(100deg, var(--grad-1), var(--grad-2)); border-radius: 999px; padding: 7px 14px; }
+
+  .ways { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .way { border: 1.5px solid var(--ink); border-radius: 12px; padding: 3.5mm; display: flex; flex-direction: column; gap: 1.5mm; }
+  .way .k { font: 500 9.5px/1.2 "JetBrains Mono", ui-monospace, monospace; letter-spacing: .13em; text-transform: uppercase; color: var(--gold); }
+  .way h3 { font-size: 14px; line-height: 1.22; }
+  .way p { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+  .way .pg { margin-top: auto; padding-top: 2mm; font: 700 10.5px/1 "Plus Jakarta Sans", sans-serif; color: var(--ink); }
+
+  .who { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6mm; }
+  .who div { border-top: 3px solid var(--sport); padding-top: 3mm; }
+  .who div:nth-child(2) { border-color: var(--dance); }
+  .who div:nth-child(3) { border-color: var(--music); }
+  .who h4 { font-size: 13px; margin-bottom: 1.5mm; }
+  .who p { font-size: 12px; color: var(--muted); line-height: 1.45; }
+
+  .band { background: var(--ink); color: #fff; border-radius: 14px; padding: 6mm 7mm; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6mm; align-items: center; }
+  .band h3 { color: #fff; font-size: 16.5px; }
+  .band p { color: #C9CDD1; font-size: 12.5px; margin-top: 1.5mm; }
+  .band .url { font: 700 14.5px/1.2 "Plus Jakarta Sans", sans-serif; color: var(--on-grad); background: linear-gradient(100deg, var(--grad-1), var(--grad-2)); padding: 9px 14px; border-radius: 8px; white-space: nowrap; }
+
+  /* ---------- Page 2 ---------- */
+  .lead { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 8mm; align-items: end; }
+  .lead h1 { font-size: 25px; line-height: 1.1; font-weight: 800; letter-spacing: -.015em; }
+  .lead h1 em { font-style: normal; color: var(--coral); }
+  .lead p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font: 600 11px/1 Manrope, sans-serif; border: 1.5px solid var(--ink); border-radius: 999px; padding: 6px 10px; background: var(--sheet); }
+
+  .twocol { display: grid; grid-template-columns: minmax(0, 1.22fr) minmax(0, 1fr); gap: 7mm; }
+  .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2.4mm; counter-reset: s; }
+  .steps li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; align-items: start; }
+  .steps li::before { counter-increment: s; content: counter(s); width: 28px; height: 28px; border-radius: 50%; background: var(--warm); border: 1px solid var(--line); color: var(--coral); display: flex; align-items: center; justify-content: center; font: 700 12.5px/1 "Plus Jakarta Sans", sans-serif; }
+  .steps h4 { font-size: 13px; }
+  .steps p { font-size: 11.5px; color: var(--muted); line-height: 1.45; margin-top: .5mm; }
+
+  .group { background: var(--teal-tint); border-radius: 14px; padding: 5mm; display: flex; flex-direction: column; gap: 3mm; }
+  .group .eyebrow { color: var(--teal); }
+  .group h3 { font-size: 16px; line-height: 1.2; }
+  .group p { font-size: 11.5px; line-height: 1.5; color: #0B5A53; }
+  .group ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2.2mm; }
+  .group li { font-size: 11.5px; padding-left: 16px; position: relative; line-height: 1.45; color: #0B5A53; }
+  .group li::before { content: ""; position: absolute; left: 0; top: .52em; width: 8px; height: 8px; border-radius: 2px; background: var(--teal); }
+
+  .promise { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5mm; }
+  .promise div { border-left: 3px solid var(--coral); padding-left: 3.5mm; }
+  .promise h4 { font-size: 12.5px; }
+  .promise p { font-size: 11.5px; color: var(--muted); line-height: 1.45; margin-top: .5mm; }
+
+  /* ---------- Page 3 ---------- */
+  .trio { display: flex; flex-direction: column; gap: 5.5mm; }
+  .feat { display: grid; grid-template-columns: 46mm minmax(0, 1fr); gap: 7mm; padding-bottom: 5.5mm; border-bottom: 1px solid var(--line); }
+  .feat:last-child { border-bottom: 0; padding-bottom: 0; }
+  .feat .side h2 { font-size: 20px; line-height: 1.15; margin-top: 1.5mm; }
+  .feat .side p { font-size: 11.5px; color: var(--muted); margin-top: 2mm; line-height: 1.45; }
+  .feat .body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4mm 6mm; }
+  .feat .body h4 { font-size: 12.5px; }
+  .feat .body p { font-size: 11.5px; color: var(--muted); line-height: 1.45; margin-top: .5mm; }
+  .example { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--paper); border-radius: 10px; padding: 3mm 4mm; font-size: 11.5px; }
+  .example b { font-family: "Plus Jakarta Sans", sans-serif; }
+  .slot { display: inline-flex; flex-direction: column; align-items: center; border: 1.5px solid var(--ink); border-radius: 8px; padding: 4px 10px; background: var(--sheet); min-width: 62px; }
+  .slot span { font-size: 9.5px; color: var(--muted); }
+  .slot strong { font: 700 13px/1.2 "Plus Jakarta Sans", sans-serif; }
+  .arrow { color: var(--muted); }
+
+  .tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5mm; }
+  .tool { border: 1px solid var(--line); border-radius: 12px; padding: 4mm; display: flex; flex-direction: column; gap: 1.5mm; }
+  .tool .k { font: 500 9.5px/1.2 "JetBrains Mono", ui-monospace, monospace; letter-spacing: .13em; text-transform: uppercase; color: var(--gold); }
+  .tool h4 { font-size: 13.5px; line-height: 1.2; }
+  .tool p { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+
+  .money { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4mm 6mm; background: var(--warm); border: 1px solid var(--line); border-radius: 14px; padding: 5mm; }
+  .money h4 { font-size: 12.5px; }
+  .money p { font-size: 11.5px; color: var(--muted); line-height: 1.45; margin-top: .5mm; }
+  .money .k { font: 500 9.5px/1.2 "JetBrains Mono", ui-monospace, monospace; letter-spacing: .13em; text-transform: uppercase; color: var(--teal); }
+
+  @media (max-width: 720px) {
+    .sheet { padding: 20px 16px; gap: 20px; }
+    .cover, .lead, .twocol, .feat, .band, .money { grid-template-columns: minmax(0, 1fr); }
+    .cover h1 { font-size: 28px; }
+    .ways, .who, .promise, .feat .body, .tools { grid-template-columns: minmax(0, 1fr); }
+    .ways { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  /* Print / PDF: exactly three A4 pages. */
+  @page { size: A4; margin: 0; }
+  @media print {
+    body { background: var(--sheet); padding: 0; }
+    .sheet { width: 210mm; max-width: none; height: 297mm; margin: 0; box-shadow: none; break-after: page; }
+    .sheet:last-child { break-after: auto; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+
+<!-- ============ Page 1 ============ -->
+<section class="sheet" aria-label="Page 1: Aspire91 for coaches">
+  <div class="runner"><img src="logo.png" alt="Aspire91"><span>For coaches, tutors and academies</span></div>
+
+  <div class="cover">
+    <div>
+      <h1>Other apps give you one parent's number. Aspire91 gives you <em>a whole group of students</em>, in one place, ready to start.</h1>
+      <p class="lede">
+        Parents living near each other join together before they contact any coach. Two families are enough. They decide what they want taught, which days suit them, and where the class should happen: their society clubhouse, a park, or a community hall. You get one request for all of them. You reply once, and you have a full batch.
+      </p>
+      <p class="sub">
+        Academies can see what parents in each area are asking for before starting a new batch. Listing is free. We take no commission on your fees.
+      </p>
+    </div>
+
+    <div class="reqcard" role="img" aria-label="A group request card: four families in Indirapuram asking for beginner cricket at their society clubhouse on weekends, with a reply button">
+      <div class="top">
+        <div>
+          <h4><span class="dot"></span>Group request</h4>
+          <p class="where">Indirapuram &middot; 1.2 km from you</p>
+        </div>
+        <div class="pin"></div>
+      </div>
+      <dl>
+        <dt>Subject</dt><dd>Cricket &middot; beginner</dd>
+        <dt>Learners</dt><dd>4 children, ages 8&ndash;10</dd>
+        <dt>Days</dt><dd>Sat, Sun &middot; mornings</dd>
+        <dt>Where</dt><dd>Their society clubhouse</dd>
+        <dt>Budget</dt><dd>&#8377;3,000&ndash;4,000/mo each</dd>
+      </dl>
+      <div class="cta">
+        <span>4 families, one request</span>
+        <span class="btn">Reply</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sectionhead">
+    <h2>Four ways to grow on Aspire91</h2>
+    <p class="eyebrow">What's inside</p>
+  </div>
+
+  <div class="ways">
+    <div class="way">
+      <p class="k">Groups</p>
+      <h3>A full group, not one enquiry</h3>
+      <p>Parents nearby agree on the class, the days and the place. They come to you as one group, and you reply once.</p>
+      <p class="pg">Page 2</p>
+    </div>
+    <div class="way">
+      <p class="k">Demand</p>
+      <h3>Know what your area wants</h3>
+      <p>See what parents near you are asking for, so you start a batch where students are already waiting.</p>
+      <p class="pg">Page 2</p>
+    </div>
+    <div class="way">
+      <p class="k">Your Space</p>
+      <h3>A page parents read</h3>
+      <p>Photos, videos and updates from your sessions, on a page of your own.</p>
+      <p class="pg">Page 3</p>
+    </div>
+    <div class="way">
+      <p class="k">Events</p>
+      <h3>Tournaments and showcases</h3>
+      <p>Run your own events, or send your students to the ones Aspire91 arranges.</p>
+      <p class="pg">Page 3</p>
+    </div>
+  </div>
+
+  <div class="who">
+    <div>
+      <h4>Individual coaches</h4>
+      <p>Teach at home, in a park, in a society clubhouse or at the family's place. Choose the areas you will travel to.</p>
+    </div>
+    <div>
+      <h4>Academies and centres</h4>
+      <p>Start batches where parents are already asking, by area, age and subject. Show your centre on your Space, and keep every enquiry in one inbox.</p>
+    </div>
+    <div>
+      <h4>Organisers</h4>
+      <p>Run tournaments, workshops and showcases. Aspire91 handles the entries and the list of who is coming.</p>
+    </div>
+  </div>
+
+  <div class="band">
+    <div>
+      <h3>List now, and be ready when your area opens</h3>
+      <p>We open one area at a time. Make your listing now and choose the areas you cover, so you are already there when we open yours.</p>
+    </div>
+    <span class="url">www.aspire91.com</span>
+  </div>
+
+  <div class="foot"><span>Aspire91 &middot; Discover. Participate. Achieve.</span><span>1 / 4</span></div>
+</section>
+
+<!-- ============ Page 2 ============ -->
+<section class="sheet" aria-label="Page 2: How you get students">
+  <div class="runner"><span>Getting students</span><span>Aspire91 for coaches</span></div>
+
+  <div class="lead">
+    <div>
+      <p class="eyebrow">How a group reaches you</p>
+      <h1>Parents agree the details first. <em>You only have to say yes.</em></h1>
+    </div>
+    <p>A group reaches you complete: how many children, what they want to learn, which days, and where. You do not need three phone calls to find out the basics.</p>
+  </div>
+
+  <div class="chips">
+    <span class="chip">What they want taught</span>
+    <span class="chip">Age and level</span>
+    <span class="chip">Where they want it taught</span>
+    <span class="chip">How many children</span>
+    <span class="chip">Days and times</span>
+    <span class="chip">What they expect to pay</span>
+    <span class="chip">How far they are from you</span>
+  </div>
+
+  <div class="twocol">
+    <div>
+      <div class="sectionhead" style="margin-bottom:3mm"><h2>How it works</h2></div>
+      <ol class="steps">
+        <li>
+          <div>
+            <h4>Make your listing</h4>
+            <p>What you teach, the areas you cover, your fees, and the days and hours you are free. You can change any of it later.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h4>We check your listing</h4>
+            <p>A real person checks that you teach what you say you teach, in the areas you picked. This keeps parents safe, and is fair to the coaches already here.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h4>Parents start finding you</h4>
+            <p>Parents searching in your areas see you and your Space. Only the areas and subjects you picked decide who sees you.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h4>Reply and chat</h4>
+            <p>Answer in the app and keep chatting there. Mark each enquiry as called, scheduled or closed, so you never lose track.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="group">
+      <p class="eyebrow">Groups</p>
+      <h3>One reply can fill a whole society</h3>
+      <p>Two families living near each other who want the same class can start a group. No other app does this.</p>
+      <ul>
+        <li><strong>They choose the place.</strong> A society clubhouse, a park, a community hall or an apartment lawn. Somewhere all of them can walk to.</li>
+        <li><strong>They agree everything first,</strong> then it comes to you as one request for all the children.</li>
+        <li><strong>You answer once,</strong> and every family in the group sees your reply.</li>
+        <li><strong>They decide how long</strong> the group stays open.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="promise">
+    <div>
+      <h4>Your number stays yours</h4>
+      <p>Parents contact you inside the app. You decide if and when to give them your phone number.</p>
+    </div>
+    <div>
+      <h4>Every listing is checked</h4>
+      <p>A real person checks every listing before parents can see it. You do not have to do anything after you send it.</p>
+    </div>
+    <div>
+      <h4>Know before you start</h4>
+      <p>You can see what an area is asking for before you put a coach or an hour on it. We also open one area at a time, so these are real neighbours, not a wide radius.</p>
+    </div>
+  </div>
+
+  <div class="foot"><span>Aspire91 &middot; www.aspire91.com</span><span>2 / 4</span></div>
+</section>
+
+<!-- ============ Page 3 ============ -->
+<section class="sheet" aria-label="Page 3: Earning more and building the business">
+  <div class="runner"><span>Your week, your fees, your name</span><span>Aspire91 for coaches</span></div>
+
+  <div class="lead">
+    <div>
+      <p class="eyebrow">Turning coaching into a business</p>
+      <h1>The same hour, taught to four children instead of one.</h1>
+    </div>
+    <p>Groups, your own page and your own events. Three ways to earn more from the hours you already teach, and to grow your sport in your area.</p>
+  </div>
+
+  <div class="trio">
+    <div class="feat">
+      <div class="side">
+        <p class="eyebrow">Groups and batches</p>
+        <h2>Teach more children in the same hour</h2>
+        <p>Travel and waiting take up more of your day than teaching does. A group removes most of it.</p>
+      </div>
+      <div class="body">
+        <div>
+          <h4>One trip, many children</h4>
+          <p>A group is several children in one place at one time, at a place they chose. One journey, one hour, one batch.</p>
+        </div>
+        <div>
+          <h4>You decide the fee</h4>
+          <p>Per child, per batch or per month, whatever you already charge. Aspire91 never sets your price.</p>
+        </div>
+        <div class="example">
+          <b>Example</b>
+          <span class="slot"><span>One family</span><strong>1 slot</strong></span>
+          <span class="arrow">&rarr;</span>
+          <span class="slot"><span>A group of 4</span><strong>1 slot</strong></span>
+          <span>Same hour, same travel. Four fees instead of one.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="feat">
+      <div class="side">
+        <p class="eyebrow">Your Space</p>
+        <h2>Show parents what you do</h2>
+        <p>Parents trust what they can see. Photos of last Sunday's class tell them more than a list of your qualifications.</p>
+      </div>
+      <div class="body">
+        <div>
+          <h4>Post your classes</h4>
+          <p>Photos, videos and updates from your classes, on your own page that parents read while they are deciding.</p>
+        </div>
+        <div>
+          <h4>Families can follow you</h4>
+          <p>Parents who joined stay in touch, and parents who are still deciding keep seeing your work every week.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="feat">
+      <div class="side">
+        <p class="eyebrow">Events</p>
+        <h2>Run your own events</h2>
+        <p>A tournament brings families to you quickly. It is the fastest way for a new coach to become known in the area.</p>
+      </div>
+      <div class="body">
+        <div>
+          <h4>Run it through Aspire91</h4>
+          <p>Tournaments, workshops and showcases. Families enter through the app, and you see who is coming.</p>
+        </div>
+        <div>
+          <h4>Or enter the ones we arrange</h4>
+          <p>Aspire91 arranges competitions too. Send your students to those, so they get to compete without you organising anything.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="money">
+    <div>
+      <p class="k">What it costs</p>
+      <h4>Nothing right now</h4>
+      <p>Listing is free, and running events is free too, while we are starting out. If that ever changes, we will tell you before it happens, not after.</p>
+    </div>
+    <div>
+      <p class="k">Your money</p>
+      <h4>Aspire91 never touches your fees</h4>
+      <p>You agree the fee with the family and they pay you directly. We take no commission, and we never handle your money.</p>
+    </div>
+  </div>
+
+  <div class="foot"><span>Aspire91 &middot; www.aspire91.com</span><span>3 / 4</span></div>
+</section>
+
+<!-- ============ Page 4 ============ -->
+<section class="sheet" aria-label="Page 4: Your coach panel">
+  <div class="runner"><span>Your coach panel</span><span>Aspire91 for coaches</span></div>
+
+  <div class="lead">
+    <div>
+      <p class="eyebrow">The day to day</p>
+      <h1>Everything you need to run your coaching, <em>in one app.</em></h1>
+    </div>
+    <p>No separate diary, no scattered WhatsApp groups, and no enquiry that gets forgotten because it came in while you were on the field.</p>
+  </div>
+
+  <div class="tools">
+    <div class="tool">
+      <p class="k">Your schedule</p>
+      <h4>Show when you are free</h4>
+      <p>Set the days and hours you can teach. Parents see them before they ask, so you stop trading messages about timings.</p>
+    </div>
+    <div class="tool">
+      <p class="k">Queries</p>
+      <h4>Questions before they commit</h4>
+      <p>Parents can ask you something first. Every question comes to one place, and you answer when you have time.</p>
+    </div>
+    <div class="tool">
+      <p class="k">First class</p>
+      <h4>Fix a trial class in the app</h4>
+      <p>Suggest a date, a time, how long it runs and where. The family confirms it, or you suggest another time.</p>
+    </div>
+    <div class="tool">
+      <p class="k">Trial fee</p>
+      <h4>Free or paid, your call</h4>
+      <p>Whether you charge for that first class is between you and the family. Aspire91 never handles the money, so it stays your decision.</p>
+    </div>
+    <div class="tool">
+      <p class="k">One inbox</p>
+      <h4>Nothing gets lost</h4>
+      <p>Requests, replies and chats in one list. Mark each one called, scheduled or closed, so you always know what is pending.</p>
+    </div>
+    <div class="tool">
+      <p class="k">Competitions</p>
+      <h4>Give your students a stage</h4>
+      <p>Run your own events, or enter your students in the competitions Aspire91 arranges. They compete, and you organise nothing.</p>
+    </div>
+  </div>
+
+  <div class="band">
+    <div>
+      <h3>Create your listing today</h3>
+      <p>What you teach, where you teach, and what you charge. A real person checks it, and then families near you can find you. The Android app is coming soon.</p>
+    </div>
+    <span class="url">www.aspire91.com</span>
+  </div>
+
+  <div class="foot"><span>Aspire91 is operated by Trustcabbage Private Limited</span><span>4 / 4</span></div>
+</section>
