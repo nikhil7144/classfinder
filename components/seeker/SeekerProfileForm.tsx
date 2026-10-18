@@ -53,6 +53,9 @@ export default function SeekerProfileForm({ redirectTo = "/dashboard", variant =
 
   const [cities, setCities] = useState<CityRow[]>([]);
   const [areas, setAreas] = useState<AreaRow[]>([]);
+  // Empty because the fetch failed, or empty because nothing has opened yet.
+  // Identical to this form, and very different to a parent. See fetchReference.
+  const [referenceFailed, setReferenceFailed] = useState(false);
 
   const [isSaving, setIsSaving] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
@@ -71,7 +74,7 @@ export default function SeekerProfileForm({ redirectTo = "/dashboard", variant =
 
       // Seekers only pick from live areas — the launch gate, applied inside
       // fetchSeekerLocations so every seeker-side screen agrees on it.
-      const [{ cities: cityRows, areas: areaRows }, { data: profileRow }, { data: seekerRow }] =
+      const [{ cities: cityRows, areas: areaRows, ok }, { data: profileRow }, { data: seekerRow }] =
         await Promise.all([
           fetchSeekerLocations(),
           supabase.from("profiles").select("phone, profile_complete").eq("id", authData.user.id).maybeSingle(),
@@ -80,6 +83,7 @@ export default function SeekerProfileForm({ redirectTo = "/dashboard", variant =
 
       setCities((cityRows as CityRow[]) || []);
       setAreas((areaRows as AreaRow[]) || []);
+      setReferenceFailed(!ok);
       setPhone((current) => current || profileRow?.phone || "");
       setIsComplete(Boolean(profileRow?.profile_complete));
 
@@ -339,7 +343,9 @@ export default function SeekerProfileForm({ redirectTo = "/dashboard", variant =
             <label className="mb-2 block text-sm text-muted">Where are you looking?</label>
             {cities.length === 0 ? (
               <p className="text-sm text-muted">
-                No areas are open yet. Check back shortly — we&apos;re opening area by area.
+                {referenceFailed
+                  ? "Couldn't load cities and areas just now. Refresh the page and try again."
+                  : "No areas are open yet. Check back shortly — we're opening area by area."}
               </p>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">

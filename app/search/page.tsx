@@ -75,11 +75,19 @@ function SearchPage() {
       // getUser goes in the same batch rather than after it. It used to wait
       // for the taxonomy it has nothing to do with, which put a whole extra
       // round trip on the wait before this page could show anything.
-      const [{ cities: c, areas: a }, taxonomy, { data: auth }] = await Promise.all([
+      const [{ cities: c, areas: a, ok }, taxonomy, { data: auth }] = await Promise.all([
         fetchSeekerLocations(),
         fetchTaxonomy(),
         supabase.auth.getUser(),
       ]);
+
+      // `ok` is the whole reason fetchReference carries one. It fails soft —
+      // an unreachable API resolves to an empty list rather than rejecting —
+      // so the catch below never fires, and without this check an outage
+      // renders as "we haven't opened any areas yet". That is a statement
+      // about the product, it is false, and it tells a parent in an area we
+      // launched that we have not got there yet.
+      if (!ok) throw new Error("reference unavailable");
 
       setCities(c);
       setAreas(a);

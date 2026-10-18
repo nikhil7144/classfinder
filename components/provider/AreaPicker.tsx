@@ -148,12 +148,14 @@ export function ServiceAreaPicker({
 type SingleProps = {
   cities: CityRow[];
   areas: AreaRow[];
+  /** True when the list is empty because the fetch failed, not because it is. */
+  loadFailed?: boolean;
   areaId: string | null;
   onChange: (areaId: string | null) => void;
 };
 
 /** One city + one area, for a single branch location. */
-export function BranchAreaSelect({ cities, areas, areaId, onChange }: SingleProps) {
+export function BranchAreaSelect({ cities, areas, areaId, onChange, loadFailed }: SingleProps) {
   const currentCityId = useMemo(() => {
     const area = areas.find((a) => a.id === areaId);
     return area?.cityId ?? cities[0]?.id ?? "";
@@ -168,6 +170,19 @@ export function BranchAreaSelect({ cities, areas, areaId, onChange }: SingleProp
     () => areas.filter((a) => a.cityId === cityId).sort((a, b) => a.name.localeCompare(b.name)),
     [areas, cityId]
   );
+
+  if (cities.length === 0) {
+    // The same two empties as the picker above. Here they were rendering as
+    // two working-looking dropdowns with nothing in them, which reads as this
+    // branch having no valid answer rather than the page having no data.
+    return (
+      <p className="text-sm text-muted">
+        {loadFailed
+          ? "Couldn't load cities and areas just now. Refresh the page and try again."
+          : "No cities have been set up yet. Ask an admin to add your city and areas."}
+      </p>
+    );
+  }
 
   return (
     <div className="grid gap-3 sm:grid-cols-2">

@@ -815,6 +815,7 @@ export default function ProviderProfileForm({ redirectTo = "/dashboard", variant
                       <BranchAreaSelect
                         cities={cities}
                         areas={areas}
+                        loadFailed={referenceFailed}
                         areaId={branch.areaId}
                         onChange={(areaId) => updateBranch(index, { areaId })}
                       />

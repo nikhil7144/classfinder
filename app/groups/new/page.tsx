@@ -32,6 +32,7 @@ export default function NewGroupPage() {
 
   const [ready, setReady] = useState(false);
   const [blocked, setBlocked] = useState<string | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const [cities, setCities] = useState<City[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
@@ -81,10 +82,20 @@ export default function NewGroupPage() {
 
       // Live areas only — a group is seeker-side demand, and the launch gate
       // applies to it exactly as it does to search.
-      const [{ cities: c, areas: a }, { serviceCategories: s }] = await Promise.all([
-        fetchSeekerLocations(),
-        fetchTaxonomy(),
-      ]);
+      const [
+        { cities: c, areas: a, ok: locationsOk },
+        { serviceCategories: s, ok: taxonomyOk },
+      ] = await Promise.all([fetchSeekerLocations(), fetchTaxonomy()]);
+
+      // Reference data fails soft to an empty list rather than rejecting, so
+      // without this an outage renders as a complete form with nothing in any
+      // of its pickers — no subject, no city, no area — and the only feedback
+      // is a validation error blaming the parent for not choosing one.
+      if (!locationsOk || !taxonomyOk) {
+        setLoadFailed(true);
+        setReady(true);
+        return;
+      }
 
       setCities((c as City[]) || []);
       setAreas((a as Area[]) || []);
@@ -149,6 +160,27 @@ export default function NewGroupPage() {
   };
 
   if (!ready) return <div className="min-h-screen bg-bg" />;
+
+  if (loadFailed) {
+    return (
+      <main className="min-h-screen bg-bg">
+        <div className="mx-auto max-w-2xl px-6 py-16">
+          <div className="cf-card p-8 text-center">
+            <p className="text-muted">
+              Couldn&apos;t load cities and areas just now. Try again in a moment.
+            </p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="cf-btn-ghost mt-6"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   if (blocked) {
     return (
