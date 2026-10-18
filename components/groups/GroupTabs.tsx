@@ -27,7 +27,7 @@ export default function GroupTabs({ groupId, active, unread = 0, threadCount = 0
       href: `/groups/${groupId}?tab=messages`,
       badge: unread || undefined,
     },
-    { key: "posts", label: "Posts", href: `/groups/${groupId}?tab=posts`, soon: true },
+    { key: "posts", label: "Posts", href: `/groups/${groupId}?tab=posts` },
   ];
 
   return (

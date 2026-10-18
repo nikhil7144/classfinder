@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next";
 import { BRAND } from "@/lib/brand";
+import { fetchGroupsIn } from "@/lib/api/client";
 import { createAnonServerClient } from "@/lib/supabase-anon";
 import {
   areasWithCoaches,
@@ -173,6 +174,59 @@ async function landingEntries(now: Date): Promise<MetadataRoute.Sitemap> {
           priority: 0.9,
         });
       }
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Published groups, by city and area.
+  //
+  // Only the cities and areas that actually have one, same rule as the coach
+  // pages: a page offered to a crawler and found empty is worse than no page,
+  // and groups empty out on their own when they lapse.
+  //
+  // The groups' own /groups/<id> pages are deliberately absent. A group page
+  // carries photos families posted, and those stay out of the index — the
+  // city and area pages are what should rank, on their text.
+  // ---------------------------------------------------------------------
+  const groupCities = await Promise.all(
+    cities.map(async (city) => ({
+      city,
+      groups: await fetchGroupsIn({ cityId: city.id, limit: 24 }),
+    })),
+  );
+
+  const anyGroups = groupCities.some((c) => c.groups.length > 0);
+  if (anyGroups) {
+    entries.push({
+      url: `${BRAND.siteUrl}/groups/in`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.7,
+    });
+  }
+
+  for (const { city, groups } of groupCities) {
+    if (groups.length === 0) continue;
+
+    const citySlug = slugify(city.name);
+    entries.push({
+      url: `${BRAND.siteUrl}/groups/in/${citySlug}`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.7,
+    });
+
+    const seen = new Set<string>();
+    for (const group of groups) {
+      if (!group.areaName || seen.has(group.areaName)) continue;
+      seen.add(group.areaName);
+
+      entries.push({
+        url: `${BRAND.siteUrl}/groups/in/${citySlug}/${slugify(group.areaName)}`,
+        lastModified: now,
+        changeFrequency: "weekly",
+        priority: 0.8,
+      });
     }
   }
 

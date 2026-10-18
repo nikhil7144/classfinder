@@ -76,3 +76,88 @@ export async function fetchCityFeed(cityId: string, limit = 12): Promise<FeedPos
     return [];
   }
 }
+
+/* ---------------------------------------------------------------------
+   Published groups.
+
+   Live and public are different things: live means the families are here and
+   it is looking for a coach, public means the creator chose to showcase it.
+   Only published ones are readable here, and only while still live — the API
+   enforces both, so these pages cannot show a group that has quietly lapsed.
+   --------------------------------------------------------------------- */
+
+export type DiscoverGroup = components["schemas"]["DiscoverGroupDto"];
+export type PublicGroup = components["schemas"]["PublicGroupDto"];
+export type ProviderGroup = components["schemas"]["ProviderGroupDto"];
+
+/** Fails soft like every other read here: an empty list costs a section. */
+export async function fetchGroupsIn(opts: {
+  cityId?: string | null;
+  areaId?: string | null;
+  serviceCategoryId?: string | null;
+  limit?: number;
+}): Promise<DiscoverGroup[]> {
+  try {
+    const { data, error } = await api.GET("/api/v1/groups/discover", {
+      params: {
+        query: {
+          cityId: opts.cityId ?? undefined,
+          areaId: opts.areaId ?? undefined,
+          serviceCategoryId: opts.serviceCategoryId ?? undefined,
+          limit: opts.limit ?? 24,
+        },
+      },
+    });
+    if (error || !data) return [];
+    return data;
+  } catch {
+    return [];
+  }
+}
+
+/** The groups one coach trains, for their public page. */
+export async function fetchGroupsForCoach(providerId: string): Promise<ProviderGroup[]> {
+  try {
+    const { data, error } = await api.GET("/api/v1/groups/by-coach/{providerId}", {
+      params: { path: { providerId } },
+    });
+    if (error || !data) return [];
+    return data;
+  } catch {
+    return [];
+  }
+}
+
+/** One published group, as a stranger sees it. Null when it is not public. */
+export async function fetchPublicGroup(groupId: string): Promise<PublicGroup | null> {
+  try {
+    const { data, error } = await api.GET("/api/v1/groups/{id}/public", {
+      params: { path: { id: groupId } },
+    });
+    if (error || !data) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The posts a stranger may read.
+ *
+ * Only what authors opened to the showcase, and only while the group is
+ * published — the API decides both, so this cannot show more than it should
+ * by forgetting a filter.
+ */
+export async function fetchPublicGroupPosts(
+  groupId: string,
+): Promise<components["schemas"]["GroupPostDto"][]> {
+  try {
+    const { data, error } = await api.GET("/api/v1/groups/{id}/posts", {
+      params: { path: { id: groupId } },
+    });
+    if (error || !data) return [];
+    return data;
+  } catch {
+    return [];
+  }
+}

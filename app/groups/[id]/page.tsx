@@ -12,6 +12,7 @@ import {
 } from "@/lib/groups";
 import GroupTabs, { GroupTabKey } from "@/components/groups/GroupTabs";
 import GroupOverview from "@/components/groups/GroupOverview";
+import GroupPosts from "@/components/groups/GroupPosts";
 import GroupMessages from "@/components/groups/GroupMessages";
 import PageSkeleton from "@/components/ui/PageSkeleton";
 
@@ -27,7 +28,8 @@ function GroupPage() {
   const params = useSearchParams();
 
   const tabParam = params.get("tab");
-  const tab: GroupTabKey = tabParam === "messages" ? "messages" : "overview";
+  const tab: GroupTabKey =
+    tabParam === "messages" ? "messages" : tabParam === "posts" ? "posts" : "overview";
   const activeThread = params.get("t");
   const justCreated = params.get("created") === "1";
   // Set when they followed "Log in to join" — the intent survives the round trip.
@@ -194,7 +196,13 @@ function GroupPage() {
 
         <GroupTabs groupId={id} active={tab} unread={unread} threadCount={threads.length} />
 
-        {tab === "messages" ? (
+        {tab === "posts" ? (
+          <GroupPosts
+            groupId={id}
+            me={me}
+            isMember={Boolean(invite?.already_member)}
+          />
+        ) : tab === "messages" ? (
           <GroupMessages
             threads={threads}
             me={me}

@@ -1853,6 +1853,314 @@
         ]
       }
     },
+    "/api/v1/groups/discover": {
+      "get": {
+        "description": "Readable signed out: the point of publishing is that a stranger can find it. Carries no society name and no member names, the same list the coach view withholds.",
+        "operationId": "GroupsController_discover_v1",
+        "parameters": [
+          {
+            "name": "cityId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "areaId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "serviceCategoryId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DiscoverGroupDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Published groups, by city, area and service",
+        "tags": [
+          "groups"
+        ]
+      }
+    },
+    "/api/v1/groups/{id}/public": {
+      "get": {
+        "description": "A group that is not published reads as missing rather than forbidden: whether it exists at all is not a visitor's business.",
+        "operationId": "GroupsController_publicView_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicGroupDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "One published group, as a stranger sees it",
+        "tags": [
+          "groups"
+        ]
+      }
+    },
+    "/api/v1/groups/by-coach/{providerId}": {
+      "get": {
+        "description": "Published groups where that coach was accepted, for their public page. An unapproved or suspended coach returns none, the same rule every other public read of a coach uses.",
+        "operationId": "GroupsController_byCoach_v1",
+        "parameters": [
+          {
+            "name": "providerId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProviderGroupDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "The groups a coach trains",
+        "tags": [
+          "groups"
+        ]
+      }
+    },
+    "/api/v1/groups/{id}/publish": {
+      "patch": {
+        "description": "Creator only, and only once the group is live. Publishing pushes expiry out to ninety days: the ten-day clock gates demand a coach is shown, and a page meant to be found cannot live on it.",
+        "operationId": "GroupsController_publish_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishGroupDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicGroupDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Show it on Aspire91, or take it down",
+        "tags": [
+          "groups"
+        ]
+      }
+    },
+    "/api/v1/groups/{id}/posts": {
+      "get": {
+        "description": "A member sees everything. Anybody else sees only the posts their authors opened, and only while the group is published.",
+        "operationId": "GroupsController_posts_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GroupPostDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "What the group has posted",
+        "tags": [
+          "groups"
+        ]
+      },
+      "post": {
+        "description": "Members only. It starts at `members`: a parent putting a photo of their child into their group should have it stay there unless they decide otherwise.",
+        "operationId": "GroupsController_addPost_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGroupPostDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupPostDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Post to your group",
+        "tags": [
+          "groups"
+        ]
+      }
+    },
+    "/api/v1/groups/posts/{postId}/visibility": {
+      "patch": {
+        "description": "The post's own author, and nobody else — not even the creator. A creator who could promote any post could publish a photo of another family's child, and that parent agreed to share with their group rather than with the world.",
+        "operationId": "GroupsController_setPostVisibility_v1",
+        "parameters": [
+          {
+            "name": "postId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePostVisibilityDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupPostDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open a post to the showcase, or close it",
+        "tags": [
+          "groups"
+        ]
+      }
+    },
     "/api/v1/notifications": {
       "get": {
         "description": "Paged on time rather than an offset: notifications arrive while somebody is scrolling, and an offset would shuffle the page under their thumb each time one did. Pass the previous page's nextBefore to continue.",
@@ -5837,6 +6145,299 @@
           "name",
           "societyName",
           "shared"
+        ]
+      },
+      "DiscoverGroupDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "serviceName": {
+            "type": "string",
+            "nullable": true
+          },
+          "areaName": {
+            "type": "string",
+            "nullable": true
+          },
+          "cityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "studentCount": {
+            "type": "number"
+          },
+          "memberCount": {
+            "type": "number"
+          },
+          "publicHeadline": {
+            "type": "string",
+            "nullable": true
+          },
+          "publicAbout": {
+            "type": "string",
+            "nullable": true
+          },
+          "publishedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "hasCoach": {
+            "type": "boolean",
+            "description": "Whether a coach has been accepted. Media needs one."
+          },
+          "alreadyMember": {
+            "type": "boolean",
+            "description": "False for a guest, rather than an error."
+          },
+          "serviceCategoryId": {
+            "type": "string"
+          },
+          "areaId": {
+            "type": "string",
+            "nullable": true
+          },
+          "cityId": {
+            "type": "string",
+            "nullable": true
+          },
+          "publicPostCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "serviceName",
+          "areaName",
+          "cityName",
+          "studentCount",
+          "memberCount",
+          "publicHeadline",
+          "publicAbout",
+          "publishedAt",
+          "hasCoach",
+          "alreadyMember",
+          "serviceCategoryId",
+          "areaId",
+          "cityId",
+          "publicPostCount"
+        ]
+      },
+      "PublicGroupDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "serviceName": {
+            "type": "string",
+            "nullable": true
+          },
+          "areaName": {
+            "type": "string",
+            "nullable": true
+          },
+          "cityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "studentCount": {
+            "type": "number"
+          },
+          "memberCount": {
+            "type": "number"
+          },
+          "publicHeadline": {
+            "type": "string",
+            "nullable": true
+          },
+          "publicAbout": {
+            "type": "string",
+            "nullable": true
+          },
+          "publishedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "hasCoach": {
+            "type": "boolean",
+            "description": "Whether a coach has been accepted. Media needs one."
+          },
+          "alreadyMember": {
+            "type": "boolean",
+            "description": "False for a guest, rather than an error."
+          }
+        },
+        "required": [
+          "id",
+          "serviceName",
+          "areaName",
+          "cityName",
+          "studentCount",
+          "memberCount",
+          "publicHeadline",
+          "publicAbout",
+          "publishedAt",
+          "hasCoach",
+          "alreadyMember"
+        ]
+      },
+      "ProviderGroupDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "serviceName": {
+            "type": "string",
+            "nullable": true
+          },
+          "areaName": {
+            "type": "string",
+            "nullable": true
+          },
+          "cityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "studentCount": {
+            "type": "number"
+          },
+          "memberCount": {
+            "type": "number"
+          },
+          "publicHeadline": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "serviceName",
+          "areaName",
+          "cityName",
+          "studentCount",
+          "memberCount",
+          "publicHeadline"
+        ]
+      },
+      "PublishGroupDto": {
+        "type": "object",
+        "properties": {
+          "published": {
+            "type": "boolean",
+            "description": "False unpublishes. The group itself is untouched."
+          },
+          "publicHeadline": {
+            "type": "string",
+            "maxLength": 140
+          },
+          "publicAbout": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "published"
+        ]
+      },
+      "GroupPostDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "photo",
+              "video"
+            ]
+          },
+          "body": {
+            "type": "string",
+            "nullable": true
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "youtubeId": {
+            "type": "string",
+            "nullable": true
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "members",
+              "public"
+            ],
+            "description": "The author's call, and it starts at members."
+          },
+          "showOrder": {
+            "type": "number",
+            "nullable": true,
+            "description": "The creator curates this. Null means unplaced."
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "body",
+          "imageUrl",
+          "youtubeId",
+          "visibility",
+          "showOrder",
+          "createdAt"
+        ]
+      },
+      "CreateGroupPostDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "photo",
+              "video"
+            ]
+          },
+          "body": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2000
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "A storage URL. Photos only — never a blob."
+          },
+          "youtubeId": {
+            "type": "string",
+            "description": "The 11-character id, nothing else."
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "UpdatePostVisibilityDto": {
+        "type": "object",
+        "properties": {
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "members",
+              "public"
+            ],
+            "description": "Only the post's own author may change this. A creator who could promote any post could publish a photo of another family's child, and that parent agreed to share with their group, not with the world."
+          }
+        },
+        "required": [
+          "visibility"
         ]
       },
       "NotificationDto": {

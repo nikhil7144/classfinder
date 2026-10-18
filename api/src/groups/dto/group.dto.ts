@@ -326,3 +326,138 @@ export class RespondToPitchDto {
   @IsIn(["accepted", "declined"])
   status!: string;
 }
+
+/* ---------------------------------------------------------------------
+   Communities — a published group.
+
+   Live and public are different things. Live is `is_group_active()`: the
+   families are here and it is looking for a coach. Public is the creator
+   choosing to showcase it on Aspire91, and it is never automatic — an
+   accepted coach does not publish anything, and a group still recruiting its
+   second family has no publish button at all, because recruiting happens
+   privately down the invite link and a showcase is not a recruitment ad.
+   --------------------------------------------------------------------- */
+
+/**
+ * How far publishing, or activity inside a published group, pushes expiry.
+ *
+ * Deliberately not GROUP_EXTEND_DAYS. That one answers "the creator wants
+ * longer to find a coach", and ten days is right for demand a coach is being
+ * shown. This answers "this showcase is alive", and a page meant to be found
+ * cannot be rebuilt every ten days. Mirrors the interval in phase3y.
+ */
+export const GROUP_PUBLISHED_DAYS = 90;
+
+export const GROUP_POST_KINDS = ["photo", "video"] as const;
+export const GROUP_POST_VISIBILITIES = ["members", "public"] as const;
+
+/** A published group, as a stranger sees it. No society, no names. */
+export class PublicGroupDto {
+  @ApiProperty() id!: string;
+  @ApiProperty({ type: String, nullable: true }) serviceName!: string | null;
+  @ApiProperty({ type: String, nullable: true }) areaName!: string | null;
+  @ApiProperty({ type: String, nullable: true }) cityName!: string | null;
+  @ApiProperty() studentCount!: number;
+  @ApiProperty() memberCount!: number;
+  @ApiProperty({ type: String, nullable: true }) publicHeadline!: string | null;
+  @ApiProperty({ type: String, nullable: true }) publicAbout!: string | null;
+  @ApiProperty({ type: String, nullable: true }) publishedAt!: string | null;
+
+  @ApiProperty({ description: "Whether a coach has been accepted. Media needs one." })
+  hasCoach!: boolean;
+
+  @ApiProperty({ description: "False for a guest, rather than an error." })
+  alreadyMember!: boolean;
+}
+
+/** One row of the discovery list. */
+export class DiscoverGroupDto extends PublicGroupDto {
+  @ApiProperty() serviceCategoryId!: string;
+  @ApiProperty({ type: String, nullable: true }) areaId!: string | null;
+  @ApiProperty({ type: String, nullable: true }) cityId!: string | null;
+  @ApiProperty() publicPostCount!: number;
+}
+
+/** A group on a coach's public page. */
+export class ProviderGroupDto {
+  @ApiProperty() id!: string;
+  @ApiProperty({ type: String, nullable: true }) serviceName!: string | null;
+  @ApiProperty({ type: String, nullable: true }) areaName!: string | null;
+  @ApiProperty({ type: String, nullable: true }) cityName!: string | null;
+  @ApiProperty() studentCount!: number;
+  @ApiProperty() memberCount!: number;
+  @ApiProperty({ type: String, nullable: true }) publicHeadline!: string | null;
+}
+
+export class GroupPostDto {
+  @ApiProperty() id!: string;
+  @ApiProperty({ enum: GROUP_POST_KINDS }) kind!: string;
+  @ApiProperty({ type: String, nullable: true }) body!: string | null;
+  @ApiProperty({ type: String, nullable: true }) imageUrl!: string | null;
+  @ApiProperty({ type: String, nullable: true }) youtubeId!: string | null;
+
+  @ApiProperty({
+    enum: GROUP_POST_VISIBILITIES,
+    description: "The author's call, and it starts at members.",
+  })
+  visibility!: string;
+
+  @ApiProperty({ type: Number, nullable: true, description: "The creator curates this. Null means unplaced." })
+  showOrder!: number | null;
+
+  @ApiProperty() createdAt!: string;
+}
+
+export class CreateGroupPostDto {
+  @ApiProperty({ enum: GROUP_POST_KINDS })
+  @IsIn(GROUP_POST_KINDS as unknown as string[])
+  kind!: string;
+
+  @ApiPropertyOptional({ type: String, nullable: true, maxLength: 2000 })
+  @IsOptional()
+  @IsString()
+  @Length(0, 2000)
+  body?: string | null;
+
+  @ApiPropertyOptional({ type: String, description: "A storage URL. Photos only — never a blob." })
+  @IsOptional()
+  @IsString()
+  @Length(1, 1000)
+  imageUrl?: string | null;
+
+  @ApiPropertyOptional({ type: String, description: "The 11-character id, nothing else." })
+  @IsOptional()
+  @IsString()
+  @Length(11, 11)
+  youtubeId?: string | null;
+}
+
+export class UpdatePostVisibilityDto {
+  @ApiProperty({
+    enum: GROUP_POST_VISIBILITIES,
+    description:
+      "Only the post's own author may change this. A creator who could promote any post " +
+      "could publish a photo of another family's child, and that parent agreed to share " +
+      "with their group, not with the world.",
+  })
+  @IsIn(GROUP_POST_VISIBILITIES as unknown as string[])
+  visibility!: string;
+}
+
+export class PublishGroupDto {
+  @ApiProperty({ description: "False unpublishes. The group itself is untouched." })
+  @IsBoolean()
+  published!: boolean;
+
+  @ApiPropertyOptional({ type: String, maxLength: 140 })
+  @IsOptional()
+  @IsString()
+  @Length(0, 140)
+  publicHeadline?: string | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true, maxLength: 2000 })
+  @IsOptional()
+  @IsString()
+  @Length(0, 2000)
+  publicAbout?: string | null;
+}

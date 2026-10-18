@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server-client";
 import { fetchTaxonomy } from "@/lib/api/reference";
+import { fetchGroupsForCoach } from "@/lib/api/client";
 import EnquiryForm from "@/components/provider/EnquiryForm";
 import RaiseQueryForm from "@/components/provider/RaiseQueryForm";
 import { formatExperience, formatFees } from "@/lib/search";
@@ -138,6 +139,10 @@ export default async function ProviderProfilePage({ params }: Params) {
   // sources of truth for the same question.
   const { teachingPlaces } = await fetchTaxonomy();
   const placeLabel = Object.fromEntries(teachingPlaces.map((p) => [p.id, p.label]));
+
+  // Fails soft to an empty list, so a groups section costs a section rather
+  // than the page if the API is unreachable.
+  const coachGroups = await fetchGroupsForCoach(id);
 
   const fees = formatFees(provider.fee_min, provider.fee_max, provider.fee_period);
   const experience = formatExperience(provider.experience_years);
@@ -354,6 +359,33 @@ export default async function ProviderProfilePage({ params }: Params) {
             <h2 className="cf-display text-lg text-ink">Fees</h2>
             {fees && <p className="mt-3 text-xl font-semibold text-ink">{fees}</p>}
             <p className="mt-2 text-sm text-muted">{provider.fees_note}</p>
+          </section>
+        )}
+
+        {/* What this coach already runs, which answers a question a fees
+            note cannot: are other families near me actually doing this.
+            Published groups only, and no names — a group showcases the
+            class, not the families in it. */}
+        {coachGroups.length > 0 && (
+          <section className="cf-card p-7">
+            <h2 className="cf-display text-lg text-ink">Groups they train</h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {coachGroups.map((g) => (
+                <Link
+                  key={g.id}
+                  href={`/groups/public/${g.id}`}
+                  className="rounded-2xl border border-line bg-surface-2 p-4 transition hover:border-faint"
+                >
+                  <p className="font-display text-sm font-bold text-ink">
+                    {g.publicHeadline || g.serviceName}
+                  </p>
+                  <p className="mt-1 text-xs text-muted">
+                    {g.areaName} · {g.memberCount}{" "}
+                    {g.memberCount === 1 ? "family" : "families"}
+                  </p>
+                </Link>
+              ))}
+            </div>
           </section>
         )}
 

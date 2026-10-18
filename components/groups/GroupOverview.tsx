@@ -12,6 +12,7 @@ import {
   membersStillNeeded,
 } from "@/lib/groups";
 import { withNext } from "@/lib/next-path";
+import GroupPublish from "@/components/groups/GroupPublish";
 
 type Props = {
   invite: GroupInvite;
@@ -208,6 +209,12 @@ export default function GroupOverview({
           </div>
         </section>
       )}
+
+      {/* Above Manage, because showing the group is the thing a creator
+          wants once it is live, and extending or closing it is housekeeping.
+          Creator only: publishing is never automatic and never anyone
+          else's — not an accepted coach's, not a member's. */}
+      {isCreator && <GroupPublish invite={invite} onChanged={onChanged} />}
 
       {isCreator && (
         <section className="cf-card p-7">

@@ -11,12 +11,20 @@ import {
   CreateGroupDto,
   GROUP_EXTEND_DAYS,
   GROUP_MIN_STUDENTS,
+  GROUP_PUBLISHED_DAYS,
   GroupContactDto,
   GroupDto,
   GroupInviteDto,
   GroupPitchDto,
+  GroupPostDto,
+  CreateGroupPostDto,
+  DiscoverGroupDto,
+  ProviderGroupDto,
+  PublicGroupDto,
+  PublishGroupDto,
   RespondToPitchDto,
   UpdateGroupDto,
+  UpdatePostVisibilityDto,
 } from "./dto/group.dto";
 
 /** A row exactly as my_groups() returns it. */
@@ -353,5 +361,307 @@ export class GroupsService {
 
     if (!group) throw new NotFoundException("That group is not there any more.");
     return group;
+  }
+
+  /* -------------------------------------------------------------------
+     Communities.
+
+     Live and public are different things. Live is is_group_active(): the
+     families are here and it is looking for a coach. Public is the creator
+     choosing to showcase it, and nothing else makes it happen. An accepted
+     coach does not publish a group, and a group still recruiting its second
+     family has nothing to publish, because recruiting happens down the
+     invite link and a showcase is not a recruitment ad.
+     ------------------------------------------------------------------- */
+
+  /**
+   * Published groups, by city, area and service.
+   *
+   * Anonymous by design, because the point of publishing is that a stranger
+   * can find it. Carries no society name and no member names, the same list
+   * the coach view withholds.
+   */
+  async discover(
+    caller: Caller | null,
+    where: {
+      cityId?: string;
+      areaId?: string;
+      serviceCategoryId?: string;
+      limit?: number;
+      offset?: number;
+    },
+  ): Promise<DiscoverGroupDto[]> {
+    const db = caller ? this.supabase.asUser(caller.accessToken) : this.supabase.anon();
+
+    const { data, error } = await db.rpc("groups_discover", {
+      p_city_id: where.cityId ?? null,
+      p_area_id: where.areaId ?? null,
+      p_service_category_id: where.serviceCategoryId ?? null,
+      p_limit: where.limit ?? 24,
+      p_offset: where.offset ?? 0,
+    });
+    if (error) throw new InternalServerErrorException(error.message);
+
+    return ((data as Record<string, unknown>[]) ?? []).map((r) => ({
+      id: r.id as string,
+      serviceCategoryId: r.service_category_id as string,
+      serviceName: (r.service_name as string) ?? null,
+      areaId: (r.area_id as string) ?? null,
+      areaName: (r.area_name as string) ?? null,
+      cityId: (r.city_id as string) ?? null,
+      cityName: (r.city_name as string) ?? null,
+      studentCount: count(r.student_count),
+      memberCount: count(r.member_count),
+      publicHeadline: (r.public_headline as string) ?? null,
+      publicAbout: (r.public_about as string) ?? null,
+      publishedAt: (r.published_at as string) ?? null,
+      hasCoach: Boolean(r.has_coach),
+      publicPostCount: count(r.public_post_count),
+      alreadyMember: false,
+    }));
+  }
+
+  /** One published group. Unpublished reads as missing, not forbidden. */
+  async publicView(id: string, caller: Caller | null): Promise<PublicGroupDto> {
+    const db = caller ? this.supabase.asUser(caller.accessToken) : this.supabase.anon();
+
+    const { data, error } = await db.rpc("group_public", { p_id: id });
+    if (error) throw new InternalServerErrorException(error.message);
+
+    const row = data as Record<string, unknown> | null;
+    if (!row || !row.id) throw new NotFoundException("That group is not public.");
+
+    return {
+      id: row.id as string,
+      serviceName: (row.service_name as string) ?? null,
+      areaName: (row.area_name as string) ?? null,
+      cityName: (row.city_name as string) ?? null,
+      studentCount: count(row.student_count),
+      memberCount: count(row.member_count),
+      publicHeadline: (row.public_headline as string) ?? null,
+      publicAbout: (row.public_about as string) ?? null,
+      publishedAt: (row.published_at as string) ?? null,
+      hasCoach: Boolean(row.has_coach),
+      alreadyMember: Boolean(row.already_member),
+    };
+  }
+
+  /** The groups a coach trains, for their public page. */
+  async forPublicProvider(
+    providerId: string,
+    caller: Caller | null,
+  ): Promise<ProviderGroupDto[]> {
+    const db = caller ? this.supabase.asUser(caller.accessToken) : this.supabase.anon();
+
+    const { data, error } = await db.rpc("groups_for_public_provider", {
+      p_provider_id: providerId,
+    });
+    if (error) throw new InternalServerErrorException(error.message);
+
+    return ((data as Record<string, unknown>[]) ?? []).map((r) => ({
+      id: r.id as string,
+      serviceName: (r.service_name as string) ?? null,
+      areaName: (r.area_name as string) ?? null,
+      cityName: (r.city_name as string) ?? null,
+      studentCount: count(r.student_count),
+      memberCount: count(r.member_count),
+      publicHeadline: (r.public_headline as string) ?? null,
+    }));
+  }
+
+  /**
+   * Publish it, or take it back down.
+   *
+   * Creator only, and only once the group is live: two families, still open.
+   * Publishing rolls expiry out by GROUP_PUBLISHED_DAYS rather than the ten
+   * days that gate coach-visible demand, because a page meant to be found
+   * cannot be rebuilt every week and a half.
+   */
+  async publish(caller: Caller, id: string, body: PublishGroupDto): Promise<PublicGroupDto> {
+    const db = this.supabase.asUser(caller.accessToken);
+
+    const { data: row } = await db
+      .from("groups")
+      .select("creator_id")
+      .eq("id", id)
+      .maybeSingle();
+
+    const creatorId = (row as { creator_id: string } | null)?.creator_id;
+    if (!creatorId) throw new NotFoundException("That group is not there any more.");
+    if (creatorId !== caller.id) {
+      throw new ForbiddenException("Only the person who made the group can publish it.");
+    }
+
+    if (body.published) {
+      const { data: live, error: liveError } = await db.rpc("is_group_active", {
+        p_group_id: id,
+      });
+      if (liveError) throw new InternalServerErrorException(liveError.message);
+      if (!live) {
+        throw new BadRequestException(
+          "A group can be shown on Aspire91 once it is live: two families, still open.",
+        );
+      }
+    }
+
+    const patch: Record<string, unknown> = {
+      published_at: body.published ? new Date().toISOString() : null,
+    };
+    if (body.publicHeadline !== undefined) patch.public_headline = body.publicHeadline;
+    if (body.publicAbout !== undefined) patch.public_about = body.publicAbout;
+    if (body.published) patch.expires_at = this.daysFromNow(GROUP_PUBLISHED_DAYS);
+
+    const { error } = await db.from("groups").update(patch).eq("id", id);
+    if (error) throw new InternalServerErrorException(error.message);
+
+    // Nothing public left to read back once it is down.
+    if (!body.published) {
+      return {
+        id,
+        serviceName: null,
+        areaName: null,
+        cityName: null,
+        studentCount: 0,
+        memberCount: 0,
+        publicHeadline: body.publicHeadline ?? null,
+        publicAbout: body.publicAbout ?? null,
+        publishedAt: null,
+        hasCoach: false,
+        alreadyMember: true,
+      };
+    }
+
+    return this.publicView(id, caller);
+  }
+
+  /**
+   * The group's posts.
+   *
+   * A member sees all of them; anybody else sees only what an author opened,
+   * and only while the group is published. That split is the RLS policy's
+   * rather than this method's, which is why the member read goes through the
+   * table as the caller instead of a definer function.
+   */
+  async posts(id: string, caller: Caller | null): Promise<GroupPostDto[]> {
+    if (!caller) {
+      const { data, error } = await this.supabase.anon().rpc("group_public_posts", {
+        p_group_id: id,
+        p_limit: 24,
+      });
+      if (error) throw new InternalServerErrorException(error.message);
+
+      return ((data as Record<string, unknown>[]) ?? []).map((r) => ({
+        id: r.id as string,
+        kind: r.kind as string,
+        body: (r.body as string) ?? null,
+        imageUrl: (r.image_url as string) ?? null,
+        youtubeId: (r.youtube_id as string) ?? null,
+        visibility: "public",
+        showOrder: (r.show_order as number) ?? null,
+        createdAt: r.created_at as string,
+      }));
+    }
+
+    const { data, error } = await this.supabase
+      .asUser(caller.accessToken)
+      .from("group_posts")
+      .select("id, kind, body, image_url, youtube_id, visibility, show_order, created_at")
+      .eq("group_id", id)
+      .eq("is_hidden", false)
+      .order("show_order", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: false })
+      .limit(60);
+    if (error) throw new InternalServerErrorException(error.message);
+
+    return ((data as Record<string, unknown>[]) ?? []).map((r) => ({
+      id: r.id as string,
+      kind: r.kind as string,
+      body: (r.body as string) ?? null,
+      imageUrl: (r.image_url as string) ?? null,
+      youtubeId: (r.youtube_id as string) ?? null,
+      visibility: r.visibility as string,
+      showOrder: (r.show_order as number) ?? null,
+      createdAt: r.created_at as string,
+    }));
+  }
+
+  /**
+   * Post to a group.
+   *
+   * Members only, and the insert policy is what says so: a non-member matches
+   * nothing and gets a row back of null rather than an error.
+   */
+  async addPost(caller: Caller, id: string, body: CreateGroupPostDto): Promise<GroupPostDto> {
+    if (body.kind === "photo" && !body.imageUrl) {
+      throw new BadRequestException("A photo post needs an image.");
+    }
+    if (body.kind === "video" && !body.youtubeId) {
+      throw new BadRequestException("A video post needs a YouTube id.");
+    }
+
+    const { data, error } = await this.supabase
+      .asUser(caller.accessToken)
+      .from("group_posts")
+      .insert({
+        group_id: id,
+        author_id: caller.id,
+        kind: body.kind,
+        body: body.body ?? null,
+        image_url: body.kind === "photo" ? body.imageUrl : null,
+        youtube_id: body.kind === "video" ? body.youtubeId : null,
+      })
+      .select("id, kind, body, image_url, youtube_id, visibility, show_order, created_at")
+      .maybeSingle();
+
+    if (error) throw new InternalServerErrorException(error.message);
+    const row = data as Record<string, unknown> | null;
+    if (!row) throw new ForbiddenException("Only members of the group can post to it.");
+
+    return {
+      id: row.id as string,
+      kind: row.kind as string,
+      body: (row.body as string) ?? null,
+      imageUrl: (row.image_url as string) ?? null,
+      youtubeId: (row.youtube_id as string) ?? null,
+      visibility: row.visibility as string,
+      showOrder: (row.show_order as number) ?? null,
+      createdAt: row.created_at as string,
+    };
+  }
+
+  /**
+   * Open a post to the showcase, or close it again.
+   *
+   * The author's own post and nobody else's, enforced by the update policy. A
+   * creator who could promote any post could publish a photo of another
+   * family's child, and that parent agreed to share with their group.
+   */
+  async setPostVisibility(
+    caller: Caller,
+    postId: string,
+    body: UpdatePostVisibilityDto,
+  ): Promise<GroupPostDto> {
+    const { data, error } = await this.supabase
+      .asUser(caller.accessToken)
+      .from("group_posts")
+      .update({ visibility: body.visibility })
+      .eq("id", postId)
+      .select("id, kind, body, image_url, youtube_id, visibility, show_order, created_at")
+      .maybeSingle();
+
+    if (error) throw new InternalServerErrorException(error.message);
+    const row = data as Record<string, unknown> | null;
+    if (!row) throw new ForbiddenException("Only the person who posted it can change that.");
+
+    return {
+      id: row.id as string,
+      kind: row.kind as string,
+      body: (row.body as string) ?? null,
+      imageUrl: (row.image_url as string) ?? null,
+      youtubeId: (row.youtube_id as string) ?? null,
+      visibility: row.visibility as string,
+      showOrder: (row.show_order as number) ?? null,
+      createdAt: row.created_at as string,
+    };
   }
 }

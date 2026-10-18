@@ -866,6 +866,130 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/groups/discover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Published groups, by city, area and service
+         * @description Readable signed out: the point of publishing is that a stranger can find it. Carries no society name and no member names, the same list the coach view withholds.
+         */
+        get: operations["GroupsController_discover_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/groups/{id}/public": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One published group, as a stranger sees it
+         * @description A group that is not published reads as missing rather than forbidden: whether it exists at all is not a visitor's business.
+         */
+        get: operations["GroupsController_publicView_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/groups/by-coach/{providerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The groups a coach trains
+         * @description Published groups where that coach was accepted, for their public page. An unapproved or suspended coach returns none, the same rule every other public read of a coach uses.
+         */
+        get: operations["GroupsController_byCoach_v1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/groups/{id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Show it on Aspire91, or take it down
+         * @description Creator only, and only once the group is live. Publishing pushes expiry out to ninety days: the ten-day clock gates demand a coach is shown, and a page meant to be found cannot live on it.
+         */
+        patch: operations["GroupsController_publish_v1"];
+        trace?: never;
+    };
+    "/api/v1/groups/{id}/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What the group has posted
+         * @description A member sees everything. Anybody else sees only the posts their authors opened, and only while the group is published.
+         */
+        get: operations["GroupsController_posts_v1"];
+        put?: never;
+        /**
+         * Post to your group
+         * @description Members only. It starts at `members`: a parent putting a photo of their child into their group should have it stay there unless they decide otherwise.
+         */
+        post: operations["GroupsController_addPost_v1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/groups/posts/{postId}/visibility": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Open a post to the showcase, or close it
+         * @description The post's own author, and nobody else — not even the creator. A creator who could promote any post could publish a photo of another family's child, and that parent agreed to share with their group rather than with the world.
+         */
+        patch: operations["GroupsController_setPostVisibility_v1"];
+        trace?: never;
+    };
     "/api/v1/notifications": {
         parameters: {
             query?: never;
@@ -2311,6 +2435,87 @@ export interface components {
             societyName: string | null;
             /** @description Whether the group is sharing a number at all. */
             shared: boolean;
+        };
+        DiscoverGroupDto: {
+            id: string;
+            serviceName: string | null;
+            areaName: string | null;
+            cityName: string | null;
+            studentCount: number;
+            memberCount: number;
+            publicHeadline: string | null;
+            publicAbout: string | null;
+            publishedAt: string | null;
+            /** @description Whether a coach has been accepted. Media needs one. */
+            hasCoach: boolean;
+            /** @description False for a guest, rather than an error. */
+            alreadyMember: boolean;
+            serviceCategoryId: string;
+            areaId: string | null;
+            cityId: string | null;
+            publicPostCount: number;
+        };
+        PublicGroupDto: {
+            id: string;
+            serviceName: string | null;
+            areaName: string | null;
+            cityName: string | null;
+            studentCount: number;
+            memberCount: number;
+            publicHeadline: string | null;
+            publicAbout: string | null;
+            publishedAt: string | null;
+            /** @description Whether a coach has been accepted. Media needs one. */
+            hasCoach: boolean;
+            /** @description False for a guest, rather than an error. */
+            alreadyMember: boolean;
+        };
+        ProviderGroupDto: {
+            id: string;
+            serviceName: string | null;
+            areaName: string | null;
+            cityName: string | null;
+            studentCount: number;
+            memberCount: number;
+            publicHeadline: string | null;
+        };
+        PublishGroupDto: {
+            /** @description False unpublishes. The group itself is untouched. */
+            published: boolean;
+            publicHeadline?: string;
+            publicAbout?: string | null;
+        };
+        GroupPostDto: {
+            id: string;
+            /** @enum {string} */
+            kind: "photo" | "video";
+            body: string | null;
+            imageUrl: string | null;
+            youtubeId: string | null;
+            /**
+             * @description The author's call, and it starts at members.
+             * @enum {string}
+             */
+            visibility: "members" | "public";
+            /** @description The creator curates this. Null means unplaced. */
+            showOrder: number | null;
+            createdAt: string;
+        };
+        CreateGroupPostDto: {
+            /** @enum {string} */
+            kind: "photo" | "video";
+            body?: string | null;
+            /** @description A storage URL. Photos only — never a blob. */
+            imageUrl?: string;
+            /** @description The 11-character id, nothing else. */
+            youtubeId?: string;
+        };
+        UpdatePostVisibilityDto: {
+            /**
+             * @description Only the post's own author may change this. A creator who could promote any post could publish a photo of another family's child, and that parent agreed to share with their group, not with the world.
+             * @enum {string}
+             */
+            visibility: "members" | "public";
         };
         NotificationDto: {
             /** Format: uuid */
@@ -4083,6 +4288,169 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GroupContactDto"];
+                };
+            };
+        };
+    };
+    GroupsController_discover_v1: {
+        parameters: {
+            query?: {
+                cityId?: string;
+                areaId?: string;
+                serviceCategoryId?: string;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiscoverGroupDto"][];
+                };
+            };
+        };
+    };
+    GroupsController_publicView_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicGroupDto"];
+                };
+            };
+        };
+    };
+    GroupsController_byCoach_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderGroupDto"][];
+                };
+            };
+        };
+    };
+    GroupsController_publish_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublishGroupDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicGroupDto"];
+                };
+            };
+        };
+    };
+    GroupsController_posts_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupPostDto"][];
+                };
+            };
+        };
+    };
+    GroupsController_addPost_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateGroupPostDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupPostDto"];
+                };
+            };
+        };
+    };
+    GroupsController_setPostVisibility_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePostVisibilityDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupPostDto"];
                 };
             };
         };
