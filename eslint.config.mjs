@@ -28,6 +28,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The Nest build output. Gitignored, so CI never sees it, but it appears
+    // locally the moment anyone runs gen:api — and 162 errors of compiled
+    // require() calls bury whatever eslint has to say about the source.
+    "api/dist/**",
   ]),
 ]);
 
