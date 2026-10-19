@@ -126,6 +126,7 @@ class _ProfileTab extends ConsumerWidget {
               color: A91.surface,
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: A91.borderSoft),
+              boxShadow: A91.cardShadow,
             ),
             child: Text(
               coach.helpStatement!.trim(),

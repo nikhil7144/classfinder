@@ -218,6 +218,7 @@ class _EntryTileState extends ConsumerState<EntryTile> {
         color: A91.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: A91.border),
+        boxShadow: A91.cardShadow,
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(

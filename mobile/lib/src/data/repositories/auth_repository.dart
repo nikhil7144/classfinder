@@ -5,6 +5,7 @@ import '../../config/env.dart';
 import '../../flavor.dart';
 import '../api_exception.dart';
 import '../supabase.dart';
+import 'notifications_repository.dart';
 
 /// Signing in.
 ///
@@ -19,7 +20,10 @@ import '../supabase.dart';
 /// is deliberate and PLAN.md says so: the session, its refresh and realtime all
 /// belong to the SDK.
 class AuthRepository {
-  const AuthRepository();
+  const AuthRepository(this._notifications);
+
+  /// Needed only for `signOut()`'s devices/forget call — see there.
+  final NotificationsRepository _notifications;
 
   /// Store-review accounts. Supabase has no notion of a fixed OTP, so these
   /// two are real accounts with a real password behind the scenes — the code
@@ -191,7 +195,24 @@ class AuthRepository {
   /// awaited-and-thrown: someone who has only ever used email OTP has no
   /// Google session to clear, and a plugin hiccup here must never block an
   /// otherwise-ordinary sign-out.
+  ///
+  /// Forgetting this device's push token happens here, before anything
+  /// else — the token belongs to the device, not the session, and the
+  /// forget call needs a still-valid session to authenticate with. An app
+  /// that signs out without this leaves the next person to use the phone
+  /// receiving the last person's messages, which is the bug that looks
+  /// like "notifications are going to the wrong person" and nothing in any
+  /// log explains why. Swallowed like the Google clear below: failing to
+  /// sign out because a network call failed is worse than a stale token,
+  /// and the backend disables it anyway the first time FCM reports the
+  /// device gone.
   Future<void> signOut() async {
+    try {
+      await _notifications.forgetDevice();
+    } catch (_) {
+      // Offline, or the token was already gone — either way, signing out
+      // must not block on this.
+    }
     try {
       await _googleSignIn.signOut();
     } catch (_) {

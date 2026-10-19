@@ -83,6 +83,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(themeModeProvider);
     final reference = ref.watch(referenceProvider);
 
     return reference.when(
@@ -107,7 +108,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 SliverToBoxAdapter(child: _filters(reference)),
                 ...results.when(
                   loading: () => [
-                    const SliverToBoxAdapter(child: ListSkeleton()),
+                    const SliverToBoxAdapter(
+                      child: ListSkeleton(shrinkWrap: true),
+                    ),
                   ],
                   error: (error, _) => [
                     SliverFillRemaining(
@@ -210,7 +213,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             showDistance: _query.lat != null && _query.lng != null,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => CoachScreen(coachId: coaches[i].id),
+                builder: (_) => ThemeAware(
+                  builder: (_) => CoachScreen(coachId: coaches[i].id),
+                ),
               ),
             ),
           ),

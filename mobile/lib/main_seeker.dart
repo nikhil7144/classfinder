@@ -6,6 +6,7 @@ import 'src/config/env.dart';
 import 'src/data/supabase.dart';
 import 'src/data/theme_prefs.dart';
 import 'src/flavor.dart';
+import 'src/push.dart';
 
 /// Entry point for the parents' app.
 ///
@@ -14,6 +15,11 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   appFlavor = Flavor.seeker;
   Env.assertConfigured();
+  // Before runApp(), same as Supabase: Firebase requires init before
+  // anything else touches it. Guarded internally — see push.dart — so a
+  // build with no google-services.json for this flavor yet starts exactly
+  // as it did before push existed.
+  await PushService.initializeFirebase();
   await initSupabase();
   // Read before runApp(), not inside the provider's own init — see
   // theme_prefs.dart for why: it is what stands in for the web's blocking

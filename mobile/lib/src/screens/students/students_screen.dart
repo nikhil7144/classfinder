@@ -22,6 +22,7 @@ class StudentsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(themeModeProvider);
     final feed = ref.watch(demandFeedProvider);
     final me = ref.watch(meProvider).value;
     final hasListing = me?.provider != null;
@@ -51,18 +52,27 @@ class StudentsScreen extends ConsumerWidget {
             data: (demands) => CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
-                const SliverToBoxAdapter(child: _Header()),
+                // Not `const`: _Header reads A91.muted, and StudentsScreen
+                // is rebuilt fresh on a theme change (see home_shell.dart's
+                // tab list) specifically so it reaches this far — a const
+                // instance here would be the one thing in its way.
+                // ignore: prefer_const_constructors
+                SliverToBoxAdapter(child: _Header()),
                 if (demands.isEmpty)
                   SliverFillRemaining(
                     hasScrollBody: false,
+                    // Neither EmptyState below is `const`: it reads
+                    // A91.muted.
                     child: hasListing
-                        ? const EmptyState(
+                        // ignore: prefer_const_constructors
+                        ? EmptyState(
                             title: 'Nobody yet',
                             body:
                                 'When a family near you says what they are looking for, '
                                 'and it is something you teach, they will appear here.',
                           )
-                        : const EmptyState(
+                        // ignore: prefer_const_constructors
+                        : EmptyState(
                             title: 'Finish your listing first',
                             body:
                                 'Families are matched to you by what you teach and where. '
@@ -97,10 +107,14 @@ class _Header extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          // Neither Wordmark nor Eyebrow below is `const`: Wordmark picks
+          // its asset from A91.isLight, Eyebrow's style from A91.gold.
           children: [
-            const Wordmark(height: 30),
+            // ignore: prefer_const_constructors
+            Wordmark(height: 30),
             const SizedBox(height: 22),
-            const Eyebrow('Find students'),
+            // ignore: prefer_const_constructors
+            Eyebrow('Find students'),
             const SizedBox(height: 10),
             Text(
               'Families looking for you',

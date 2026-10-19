@@ -58,6 +58,7 @@ class _QueriesScreenState extends ConsumerState<QueriesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(themeModeProvider);
     final queries = ref.watch(queriesProvider);
 
     return Scaffold(
@@ -156,7 +157,9 @@ class _Header extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Eyebrow('Queries'),
+            // Not `const`: Eyebrow's style reads A91.gold.
+            // ignore: prefer_const_constructors
+            Eyebrow('Queries'),
             const SizedBox(height: 10),
             Text(
               'Parents who want a call',

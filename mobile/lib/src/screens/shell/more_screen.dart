@@ -8,7 +8,9 @@ import '../../data/models/me.dart';
 import '../../providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/branding.dart';
+import '../../widgets/theme_picker.dart';
 import '../events/events_screen.dart';
+import '../listing/fields.dart';
 import '../listing/listing_screen.dart';
 import '../settings/settings_screen.dart';
 
@@ -26,6 +28,7 @@ class MoreScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(themeModeProvider);
     final me = ref.watch(meProvider).value;
 
     return Scaffold(
@@ -33,7 +36,9 @@ class MoreScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
           children: [
-            const Eyebrow('Your account'),
+            // Not `const`: Eyebrow's style reads A91.gold.
+            // ignore: prefer_const_constructors
+            Eyebrow('Your account'),
             const SizedBox(height: 10),
             Text(
               me?.provider?.displayName ?? 'Your account',
@@ -49,7 +54,12 @@ class MoreScreen extends ConsumerWidget {
               subtitle: _listingState(me),
               tone: _listingTone(me),
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ListingScreen()),
+                MaterialPageRoute(
+                  builder: (_) => ThemeAware(
+                    // ignore: prefer_const_constructors
+                    builder: (_) => ListingScreen(),
+                  ),
+                ),
               ),
             ),
             // Always shown, even before approval — a coach filling in their
@@ -84,7 +94,12 @@ class MoreScreen extends ConsumerWidget {
               title: 'Your events',
               subtitle: 'Trials, competitions, camps — and who has entered.',
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const EventsScreen()),
+                MaterialPageRoute(
+                  builder: (_) => ThemeAware(
+                    // ignore: prefer_const_constructors
+                    builder: (_) => EventsScreen(),
+                  ),
+                ),
               ),
             ),
             _Item(
@@ -92,10 +107,23 @@ class MoreScreen extends ConsumerWidget {
               title: 'Settings',
               subtitle: 'The email you sign in with.',
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                MaterialPageRoute(
+                  builder: (_) => ThemeAware(
+                    // ignore: prefer_const_constructors
+                    builder: (_) => SettingsScreen(),
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 26),
+            const SizedBox(height: 14),
+            // Not `const`: Section reads A91.surface.
+            // ignore: prefer_const_constructors
+            Section(
+              title: 'Appearance',
+              subtitle: 'Follows your phone by default. Pick one to stop.',
+              children: const [ThemeModePicker()],
+            ),
+            const SizedBox(height: 12),
             _SignOut(onTap: () => confirmSignOut(context, ref)),
           ],
         ),
@@ -156,6 +184,7 @@ class _Item extends StatelessWidget {
           color: A91.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: A91.border),
+          boxShadow: A91.cardShadow,
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(

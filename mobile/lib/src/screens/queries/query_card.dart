@@ -169,6 +169,7 @@ class _QueryCardState extends ConsumerState<QueryCard> {
         color: A91.surface,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: _q.unread ? A91.coral : A91.border),
+        boxShadow: A91.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

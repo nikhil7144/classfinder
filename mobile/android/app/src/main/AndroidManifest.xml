@@ -10,6 +10,13 @@
          more than the feature does. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
+    <!-- Android 13+'s runtime permission for push — see push.dart's
+         requestPermission(). Below 13 this is granted at install and the
+         request is a no-op. Declared explicitly rather than left to
+         firebase_messaging's own merged manifest, so it is not silently
+         missing if that ever changes. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
     <application
         android:label="@string/app_name"
         android:name="${applicationName}"
@@ -50,12 +57,35 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="${applicationId}" android:host="login-callback"/>
             </intent-filter>
+            <!-- The backend's push envelope (api/src/notify/push.service.ts)
+                 sends android.notification.click_action:
+                 "FLUTTER_NOTIFICATION_CLICK" on every notification, so a tap
+                 opens the app at the right screen instead of the home tab.
+                 Without this intent-filter to match it, Android has nothing
+                 telling it this Activity is what that click_action should
+                 launch — the notification would still show, but tapping it
+                 would not reliably hand the payload to
+                 FirebaseMessaging.onMessageOpenedApp/getInitialMessage(),
+                 which is exactly the "message arrived but nothing happens
+                 when I tap it" shape of bug. -->
+            <intent-filter>
+                <action android:name="FLUTTER_NOTIFICATION_CLICK"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- The channel a background/terminated notification is shown on —
+             must match the id push.dart's AndroidNotificationDetails uses
+             for the foreground case ('messages'), so a notification looks
+             and behaves the same regardless of which state delivered it. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="messages" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

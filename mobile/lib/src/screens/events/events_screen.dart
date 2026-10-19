@@ -22,6 +22,7 @@ class EventsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(themeModeProvider);
     final events = ref.watch(myEventsProvider);
 
     return Scaffold(
@@ -59,7 +60,9 @@ class EventsScreen extends ConsumerWidget {
               return CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
-                  const SliverToBoxAdapter(child: _Header()),
+                  // Not `const`: _Header's Eyebrow reads A91.gold.
+                  // ignore: prefer_const_constructors
+                  SliverToBoxAdapter(child: _Header()),
                   if (all.isEmpty)
                     const SliverFillRemaining(
                       hasScrollBody: false,
@@ -82,7 +85,10 @@ class EventsScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const EventFormScreen()),
+          MaterialPageRoute(
+            // ignore: prefer_const_constructors
+            builder: (_) => ThemeAware(builder: (_) => EventFormScreen()),
+          ),
         ),
         backgroundColor: A91.coral,
         foregroundColor: A91.onAccent,
@@ -128,7 +134,9 @@ class _Header extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Eyebrow('Events'),
+            // Not `const`: Eyebrow's style reads A91.gold.
+            // ignore: prefer_const_constructors
+            Eyebrow('Events'),
             const SizedBox(height: 10),
             Text(
               'What you are running',
@@ -173,13 +181,17 @@ class _EventCard extends StatelessWidget {
         color: A91.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: A91.border),
+        boxShadow: A91.cardShadow,
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           InkWell(
             onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => EventFormScreen(event: event)),
+              MaterialPageRoute(
+                builder: (_) =>
+                    ThemeAware(builder: (_) => EventFormScreen(event: event)),
+              ),
             ),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 15, 16, 13),
@@ -263,7 +275,8 @@ class _EventCard extends StatelessWidget {
             InkWell(
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => RegisterScreen(event: event),
+                  builder: (_) =>
+                      ThemeAware(builder: (_) => RegisterScreen(event: event)),
                 ),
               ),
               child: Padding(

@@ -24,7 +24,9 @@ class CoachSpaceTab extends ConsumerWidget {
     final posts = ref.watch(spacePostsProvider(providerId));
 
     return space.when(
-      loading: () => const Loading(),
+      // Not `const`: Loading reads A91.faint.
+      // ignore: prefer_const_constructors
+      loading: () => Loading(),
       error: (error, _) => ErrorState(
         message: error is ApiException
             ? error.message

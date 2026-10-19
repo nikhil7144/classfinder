@@ -41,6 +41,7 @@ class _BrowseEventsScreenState extends ConsumerState<BrowseEventsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(themeModeProvider);
     final reference = ref.watch(referenceProvider);
 
     return Scaffold(
@@ -49,7 +50,10 @@ class _BrowseEventsScreenState extends ConsumerState<BrowseEventsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const MyEntriesScreen()),
+              MaterialPageRoute(
+                // ignore: prefer_const_constructors
+                builder: (_) => ThemeAware(builder: (_) => MyEntriesScreen()),
+              ),
             ),
             child: Text('Your entries',
                 style: TextStyle(color: A91.gold, fontSize: 13)),
@@ -68,7 +72,9 @@ class _BrowseEventsScreenState extends ConsumerState<BrowseEventsScreen> {
           data: (reference) {
             _seed(reference);
             if (_cityId == null) {
-              return const EmptyState(
+              // Not `const`: EmptyState reads A91.muted.
+              // ignore: prefer_const_constructors
+              return EmptyState(
                 title: 'No cities open yet',
                 body: 'Once one is, what is on in it shows up here.',
               );
@@ -90,7 +96,8 @@ class _BrowseEventsScreenState extends ConsumerState<BrowseEventsScreen> {
                   ...events.when(
                     loading: () => [
                       const SliverToBoxAdapter(
-                          child: ListSkeleton(avatar: false)),
+                        child: ListSkeleton(avatar: false, shrinkWrap: true),
+                      ),
                     ],
                     error: (error, _) => [
                       SliverFillRemaining(
@@ -200,13 +207,16 @@ class EventCard extends StatelessWidget {
         color: A91.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: A91.border),
+        boxShadow: A91.cardShadow,
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap ??
             () => Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => EventDetailScreen(eventId: event.id!),
+                    builder: (_) => ThemeAware(
+                      builder: (_) => EventDetailScreen(eventId: event.id!),
+                    ),
                   ),
                 ),
         child: Padding(

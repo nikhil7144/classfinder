@@ -21,6 +21,7 @@ class SpaceScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(themeModeProvider);
     final space = ref.watch(mySpaceProvider);
     final posts = ref.watch(mySpacePostsProvider);
 
@@ -40,7 +41,11 @@ class SpaceScreen extends ConsumerWidget {
           data: (space) {
             // No listing yet means no Space. The listing tab is where that
             // starts, and saying so beats an empty page with no way out.
-            if (space == null) return const _NoListingYet();
+            // Not `const`: _NoListingYet's EmptyState reads A91.muted.
+            if (space == null) {
+              // ignore: prefer_const_constructors
+              return _NoListingYet();
+            }
 
             return RefreshIndicator(
               color: A91.coral,
@@ -105,7 +110,9 @@ class SpaceScreen extends ConsumerWidget {
           : FloatingActionButton.extended(
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => ComposerScreen(space: space.value!),
+                  builder: (_) => ThemeAware(
+                    builder: (_) => ComposerScreen(space: space.value!),
+                  ),
                 ),
               ),
               backgroundColor: A91.coral,
@@ -129,7 +136,9 @@ class _Header extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Eyebrow('My Space'),
+            // Not `const`: Eyebrow's style reads A91.gold.
+            // ignore: prefer_const_constructors
+            Eyebrow('My Space'),
             const SizedBox(height: 10),
             Text(
               'Show parents what you do',
@@ -225,7 +234,9 @@ class _NoListingYet extends StatelessWidget {
   const _NoListingYet();
 
   @override
-  Widget build(BuildContext context) => const EmptyState(
+  // Not `const`: EmptyState reads A91.muted.
+  // ignore: prefer_const_constructors
+  Widget build(BuildContext context) => EmptyState(
         title: 'Your Space opens with your listing',
         body: 'Fill in your listing first — it is the Listing tab. Your Space '
             'comes with it, and that is where you show parents how you teach.',

@@ -50,6 +50,7 @@ class _ThreadsScreenState extends ConsumerState<ThreadsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(themeModeProvider);
     final inbox = ref.watch(inboxProvider);
 
     return Scaffold(
@@ -85,7 +86,9 @@ class _ThreadsScreenState extends ConsumerState<ThreadsScreen> {
               return CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
-                  const SliverToBoxAdapter(child: _Header()),
+                  // Not `const`: _Header's Eyebrow reads A91.gold.
+                  // ignore: prefer_const_constructors
+                  SliverToBoxAdapter(child: _Header()),
                   if (sorted.isEmpty)
                     const SliverFillRemaining(
                       hasScrollBody: false,
@@ -124,7 +127,9 @@ class _Header extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Eyebrow('Messages'),
+            // Not `const`: Eyebrow's style reads A91.gold.
+            // ignore: prefer_const_constructors
+            Eyebrow('Messages'),
             const SizedBox(height: 10),
             Text(
               'Your conversations',
@@ -178,87 +183,99 @@ class _ThreadTile extends StatelessWidget {
     // as an empty conversation rather than one waiting.
     final preview = thread.lastMessage ?? thread.opening ?? '';
 
-    return Card(
+    // A Container with its own boxShadow, not the Card widget — see
+    // demand_card.dart's DemandCard for why: every other card in the app
+    // already lifts off the ground via A91.cardShadow, and Card's own
+    // Material elevation is a different shape of shadow entirely.
+    return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      child: InkWell(
+      decoration: BoxDecoration(
+        color: A91.surface,
         borderRadius: BorderRadius.circular(20),
-        onTap: () => context.push('/thread', extra: thread),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _Avatar(thread: thread),
-              const SizedBox(width: 13),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            thread.title ?? 'Conversation',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: A91.ink,
-                              fontSize: 15,
-                              fontWeight: thread.unread
-                                  ? FontWeight.w800
-                                  : FontWeight.w600,
+        border: Border.all(color: A91.border),
+        boxShadow: A91.cardShadow,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () => context.push('/thread', extra: thread),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _Avatar(thread: thread),
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              thread.title ?? 'Conversation',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: A91.ink,
+                                fontSize: 15,
+                                fontWeight: thread.unread
+                                    ? FontWeight.w800
+                                    : FontWeight.w600,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
+                          const SizedBox(width: 8),
+                          Text(
+                            _when(thread.lastActivity),
+                            style: TextStyle(color: A91.faint, fontSize: 11.5),
+                          ),
+                        ],
+                      ),
+                      if (thread.subtitle != null) ...[
+                        const SizedBox(height: 2),
                         Text(
-                          _when(thread.lastActivity),
-                          style:
-                              TextStyle(color: A91.faint, fontSize: 11.5),
+                          thread.subtitle!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: A91.faint, fontSize: 12.5),
                         ),
                       ],
-                    ),
-                    if (thread.subtitle != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        thread.subtitle!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style:
-                            TextStyle(color: A91.faint, fontSize: 12.5),
-                      ),
-                    ],
-                    if (preview.isNotEmpty) ...[
-                      const SizedBox(height: 7),
-                      Text(
-                        preview,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: thread.unread ? A91.ink : A91.muted,
-                          fontSize: 13.5,
-                          height: 1.4,
+                      if (preview.isNotEmpty) ...[
+                        const SizedBox(height: 7),
+                        Text(
+                          preview,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: thread.unread ? A91.ink : A91.muted,
+                            fontSize: 13.5,
+                            height: 1.4,
+                          ),
                         ),
-                      ),
+                      ],
+                      const SizedBox(height: 8),
+                      _Badges(thread: thread),
                     ],
-                    const SizedBox(height: 8),
-                    _Badges(thread: thread),
-                  ],
-                ),
-              ),
-              if (thread.unread) ...[
-                const SizedBox(width: 10),
-                Container(
-                  margin: const EdgeInsets.only(top: 6),
-                  height: 8,
-                  width: 8,
-                  decoration: BoxDecoration(
-                    color: A91.coral,
-                    shape: BoxShape.circle,
                   ),
                 ),
+                if (thread.unread) ...[
+                  const SizedBox(width: 10),
+                  Container(
+                    margin: const EdgeInsets.only(top: 6),
+                    height: 8,
+                    width: 8,
+                    decoration: BoxDecoration(
+                      color: A91.coral,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -289,7 +306,9 @@ class _Badges extends StatelessWidget {
             thread.iAmSeeker ? 'Awaiting your reply' : 'Sent',
             tone: A91.warn,
           ),
-        if (thread.status == 'declined') const _Badge('Closed'),
+        // Not `const`: _Badge's default tone reads A91.faint.
+        // ignore: prefer_const_constructors
+        if (thread.status == 'declined') _Badge('Closed'),
       ],
     );
   }

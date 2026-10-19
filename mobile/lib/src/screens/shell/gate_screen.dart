@@ -34,7 +34,9 @@ class GateScreen extends ConsumerWidget {
     final me = ref.watch(meProvider);
 
     return me.when(
-      loading: () => const Scaffold(body: Loading()),
+      // Not `const`: Loading reads A91.faint.
+      // ignore: prefer_const_constructors
+      loading: () => Scaffold(body: Loading()),
       error: (error, _) => Scaffold(
         body: ErrorState(
           message: error is ApiException
@@ -44,7 +46,13 @@ class GateScreen extends ConsumerWidget {
         ),
       ),
       data: (me) {
-        if (me.role == null) return const ChooseRoleScreen();
+        // Not `const`: ChooseRoleScreen's own _WrongAppEscape reads A91
+        // colours, and GateScreen is reached through a ThemeAware wrapper
+        // (see router.dart) specifically so it repaints on a theme change.
+        if (me.role == null) {
+          // ignore: prefer_const_constructors
+          return ChooseRoleScreen();
+        }
         if (!me.belongsIn(appFlavor.roles)) return _WrongApp(role: me.role!);
         return child;
       },
@@ -69,8 +77,12 @@ class _WrongApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // None of the three _Message calls below is `const`: _Message reads
+    // A91.muted directly, and _WrongApp is already rebuilt fresh on a
+    // theme change (it is never const at its own use site above).
     if (role == Role.organiser) {
-      return const _Message(
+      // ignore: prefer_const_constructors
+      return _Message(
         eyebrow: 'Not in the app',
         title: 'Events are run on the website',
         body: 'You are signed in as an event organiser. Dates, venues, fee '
@@ -80,7 +92,8 @@ class _WrongApp extends StatelessWidget {
     }
 
     if (role == Role.admin) {
-      return const _Message(
+      // ignore: prefer_const_constructors
+      return _Message(
         eyebrow: 'Not in the app',
         title: 'Admin is on the website',
         body: 'Moderation and approvals want a big screen and a keyboard. '
@@ -122,8 +135,11 @@ class _Message extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Align(
+                    // Not `const`: Wordmark picks its asset from A91.isLight.
+                    // ignore: prefer_const_constructors
+                    Align(
                         alignment: Alignment.centerLeft,
+                        // ignore: prefer_const_constructors
                         child: Wordmark(height: 34)),
                     const SizedBox(height: 34),
                     Eyebrow(eyebrow),

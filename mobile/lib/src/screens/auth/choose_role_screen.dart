@@ -100,12 +100,17 @@ class _ChooseRoleScreenState extends ConsumerState<ChooseRoleScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Align(
+                  // Not `const`: Wordmark picks its asset from A91.isLight.
+                  // ignore: prefer_const_constructors
+                  Align(
                     alignment: Alignment.centerLeft,
+                    // ignore: prefer_const_constructors
                     child: Wordmark(height: 36),
                   ),
                   const SizedBox(height: 34),
-                  const Eyebrow('One last thing'),
+                  // Not `const`: Eyebrow's style reads A91.gold.
+                  // ignore: prefer_const_constructors
+                  Eyebrow('One last thing'),
                   const SizedBox(height: 12),
                   Text(
                     'What brings you here?',
@@ -144,7 +149,9 @@ class _ChooseRoleScreenState extends ConsumerState<ChooseRoleScreen> {
                     onPressed: _choice == null || _busy ? null : _submit,
                   ),
                   const SizedBox(height: 18),
-                  const _WrongAppEscape(),
+                  // Not `const`: _WrongAppEscape reads A91.surface/borderSoft.
+                  // ignore: prefer_const_constructors
+                  _WrongAppEscape(),
                   const SizedBox(height: 6),
                   Center(
                     child: TextButton(
@@ -182,6 +189,7 @@ class _WrongAppEscape extends StatelessWidget {
         color: A91.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: A91.borderSoft),
+        boxShadow: A91.cardShadow,
       ),
       child: Text(
         coachApp

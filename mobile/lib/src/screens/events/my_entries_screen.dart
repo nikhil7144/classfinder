@@ -18,6 +18,7 @@ class MyEntriesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(themeModeProvider);
     final entries = ref.watch(myEntriesProvider);
 
     return Scaffold(
@@ -50,7 +51,9 @@ class MyEntriesScreen extends ConsumerWidget {
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: [
                     SizedBox(height: MediaQuery.sizeOf(context).height * 0.18),
-                    const EmptyState(
+                    // Not `const`: EmptyState reads A91.muted.
+                    // ignore: prefer_const_constructors
+                    EmptyState(
                       title: 'Nothing entered yet',
                       body: 'Competitions, workshops and camps you enter show '
                           'up here, with what you owe and who to ask.',
@@ -73,13 +76,19 @@ class MyEntriesScreen extends ConsumerWidget {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
+                // Neither _SectionLabel is `const`: it reads A91.faint, and
+                // this screen is reached through a ThemeAware wrapper (see
+                // browse_screen.dart) specifically so it repaints on a
+                // theme change.
                 children: [
                   if (upcoming.isNotEmpty) ...[
-                    const _SectionLabel('Coming up'),
+                    // ignore: prefer_const_constructors
+                    _SectionLabel('Coming up'),
                     for (final e in upcoming) _EntryCard(entry: e),
                   ],
                   if (past.isNotEmpty) ...[
-                    const _SectionLabel('Been and gone'),
+                    // ignore: prefer_const_constructors
+                    _SectionLabel('Been and gone'),
                     for (final e in past) _EntryCard(entry: e),
                   ],
                 ],
@@ -197,6 +206,7 @@ class _EntryCardState extends ConsumerState<_EntryCard> {
         color: A91.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: A91.border),
+        boxShadow: A91.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

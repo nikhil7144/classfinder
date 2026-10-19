@@ -162,7 +162,9 @@ class _ComposerScreenState extends ConsumerState<ComposerScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
           children: [
-            const Eyebrow('What are you posting'),
+            // Not `const`: Eyebrow's style reads A91.gold.
+            // ignore: prefer_const_constructors
+            Eyebrow('What are you posting'),
             const SizedBox(height: 12),
             ChipWrap(
               children: [

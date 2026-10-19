@@ -37,6 +37,7 @@ class Section extends StatelessWidget {
           color: A91.surface,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(color: A91.border),
+          boxShadow: A91.cardShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

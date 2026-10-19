@@ -24,6 +24,7 @@ class EventDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(themeModeProvider);
     final event = ref.watch(eventProvider(eventId));
 
     return Scaffold(
@@ -112,7 +113,9 @@ class _Body extends ConsumerWidget {
           ),
         if (event.about.trim().isNotEmpty) ...[
           const SizedBox(height: 22),
-          const Eyebrow('About it'),
+          // Not `const`: Eyebrow's style reads A91.gold.
+          // ignore: prefer_const_constructors
+          Eyebrow('About it'),
           const SizedBox(height: 10),
           Text(
             event.about.trim(),
@@ -211,6 +214,7 @@ class _CategoryCard extends StatelessWidget {
         color: A91.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: A91.border),
+        boxShadow: A91.cardShadow,
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -218,8 +222,10 @@ class _CategoryCard extends StatelessWidget {
             ? null
             : () => Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) =>
-                        EnterScreen(event: event, category: category),
+                    builder: (_) => ThemeAware(
+                      builder: (_) =>
+                          EnterScreen(event: event, category: category),
+                    ),
                   ),
                 ),
         child: Opacity(

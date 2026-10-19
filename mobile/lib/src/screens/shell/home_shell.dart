@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers.dart';
+import '../../push.dart';
 import '../../theme/theme.dart';
+import '../../widgets/notification_bell.dart';
 import '../queries/queries_screen.dart';
 import 'more_screen.dart';
 import '../space/space_screen.dart';
@@ -26,7 +30,18 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   int _tab = 0;
 
   @override
+  void initState() {
+    super.initState();
+    // Reaching this shell at all means the account is signed in and
+    // belongs here — exactly the "every launch" condition registration
+    // needs. Fire-and-forget: registerDevice() swallows its own errors
+    // and is a no-op when Firebase never initialized.
+    unawaited(ref.read(pushServiceProvider).registerDevice());
+  }
+
+  @override
   Widget build(BuildContext context) {
+    ref.watch(themeModeProvider);
     // A badge is decoration on a number that may not have loaded. No count is
     // better than a wrong one, so a failure shows nothing rather than zero.
     final alerts = ref.watch(alertsProvider).value;
@@ -64,16 +79,26 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                 // Stops animations and timers on the tabs nobody is looking at.
                 child: TickerMode(
                   enabled: _tab == i,
-                  child: const [
-                    StudentsScreen(),
-                    QueriesScreen(),
-                    ThreadsScreen(),
-                    SpaceScreen(),
-                    MoreScreen(),
+                  // Not `const`: HomeShell itself is rebuilt fresh on every
+                  // theme change (see router.dart's ThemeAware), and a const
+                  // instance here would be the one thing stopping that
+                  // rebuild from reaching these five screens — Flutter skips
+                  // a child it can see is identical to last time.
+                  // ignore: prefer_const_literals_to_create_immutables
+                  child: [
+                    StudentsScreen(), // ignore: prefer_const_constructors
+                    QueriesScreen(), // ignore: prefer_const_constructors
+                    ThreadsScreen(), // ignore: prefer_const_constructors
+                    SpaceScreen(), // ignore: prefer_const_constructors
+                    MoreScreen(), // ignore: prefer_const_constructors
                   ][i],
                 ),
               ),
             ),
+          // Outside the per-tab AnimatedOpacity loop on purpose: the bell
+          // is the same control on every tab, not one more thing each tab
+          // owns, so it should not fade in and out as _tab changes.
+          const NotificationBell(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -82,6 +107,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           setState(() => _tab = i);
           // Opening a list is the moment its numbers are most likely stale.
           if (i == 1) {
+            // Not on first launch — see push.dart's requestPermission()
+            // and README §11. Opening Queries, the worklist this
+            // notification exists for, is the first moment a coach would
+            // understand why the app is asking.
+            unawaited(ref.read(pushServiceProvider).requestPermission());
             ref.invalidate(queriesProvider);
             ref.invalidate(alertsProvider);
           }

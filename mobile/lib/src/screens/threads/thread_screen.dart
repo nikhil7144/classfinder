@@ -120,6 +120,7 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(themeModeProvider);
     final history = ref.watch(messagesProvider(_key));
     final me = supabase.auth.currentUser?.id;
 
@@ -153,7 +154,9 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
           children: [
             Expanded(
               child: history.when(
-                loading: () => const Loading(),
+                // Not `const`: Loading reads A91.faint.
+                // ignore: prefer_const_constructors
+                loading: () => Loading(),
                 error: (error, _) => ErrorState(
                   message: error is ApiException
                       ? error.message
@@ -311,6 +314,7 @@ class _Opening extends StatelessWidget {
           color: A91.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: A91.borderSoft),
+          boxShadow: A91.cardShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -398,7 +402,9 @@ class _Composer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (closed) {
-      return const _ClosedNotice();
+      // Not `const`: _ClosedNotice reads A91.border/A91.faint.
+      // ignore: prefer_const_constructors
+      return _ClosedNotice();
     }
 
     if (blocked) {

@@ -8,6 +8,15 @@ import '../theme/theme.dart';
 /// The cropped one: the full lockup carries "Discover. Participate. Achieve."
 /// inside the artwork, which is illegible much below 200px and duplicates the
 /// tagline anywhere it is written as text.
+///
+/// Two files, like lib/brand.ts's `logo`/`logoOnLight` on the web: the dark
+/// file's "Aspire" is pale, near-white type that disappears on a light
+/// ground, so a second theme needs a second file rather than one asset
+/// doing double duty. Both are copied from the same two files the web
+/// serves out of public/ — aspire91-wordmark.png and
+/// aspire91-wordmark-on-light.png — for the reason brand.ts gives: the web
+/// and the Flutter app keep showing the same artwork rather than each
+/// picking their own crop.
 class Wordmark extends StatelessWidget {
   const Wordmark({super.key, this.height = 40});
 
@@ -15,7 +24,9 @@ class Wordmark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Image.asset(
-        'assets/brand/aspire_app_icon.png',
+        A91.isLight
+            ? 'assets/brand/aspire_app_icon_light.png'
+            : 'assets/brand/aspire_app_icon.png',
         height: height,
         fit: BoxFit.contain,
       );

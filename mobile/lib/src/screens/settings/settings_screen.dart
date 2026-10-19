@@ -10,6 +10,7 @@ import '../../theme/theme.dart';
 import '../../widgets/branding.dart';
 import '../../widgets/primary_button.dart';
 import '../listing/fields.dart';
+import 'notification_settings_screen.dart';
 
 /// Sign-in and account — /account/settings.
 ///
@@ -63,6 +64,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(themeModeProvider);
     final current = ref.read(authRepositoryProvider).email;
 
     return Scaffold(
@@ -147,20 +149,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ],
             ),
-            const Section(
-              title: 'Appearance',
-              subtitle: 'Follows your phone by default. Pick one to stop.',
-              children: [_ThemeModePicker()],
+            // Not `const`: Section reads A91.surface, and _NotificationsLink
+            // reads A91 colours directly — same reason as the Legal Section
+            // below.
+            // ignore: prefer_const_constructors
+            Section(
+              title: 'Notifications',
+              subtitle: 'What pushes, what emails, and quiet hours.',
+              // ignore: prefer_const_literals_to_create_immutables
+              children: [
+                // ignore: prefer_const_constructors
+                _NotificationsLink(),
+              ],
             ),
-            const Section(
+            // Not `const` on this Section or the two _LegalLinks below: both
+            // read A91 colours (the card's own A91.surface, the links'
+            // A91.ink/surface2/borderSoft) in their build(), and this screen
+            // is reached through a ThemeAware wrapper (see account_screen.dart
+            // and more_screen.dart) specifically so it repaints on a theme
+            // change — a const instance here would be the one thing in that
+            // rebuild's way.
+            // ignore: prefer_const_constructors
+            Section(
               title: 'Legal',
               subtitle: 'Both stores require these to be reachable in-app.',
+              // ignore: prefer_const_literals_to_create_immutables
               children: [
+                // ignore: prefer_const_constructors
                 _LegalLink(
                   label: 'Privacy policy',
                   url: '${Env.siteUrl}/privacy',
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
+                // ignore: prefer_const_constructors
                 _LegalLink(
                   label: 'Terms of service',
                   url: '${Env.siteUrl}/terms',
@@ -190,7 +211,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
             ),
             const SizedBox(height: 10),
-            const Center(child: Wordmark()),
+            // Not `const`: Wordmark picks its asset from A91.isLight.
+            // ignore: prefer_const_constructors
+            Center(
+              // ignore: prefer_const_constructors
+              child: Wordmark(),
+            ),
           ],
         ),
       ),
@@ -229,82 +255,6 @@ Future<void> confirmSignOut(BuildContext context, WidgetRef ref) async {
   // The router listens to the auth stream, so signing out is all this has to
   // do — the app moves on its own.
   if (sure == true) await ref.read(authRepositoryProvider).signOut();
-}
-
-/// Light / Dark / Auto — the mobile equivalent of the web's ThemeToggle.
-///
-/// Three segments, not a single on/off switch: "Auto" is a real, persisted
-/// choice meaning "follow the phone", distinct from having picked light or
-/// dark outright. Collapsing it into a boolean would mean someone who wants
-/// their evenings dark has to repick it every night, which is the one thing
-/// System already does for free.
-class _ThemeModePicker extends ConsumerWidget {
-  const _ThemeModePicker();
-
-  static const _options = [
-    (ThemeMode.light, 'Light'),
-    (ThemeMode.dark, 'Dark'),
-    (ThemeMode.system, 'Auto'),
-  ];
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final current = ref.watch(themeModeProvider);
-
-    return Row(
-      children: [
-        for (final (mode, label) in _options) ...[
-          if (mode != _options.first.$1) const SizedBox(width: 8),
-          Expanded(
-            child: _Segment(
-              label: label,
-              selected: current == mode,
-              onTap: () => ref.read(themeModeProvider.notifier).set(mode),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _Segment extends StatelessWidget {
-  const _Segment({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Material(
-        color: selected ? A91.surface3 : Colors.transparent,
-        borderRadius: BorderRadius.circular(999),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(999),
-          onTap: onTap,
-          child: Container(
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(vertical: 11),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                  color: selected ? A91.coral : A91.border),
-            ),
-            child: Text(
-              label,
-              style: TextStyle(
-                color: selected ? A91.ink : A91.muted,
-                fontSize: 13,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-              ),
-            ),
-          ),
-        ),
-      );
 }
 
 /// A row that opens a legal page in the phone's own browser.
@@ -346,6 +296,46 @@ class _LegalLink extends StatelessWidget {
                           color: A91.ink, fontWeight: FontWeight.w500)),
                 ),
                 Icon(Icons.open_in_new, size: 17, color: A91.muted),
+              ],
+            ),
+          ),
+        ),
+      );
+}
+
+/// Opens in-app, unlike the two above — this is the app's own screen, not
+/// a copy of a web page that could drift.
+class _NotificationsLink extends StatelessWidget {
+  const _NotificationsLink();
+
+  @override
+  Widget build(BuildContext context) => Material(
+        color: A91.surface2,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ThemeAware(
+                builder: (_) => const NotificationSettingsScreen(),
+              ),
+            ),
+          ),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: A91.borderSoft),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text('Push, email and quiet hours',
+                      style: TextStyle(
+                          color: A91.ink, fontWeight: FontWeight.w500)),
+                ),
+                Icon(Icons.chevron_right, size: 19, color: A91.muted),
               ],
             ),
           ),

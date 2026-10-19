@@ -83,81 +83,98 @@ class DemandCard extends StatelessWidget {
     final budget = _budget;
     final distance = _distance;
 
-    return Card(
+    // A Container with its own boxShadow, not the Card widget: Card's
+    // elevation is Flutter's Material shadow algorithm, a different shape
+    // and falloff than A91.cardShadow's (globals.css's --shadow-sm,
+    // exactly), and every other card in the app already uses the latter —
+    // mixing the two would make this specific card lift differently from
+    // its neighbours in light mode, where the lift is the whole point.
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
+      decoration: BoxDecoration(
+        color: A91.surface,
         borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      demand.serviceNames.isEmpty
-                          ? 'A family nearby'
-                          : demand.serviceNames.join(', '),
-                      style: TextStyle(
-                        color: A91.ink,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
+        border: Border.all(color: A91.border),
+        boxShadow: A91.cardShadow,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        demand.serviceNames.isEmpty
+                            ? 'A family nearby'
+                            : demand.serviceNames.join(', '),
+                        style: TextStyle(
+                          color: A91.ink,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
-                  ),
-                  if (demand.isGroup) ...[
-                    const SizedBox(width: 10),
-                    _Badge(
-                      // The number is the point of a group: one reply reaches
-                      // all of them, and that is what makes it worth answering
-                      // before a single parent.
-                      label: '${demand.memberCount} families',
-                      tone: A91.teal,
-                    ),
+                    if (demand.isGroup) ...[
+                      const SizedBox(width: 10),
+                      _Badge(
+                        // The number is the point of a group: one reply reaches
+                        // all of them, and that is what makes it worth answering
+                        // before a single parent.
+                        label: '${demand.memberCount} families',
+                        tone: A91.teal,
+                      ),
+                    ],
                   ],
-                ],
-              ),
-              const SizedBox(height: 8),
-              _Line(
-                icon: Icons.place_outlined,
-                text: [
-                  if (demand.areaName != null) demand.areaName!,
-                  if (distance != null) distance,
-                ].join(' · '),
-              ),
-              if (_who.isNotEmpty)
-                _Line(icon: Icons.person_outline, text: _who),
-              if (days.isNotEmpty || demand.preferredTime != null)
+                ),
+                const SizedBox(height: 8),
                 _Line(
-                  icon: Icons.schedule_outlined,
+                  icon: Icons.place_outlined,
                   text: [
-                    if (days.isNotEmpty) days,
-                    if (demand.preferredTime != null) demand.preferredTime!,
+                    if (demand.areaName != null) demand.areaName!,
+                    if (distance != null) distance,
                   ].join(' · '),
                 ),
-              if (budget != null)
-                _Line(icon: Icons.payments_outlined, text: budget),
-              if (demand.notes != null && demand.notes!.trim().isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Text(
-                  demand.notes!.trim(),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                      color: A91.muted, height: 1.5, fontSize: 13.5),
-                ),
+                if (_who.isNotEmpty)
+                  _Line(icon: Icons.person_outline, text: _who),
+                if (days.isNotEmpty || demand.preferredTime != null)
+                  _Line(
+                    icon: Icons.schedule_outlined,
+                    text: [
+                      if (days.isNotEmpty) days,
+                      if (demand.preferredTime != null) demand.preferredTime!,
+                    ].join(' · '),
+                  ),
+                if (budget != null)
+                  _Line(icon: Icons.payments_outlined, text: budget),
+                if (demand.notes != null &&
+                    demand.notes!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    demand.notes!.trim(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        color: A91.muted, height: 1.5, fontSize: 13.5),
+                  ),
+                ],
+                if (demand.alreadyApproached) ...[
+                  const SizedBox(height: 12),
+                  // Not an error and not a failure — just already done. The feed
+                  // sorts these below the untouched ones, and saying so stops a
+                  // coach wondering why the button is gone.
+                  _Badge(label: 'You have written', tone: A91.faint),
+                ],
               ],
-              if (demand.alreadyApproached) ...[
-                const SizedBox(height: 12),
-                // Not an error and not a failure — just already done. The feed
-                // sorts these below the untouched ones, and saying so stops a
-                // coach wondering why the button is gone.
-                _Badge(label: 'You have written', tone: A91.faint),
-              ],
-            ],
+            ),
           ),
         ),
       ),

@@ -179,11 +179,14 @@ class _GroupScreenState extends ConsumerState<GroupScreen> {
         color: A91.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: A91.border),
+        boxShadow: A91.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Eyebrow('Your group'),
+          // Not `const`: Eyebrow's style reads A91.gold.
+          // ignore: prefer_const_constructors
+          Eyebrow('Your group'),
           const SizedBox(height: 10),
           Text(
             [
@@ -263,6 +266,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen> {
           color: A91.surface,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: A91.borderSoft),
+          boxShadow: A91.cardShadow,
         ),
         child: Text(
           _g.isActive
@@ -323,29 +327,31 @@ class _PitchCardState extends ConsumerState<_PitchCard> {
     Navigator.of(context)
         .push(
           MaterialPageRoute(
-            builder: (_) => ThreadScreen(
-              thread: Thread(
-                kind: 'group',
-                threadId: pitch.requestId,
-                groupId: widget.group.id,
-                providerId: pitch.providerId,
-                title: pitch.providerName,
-                subtitle: widget.group.serviceName,
-                photoUrl: pitch.providerPhotoUrl,
-                opening: pitch.pitch,
-                status: pitch.status.id,
-                initiatedBy: 'provider',
-                createdAt: pitch.createdAt,
-                lastMessage: pitch.lastMessage,
-                lastMessageAt: pitch.lastMessageAt,
-                lastSenderId: null,
-                messageCount: pitch.messageCount,
-                unread: pitch.unread,
-                iAmSeeker: true,
-                // A group has no phone switch of its own — sharing is set on the
-                // group, not per pitch.
-                showPhone: null,
-                origin: null,
+            builder: (_) => ThemeAware(
+              builder: (_) => ThreadScreen(
+                thread: Thread(
+                  kind: 'group',
+                  threadId: pitch.requestId,
+                  groupId: widget.group.id,
+                  providerId: pitch.providerId,
+                  title: pitch.providerName,
+                  subtitle: widget.group.serviceName,
+                  photoUrl: pitch.providerPhotoUrl,
+                  opening: pitch.pitch,
+                  status: pitch.status.id,
+                  initiatedBy: 'provider',
+                  createdAt: pitch.createdAt,
+                  lastMessage: pitch.lastMessage,
+                  lastMessageAt: pitch.lastMessageAt,
+                  lastSenderId: null,
+                  messageCount: pitch.messageCount,
+                  unread: pitch.unread,
+                  iAmSeeker: true,
+                  // A group has no phone switch of its own — sharing is set
+                  // on the group, not per pitch.
+                  showPhone: null,
+                  origin: null,
+                ),
               ),
             ),
           ),
@@ -364,6 +370,7 @@ class _PitchCardState extends ConsumerState<_PitchCard> {
         color: A91.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: waiting ? A91.coral : A91.border),
+        boxShadow: A91.cardShadow,
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(

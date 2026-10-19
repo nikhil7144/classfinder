@@ -118,8 +118,11 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Align(
+                  // Not `const`: Wordmark picks its asset from A91.isLight.
+                  // ignore: prefer_const_constructors
+                  Align(
                       alignment: Alignment.centerLeft,
+                      // ignore: prefer_const_constructors
                       child: Wordmark(height: 45)),
                   const SizedBox(height: 36),
                   Eyebrow(

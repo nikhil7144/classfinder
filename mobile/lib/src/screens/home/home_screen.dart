@@ -26,6 +26,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(themeModeProvider);
     final profile = ref.watch(myProfileProvider);
 
     return Scaffold(
@@ -42,10 +43,17 @@ class HomeScreen extends ConsumerWidget {
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.only(bottom: 28),
+            // Neither _WaitingOnYou nor _Suggested is `const`: both read A91
+            // colours, and HomeScreen is rebuilt fresh on a theme change
+            // (see seeker_shell.dart's tab list) specifically so it reaches
+            // this far — a const instance here would be the one thing in
+            // its way.
             children: [
               _Header(profile: profile.value),
-              const _WaitingOnYou(),
-              const _Suggested(),
+              // ignore: prefer_const_constructors
+              _WaitingOnYou(),
+              // ignore: prefer_const_constructors
+              _Suggested(),
             ],
           ),
         ),
@@ -70,7 +78,9 @@ class _Header extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Eyebrow('Your search'),
+          // Not `const`: Eyebrow's style reads A91.gold.
+          // ignore: prefer_const_constructors
+          Eyebrow('Your search'),
           const SizedBox(height: 10),
           Text(
             _heading(reference, wanted),
@@ -140,6 +150,7 @@ class _WaitingOnYou extends ConsumerWidget {
           color: A91.surface,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: A91.border),
+          boxShadow: A91.cardShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,15 +190,20 @@ class _Suggested extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final suggestions = ref.watch(coachSuggestionsProvider);
-    final reference = ref.watch(referenceProvider).value;
+    final referenceState = ref.watch(referenceProvider);
+    final reference = referenceState.value;
 
-    if (reference == null) return const SizedBox.shrink();
+    // Suggestions cannot be laid out until the taxonomy has loaded: without
+    // it, coach cards cannot name their services. Keep the space visibly
+    // loading during that first request instead of leaving an empty gap and
+    // starting the shimmer only after referenceProvider completes.
+    if (reference == null) {
+      if (referenceState.isLoading) return _suggestionsSkeleton();
+      return const SizedBox.shrink();
+    }
 
     return suggestions.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.only(top: 18),
-        child: SizedBox(height: 210, child: ListSkeleton(rows: 1)),
-      ),
+      loading: _suggestionsSkeleton,
       // Asking a model is the one call here that can fail on its own. A parent
       // still has search, which is what they had before, so this says nothing
       // rather than putting an error on the home screen.
@@ -245,6 +261,11 @@ class _Suggested extends ConsumerWidget {
     );
   }
 
+  Widget _suggestionsSkeleton() => const Padding(
+        padding: EdgeInsets.only(top: 18),
+        child: SizedBox(height: 210, child: ListSkeleton(rows: 1)),
+      );
+
   /// Why there is nothing, said differently depending on whose move it is.
   Widget _empty(NoSuggestionsReason? reason) {
     final text = switch (reason) {
@@ -289,7 +310,9 @@ class _SuggestionCard extends StatelessWidget {
               showDistance: true,
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => CoachScreen(coachId: suggestion.coach.id),
+                  builder: (_) => ThemeAware(
+                    builder: (_) => CoachScreen(coachId: suggestion.coach.id),
+                  ),
                 ),
               ),
             ),

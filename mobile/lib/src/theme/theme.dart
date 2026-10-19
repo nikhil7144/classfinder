@@ -29,9 +29,19 @@ import 'package:google_fonts/google_fonts.dart';
 class A91 {
   const A91._();
 
-  /// Set by `Aspire91App.build()` from the resolved ThemeMode, every
-  /// rebuild. Nothing else should write to this.
+  /// The current palette used by the static colour getters below.
   static bool isLight = false;
+
+  /// Apply a theme choice before notifying provider listeners. Screen builds
+  /// can run before Aspire91App rebuilds, so resolving the palette only in the
+  /// app widget allowed one frame to mix old and new colours.
+  static void resolve(ThemeMode mode, Brightness systemBrightness) {
+    isLight = switch (mode) {
+      ThemeMode.light => true,
+      ThemeMode.dark => false,
+      ThemeMode.system => systemBrightness == Brightness.light,
+    };
+  }
 
   // --- Grounds --------------------------------------------------------
   static Color get bg => isLight ? _Light.bg : _Dark.bg;
@@ -95,6 +105,42 @@ class A91 {
     end: Alignment.centerRight,
     colors: [grad1, grad2],
   );
+
+  /// The lift under every card — globals.css's --shadow-sm, exactly.
+  ///
+  /// Dark barely uses it: a near-black shadow on a near-black ground is
+  /// close to invisible by construction, which is correct there — dark
+  /// separates planes by lightness and a 1px border, and this only deepens
+  /// the contact edge. Light has no lightness left to spend, so the same
+  /// token does the actual work of lifting a card off the ground: two
+  /// layers, a tight contact shadow for the edge and a wide soft one for
+  /// the lift. Tinted warm (41,30,24) rather than black — black on a warm
+  /// ground greys it and the card looks dirty rather than lifted.
+  ///
+  /// Without this, every card in light mode sits flush with the page: same
+  /// lightness family as the ground, no border strong enough to read as an
+  /// edge on its own, nothing to separate "this is a card" from "this is
+  /// the background." Dark hides that gap by contrast; light cannot.
+  static List<BoxShadow> get cardShadow => isLight
+      ? const [
+          BoxShadow(
+            color: Color(0x0A291E18),
+            offset: Offset(0, 1),
+            blurRadius: 2,
+          ),
+          BoxShadow(
+            color: Color(0x0F291E18),
+            offset: Offset(0, 8),
+            blurRadius: 20,
+          ),
+        ]
+      : const [
+          BoxShadow(
+            color: Color(0x57000000),
+            offset: Offset(0, 2),
+            blurRadius: 8,
+          ),
+        ];
 
   /// Manrope for body, Plus Jakarta Sans for display, JetBrains Mono for the
   /// eyebrow labels — the same three the web loads.

@@ -38,12 +38,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(path: '/sign-in', builder: (_, __) => const SignInScreen()),
+      GoRoute(
+        path: '/sign-in',
+        // ignore: prefer_const_constructors
+        builder: (_, __) => ThemeAware(builder: (_) => SignInScreen()),
+      ),
       // Everything past the gate is only reachable by an account whose role
       // belongs to this flavor.
       GoRoute(
         path: '/',
-        builder: (_, __) => GateScreen(child: _shell()),
+        builder: (_, __) => ThemeAware(builder: (_) => GateScreen(child: _shell())),
         routes: [
           // The row travels as extra rather than being refetched by id: the
           // list already holds it, and there is no deep link into this screen
@@ -53,23 +57,23 @@ final routerProvider = Provider<GoRouter>((ref) {
           // rather than crashing.
           GoRoute(
             path: 'demand',
-            builder: (context, state) {
+            builder: (context, state) => ThemeAware(builder: (_) {
               final demand = state.extra;
               if (demand is! Demand) {
                 return GateScreen(child: _shell());
               }
               return DemandDetailScreen(demand: demand);
-            },
+            }),
           ),
           GoRoute(
             path: 'thread',
-            builder: (context, state) {
+            builder: (context, state) => ThemeAware(builder: (_) {
               final thread = state.extra;
               if (thread is! Thread) {
                 return GateScreen(child: _shell());
               }
               return ThreadScreen(thread: thread);
-            },
+            }),
           ),
         ],
       ),
@@ -82,9 +86,11 @@ final routerProvider = Provider<GoRouter>((ref) {
 /// The two flavors share auth, the gate and the router, and diverge here. A
 /// seeker in the coach shell would see five tabs built for somebody else — the
 /// same mistake organisers were getting until the flavor stopped admitting
-/// them.
-Widget _shell() =>
-    appFlavor.isProvider ? const HomeShell() : const SeekerShell();
+/// them. Not `const`: a ThemeAware above this rebuilds on every theme
+/// change, and a const instance here would be the one thing in its way —
+/// Flutter skips rebuilding a child it can see is identical to last time.
+// ignore: prefer_const_constructors
+Widget _shell() => appFlavor.isProvider ? HomeShell() : SeekerShell();
 
 /// Turns the auth stream into something GoRouter will listen to.
 class _AuthRefresh extends ChangeNotifier {

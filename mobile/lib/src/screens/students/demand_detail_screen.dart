@@ -90,6 +90,7 @@ class _DemandDetailScreenState extends ConsumerState<DemandDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(themeModeProvider);
     final canSend = _message.text.trim().length >= _minMessage && !_busy;
 
     return Scaffold(
@@ -118,7 +119,9 @@ class _DemandDetailScreenState extends ConsumerState<DemandDetailScreen> {
             _Facts(demand: _d),
             if (_d.notes != null && _d.notes!.trim().isNotEmpty) ...[
               const SizedBox(height: 22),
-              const Eyebrow('In their words'),
+              // Not `const`: Eyebrow's style reads A91.gold.
+              // ignore: prefer_const_constructors
+              Eyebrow('In their words'),
               const SizedBox(height: 10),
               Container(
                 width: double.infinity,
@@ -127,6 +130,7 @@ class _DemandDetailScreenState extends ConsumerState<DemandDetailScreen> {
                   color: A91.surface,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: A91.borderSoft),
+                  boxShadow: A91.cardShadow,
                 ),
                 child: Text(
                   _d.notes!.trim(),
@@ -135,10 +139,14 @@ class _DemandDetailScreenState extends ConsumerState<DemandDetailScreen> {
               ),
             ],
             const SizedBox(height: 28),
+            // Neither _Sent nor _AlreadyWritten is `const`: both read A91
+            // colours directly.
             if (_sent)
-              const _Sent()
+              // ignore: prefer_const_constructors
+              _Sent()
             else if (_d.alreadyApproached)
-              const _AlreadyWritten()
+              // ignore: prefer_const_constructors
+              _AlreadyWritten()
             else
               _Composer(
                 controller: _message,
@@ -263,7 +271,9 @@ class _Composer extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Eyebrow('Write to them'),
+        // Not `const`: Eyebrow's style reads A91.gold.
+        // ignore: prefer_const_constructors
+        Eyebrow('Write to them'),
         const SizedBox(height: 10),
         Text(
           isGroup

@@ -20,6 +20,7 @@ class GroupsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(themeModeProvider);
     final groups = ref.watch(myGroupsProvider);
 
     return Scaffold(
@@ -47,7 +48,11 @@ class GroupsScreen extends ConsumerWidget {
               ],
             ),
             data: (groups) {
-              if (groups.isEmpty) return const _Empty();
+              // Not `const`: _Empty's EmptyState reads A91.muted.
+              if (groups.isEmpty) {
+                // ignore: prefer_const_constructors
+                return _Empty();
+              }
 
               // Live ones first: a group still taking pitches is a thing to
               // watch, and one that has ended is a record.
@@ -68,7 +73,10 @@ class GroupsScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const GroupFormScreen()),
+          MaterialPageRoute(
+            // ignore: prefer_const_constructors
+            builder: (_) => ThemeAware(builder: (_) => GroupFormScreen()),
+          ),
         ),
         backgroundColor: A91.coral,
         foregroundColor: A91.onAccent,
@@ -88,7 +96,9 @@ class _Empty extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
           SizedBox(height: MediaQuery.sizeOf(context).height * 0.18),
-          const EmptyState(
+          // Not `const`: EmptyState reads A91.muted.
+          // ignore: prefer_const_constructors
+          EmptyState(
             title: 'No groups yet',
             body: 'Four families in one society asking together is a class '
                 'worth travelling for. One family asking alone is a lead. '
@@ -114,11 +124,14 @@ class _GroupCard extends StatelessWidget {
         color: A91.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: A91.border),
+        boxShadow: A91.cardShadow,
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => GroupScreen(group: group)),
+          MaterialPageRoute(
+            builder: (_) => ThemeAware(builder: (_) => GroupScreen(group: group)),
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 15, 16, 14),

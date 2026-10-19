@@ -139,7 +139,19 @@ export class QueriesService {
       p_status: body.status,
       p_callback_at: body.callbackAt ?? null,
     });
-    if (error) throw new ForbiddenException(error.message);
+    if (error) {
+      // queries_one_live — same constraint raise() already explains. Reopening
+      // a completed query puts it back among the live ones, and that family
+      // may since have raised a new query with this same coach; the database
+      // is the only place that can see that collision atomically, so it is
+      // left to enforce it rather than pre-checked here, same as raise().
+      if (error.code === "23505") {
+        throw new BadRequestException(
+          "This family already has an open query with you. Answer that one instead of reopening this.",
+        );
+      }
+      throw new ForbiddenException(error.message);
+    }
 
     const { data } = await db.from("queries").select(COLUMNS).eq("id", id).single();
     return toDto(data as unknown as Row, caller.id);

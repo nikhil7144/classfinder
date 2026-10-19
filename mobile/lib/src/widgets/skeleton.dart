@@ -1,3 +1,11 @@
+// SkeletonBox reads A91.surface3 and SkeletonPanel reads A91.surface/border,
+// so neither is ever `const` below, and nor is any Row/Expanded that merely
+// wraps one — a const instance would freeze that block at whatever colour it
+// first rendered, instead of picking up a theme change the way the rest of
+// the screen underneath it does. The analyzer does not know that, so it
+// would otherwise flag every one of them as "could be const"; this file's
+// const-free blocks are intentional, not missed.
+// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
 import 'package:flutter/material.dart';
 
 import '../theme/theme.dart';
@@ -93,6 +101,7 @@ class SkeletonPanel extends StatelessWidget {
           color: A91.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: A91.border),
+          boxShadow: A91.cardShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,14 +116,21 @@ class SkeletonPanel extends StatelessWidget {
 /// skeleton that does not resemble what arrives is just a grey rectangle, and
 /// the point of one is that the page does not jump when it fills in.
 class ListSkeleton extends StatelessWidget {
-  const ListSkeleton({super.key, this.rows = 4, this.avatar = true});
+  const ListSkeleton({
+    super.key,
+    this.rows = 4,
+    this.avatar = true,
+    this.shrinkWrap = false,
+  });
 
   final int rows;
   final bool avatar;
+  final bool shrinkWrap;
 
   @override
   Widget build(BuildContext context) => Pulse(
         child: ListView.builder(
+          shrinkWrap: shrinkWrap,
           physics: const NeverScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           itemCount: rows,
@@ -124,10 +140,10 @@ class ListSkeleton extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (avatar) ...[
-                    const SkeletonBox(height: 52, width: 52, radius: 16),
+                    SkeletonBox(height: 52, width: 52, radius: 16),
                     const SizedBox(width: 13),
                   ],
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -137,16 +153,16 @@ class ListSkeleton extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SkeletonBox(height: 14, width: 58),
+                  SkeletonBox(height: 14, width: 58),
                 ],
               ),
               const SizedBox(height: 14),
-              const SkeletonBox(height: 12),
+              SkeletonBox(height: 12),
               const SizedBox(height: 7),
               // The short last line is what makes a block read as a paragraph.
-              const SkeletonBox(height: 12, width: 180),
+              SkeletonBox(height: 12, width: 180),
               const SizedBox(height: 14),
-              const Row(
+              Row(
                 children: [
                   SkeletonBox(height: 24, width: 70, radius: 999),
                   SizedBox(width: 7),
@@ -171,19 +187,19 @@ class DetailSkeleton extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
           children: [
-            const Row(
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SkeletonBox(height: 78, width: 78, radius: 22),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SkeletonBox(height: 24, width: 170),
-                      SizedBox(height: 9),
+                      const SizedBox(height: 9),
                       SkeletonBox(height: 13, width: 110),
-                      SizedBox(height: 9),
+                      const SizedBox(height: 9),
                       SkeletonBox(height: 13, width: 140),
                     ],
                   ),
@@ -191,22 +207,22 @@ class DetailSkeleton extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 22),
-            const SkeletonPanel(
+            SkeletonPanel(
               children: [
                 SkeletonBox(height: 13),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 SkeletonBox(height: 13, width: 220),
               ],
             ),
             for (var i = 0; i < 3; i++) ...[
               const SizedBox(height: 22),
-              const SkeletonBox(height: 18, width: 120),
+              SkeletonBox(height: 18, width: 120),
               const SizedBox(height: 12),
-              const SkeletonBox(height: 12),
+              SkeletonBox(height: 12),
               const SizedBox(height: 7),
-              const SkeletonBox(height: 12),
+              SkeletonBox(height: 12),
               const SizedBox(height: 7),
-              const SkeletonBox(height: 12, width: 200),
+              SkeletonBox(height: 12, width: 200),
             ],
           ],
         ),
@@ -230,12 +246,12 @@ class FormSkeleton extends StatelessWidget {
               SkeletonPanel(
                 padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
                 children: [
-                  const SkeletonBox(height: 12, width: 96),
+                  SkeletonBox(height: 12, width: 96),
                   const SizedBox(height: 20),
                   for (var f = 0; f < fields; f++) ...[
-                    const SkeletonBox(height: 12, width: 110),
+                    SkeletonBox(height: 12, width: 110),
                     const SizedBox(height: 9),
-                    const SkeletonBox(height: 46, radius: 14),
+                    SkeletonBox(height: 46, radius: 14),
                     const SizedBox(height: 18),
                   ],
                 ],

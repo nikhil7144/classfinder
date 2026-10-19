@@ -21,6 +21,12 @@ plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
     id("com.android.application") version "9.1.0" apply false
     id("org.jetbrains.kotlin.android") version "2.4.0" apply false
+    // Declared here, applied conditionally in app/build.gradle.kts — only
+    // once a google-services.json exists for at least one flavor. See the
+    // comment there: applying this plugin with neither file present fails
+    // the whole build, which must not happen before README §11's Firebase
+    // project exists.
+    id("com.google.gms.google-services") version "4.4.2" apply false
 }
 
 include(":app")

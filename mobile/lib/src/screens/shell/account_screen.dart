@@ -5,8 +5,10 @@ import '../../data/models/seeker.dart';
 import '../../providers.dart';
 import '../../theme/theme.dart';
 import '../../widgets/branding.dart';
+import '../../widgets/theme_picker.dart';
 import '../events/browse_screen.dart';
 import '../groups/groups_screen.dart';
+import '../listing/fields.dart';
 import '../settings/settings_screen.dart';
 import '../profile/profile_screen.dart';
 
@@ -25,6 +27,7 @@ class AccountScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(themeModeProvider);
     final profile = ref.watch(myProfileProvider).value;
     final groups = ref.watch(myGroupsProvider).value;
 
@@ -33,7 +36,9 @@ class AccountScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
           children: [
-            const Eyebrow('Your account'),
+            // Not `const`: Eyebrow's style reads A91.gold.
+            // ignore: prefer_const_constructors
+            Eyebrow('Your account'),
             const SizedBox(height: 10),
             Text(
               profile?.name.trim().isNotEmpty == true
@@ -51,7 +56,10 @@ class AccountScreen extends ConsumerWidget {
               subtitle: _profileState(profile),
               tone: _profileTone(profile),
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                MaterialPageRoute(
+                  // ignore: prefer_const_constructors
+                  builder: (_) => ThemeAware(builder: (_) => ProfileScreen()),
+                ),
               ),
             ),
             _Item(
@@ -59,7 +67,10 @@ class AccountScreen extends ConsumerWidget {
               title: 'Your groups',
               subtitle: _groupsState(groups?.length),
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const GroupsScreen()),
+                MaterialPageRoute(
+                  // ignore: prefer_const_constructors
+                  builder: (_) => ThemeAware(builder: (_) => GroupsScreen()),
+                ),
               ),
             ),
             _Item(
@@ -67,7 +78,12 @@ class AccountScreen extends ConsumerWidget {
               title: 'Events',
               subtitle: 'Competitions, workshops and camps near you.',
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const BrowseEventsScreen()),
+                MaterialPageRoute(
+                  builder: (_) => ThemeAware(
+                    // ignore: prefer_const_constructors
+                    builder: (_) => BrowseEventsScreen(),
+                  ),
+                ),
               ),
             ),
             _Item(
@@ -75,10 +91,21 @@ class AccountScreen extends ConsumerWidget {
               title: 'Settings',
               subtitle: 'The email you sign in with.',
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                MaterialPageRoute(
+                  // ignore: prefer_const_constructors
+                  builder: (_) => ThemeAware(builder: (_) => SettingsScreen()),
+                ),
               ),
             ),
-            const SizedBox(height: 26),
+            const SizedBox(height: 14),
+            // Not `const`: Section reads A91.surface.
+            // ignore: prefer_const_constructors
+            Section(
+              title: 'Appearance',
+              subtitle: 'Follows your phone by default. Pick one to stop.',
+              children: const [ThemeModePicker()],
+            ),
+            const SizedBox(height: 12),
             _SignOut(onTap: () => confirmSignOut(context, ref)),
           ],
         ),
@@ -137,6 +164,7 @@ class _Item extends StatelessWidget {
           color: A91.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: A91.border),
+          boxShadow: A91.cardShadow,
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(

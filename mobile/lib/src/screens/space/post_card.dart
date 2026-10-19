@@ -113,6 +113,7 @@ class _PostCardState extends ConsumerState<PostCard> {
         color: A91.surface,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: A91.border),
+        boxShadow: A91.cardShadow,
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(

@@ -34,6 +34,7 @@ class ListingScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(themeModeProvider);
     final reference = ref.watch(referenceProvider);
     final listing = ref.watch(myListingProvider);
     final me = ref.watch(meProvider);

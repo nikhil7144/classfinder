@@ -31,6 +31,7 @@ class EventFormScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(themeModeProvider);
     final reference = ref.watch(referenceProvider);
 
     return reference.when(

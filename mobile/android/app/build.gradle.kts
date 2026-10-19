@@ -94,6 +94,20 @@ kotlin {
     }
 }
 
+// Push notifications — see mobile/README.md §11. google-services.json does
+// not exist yet for either flavor (no Firebase project has been created),
+// and applying this plugin with neither file present fails the entire
+// build, for both flavors, immediately — so it is applied only once at
+// least one of the two per-flavor files has actually been added, at
+// android/app/src/seeker/google-services.json and
+// android/app/src/provider/google-services.json. Until then this is a
+// no-op and nothing here changes how the app builds today.
+if (file("src/seeker/google-services.json").exists() ||
+    file("src/provider/google-services.json").exists()
+) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 flutter {
     source = "../.."
 }

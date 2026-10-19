@@ -152,11 +152,14 @@ class _TrialCardState extends ConsumerState<TrialCard> {
         color: A91.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: A91.borderSoft),
+        boxShadow: A91.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Eyebrow('First class'),
+          // Not `const`: Eyebrow's style reads A91.gold.
+          // ignore: prefer_const_constructors
+          Eyebrow('First class'),
           const SizedBox(height: 10),
           if (_latest == null) _none() else _one(_latest!),
           if (_error != null) ...[

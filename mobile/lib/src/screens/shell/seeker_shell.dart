@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers.dart';
+import '../../push.dart';
 import '../../theme/theme.dart';
 import '../../widgets/branding.dart';
+import '../../widgets/notification_bell.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/skeleton.dart';
 import '../home/home_screen.dart';
@@ -35,7 +39,18 @@ class _SeekerShellState extends ConsumerState<SeekerShell> {
   int _tab = 0;
 
   @override
+  void initState() {
+    super.initState();
+    // Reaching this shell at all means the account is signed in — exactly
+    // the "every launch" condition registration needs. Fire-and-forget:
+    // registerDevice() swallows its own errors and is a no-op when
+    // Firebase never initialized.
+    unawaited(ref.read(pushServiceProvider).registerDevice());
+  }
+
+  @override
   Widget build(BuildContext context) {
+    ref.watch(themeModeProvider);
     final profile = ref.watch(myProfileProvider);
 
     // hasValue, not just isLoading: isLoading is also true while an already-
@@ -50,7 +65,11 @@ class _SeekerShellState extends ConsumerState<SeekerShell> {
     }
     // A failure to read the profile is not a reason to lock somebody out of
     // their own account — the form behind this can still write one.
-    if (profile.hasValue && profile.value == null) return const _Welcome();
+    // Not `const`: _Welcome reads A91 colours directly.
+    if (profile.hasValue && profile.value == null) {
+      // ignore: prefer_const_constructors
+      return _Welcome();
+    }
 
     return Scaffold(
       // A Stack rather than an IndexedStack, and rather than an
@@ -74,15 +93,25 @@ class _SeekerShellState extends ConsumerState<SeekerShell> {
                 // Stops animations and timers on the tabs nobody is looking at.
                 child: TickerMode(
                   enabled: _tab == i,
-                  child: const [
-                    HomeScreen(),
-                    SearchScreen(),
-                    ThreadsScreen(),
-                    AccountScreen(),
+                  // Not `const`: SeekerShell itself is rebuilt fresh on every
+                  // theme change (see router.dart's ThemeAware), and a const
+                  // instance here would be the one thing stopping that
+                  // rebuild from reaching these four screens — Flutter skips
+                  // a child it can see is identical to last time.
+                  // ignore: prefer_const_literals_to_create_immutables
+                  child: [
+                    HomeScreen(), // ignore: prefer_const_constructors
+                    SearchScreen(), // ignore: prefer_const_constructors
+                    ThreadsScreen(), // ignore: prefer_const_constructors
+                    AccountScreen(), // ignore: prefer_const_constructors
                   ][i],
                 ),
               ),
             ),
+          // Outside the per-tab AnimatedOpacity loop on purpose: the bell
+          // is the same control on every tab, not one more thing each tab
+          // owns, so it should not fade in and out as _tab changes.
+          const NotificationBell(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -135,12 +164,17 @@ class _Welcome extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Align(
+                    // Not `const`: Wordmark picks its asset from A91.isLight.
+                    // ignore: prefer_const_constructors
+                    Align(
                       alignment: Alignment.centerLeft,
+                      // ignore: prefer_const_constructors
                       child: Wordmark(height: 34),
                     ),
                     const SizedBox(height: 34),
-                    const Eyebrow('Welcome'),
+                    // Not `const`: Eyebrow's style reads A91.gold.
+                    // ignore: prefer_const_constructors
+                    Eyebrow('Welcome'),
                     const SizedBox(height: 12),
                     Text(
                       'Tell us what you are looking for',
@@ -159,7 +193,10 @@ class _Welcome extends StatelessWidget {
                         label: 'Get started',
                         onPressed: () => Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => const ProfileScreen(),
+                            builder: (_) => ThemeAware(
+                              // ignore: prefer_const_constructors
+                              builder: (_) => ProfileScreen(),
+                            ),
                           ),
                         ),
                       ),

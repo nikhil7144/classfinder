@@ -22,6 +22,7 @@ import 'data/models/thread.dart';
 import 'data/models/trial.dart';
 import 'data/repositories/alerts_repository.dart';
 import 'data/repositories/listing_repository.dart';
+import 'data/repositories/notifications_repository.dart';
 import 'data/repositories/reference_repository.dart';
 import 'data/repositories/coaches_repository.dart';
 import 'data/repositories/enquiries_repository.dart';
@@ -34,6 +35,7 @@ import 'data/repositories/suggestions_repository.dart';
 import 'data/repositories/students_repository.dart';
 import 'data/repositories/threads_repository.dart';
 import 'data/repositories/trials_repository.dart';
+import 'theme/theme.dart';
 
 /// Everything the app can be handed.
 ///
@@ -48,8 +50,15 @@ import 'data/repositories/trials_repository.dart';
 
 final apiClientProvider = Provider<ApiClient>((ref) => ApiClient());
 
-final authRepositoryProvider =
-    Provider<AuthRepository>((ref) => const AuthRepository());
+final notificationsRepositoryProvider = Provider<NotificationsRepository>(
+  (ref) => NotificationsRepository(ref.watch(apiClientProvider)),
+);
+
+// Not `const`: AuthRepository now takes NotificationsRepository, read from
+// another provider rather than a compile-time constant.
+final authRepositoryProvider = Provider<AuthRepository>(
+  (ref) => AuthRepository(ref.watch(notificationsRepositoryProvider)),
+);
 
 final meRepositoryProvider =
     Provider<MeRepository>((ref) => MeRepository(ref.watch(apiClientProvider)));
@@ -322,8 +331,46 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
   /// theme_prefs.dart directly, the same reason a screen never touches a
   /// repository's storage layer on its own.
   Future<void> set(ThemeMode mode) async {
+    A91.resolve(
+      mode,
+      WidgetsBinding.instance.platformDispatcher.platformBrightness,
+    );
     state = mode;
     await writeThemeMode(mode);
+  }
+}
+
+/// Wraps one independently-navigated screen so it repaints when the theme
+/// changes, without Navigator's cooperation and without losing anything.
+///
+/// A91's colours are plain static getters, not an InheritedWidget, so
+/// nothing is told to rebuild just because A91.isLight changed — Flutter
+/// only reaches a widget when its own parent's build() hands it a
+/// genuinely different instance, and that cascade stops dead at the first
+/// of two things this app has everywhere on purpose: a route Navigator
+/// already built and is deliberately leaving alone (so a scroll position
+/// or a half-typed form survives), and a `const` instance Flutter skips
+/// rebuilding because it looks unchanged.
+///
+/// This sidesteps both without needing either one's cooperation: watching
+/// themeModeProvider here means Riverpod marks *this* element dirty
+/// directly, the same way any provider change already would, regardless of
+/// what Navigator thinks about the route around it. Put one of these at
+/// the top of every GoRoute and every Navigator.push target — each is one
+/// ordinary, already-proven rebuild, not a novel mechanism reaching into
+/// parts of Flutter that do not expect it. Two attempts at the latter (a
+/// changing Key on the whole routed tree, then a hand-rolled
+/// element-tree walk) each ended in a crash on a real device; this uses
+/// nothing Flutter was not already doing somewhere in this app.
+class ThemeAware extends ConsumerWidget {
+  const ThemeAware({super.key, required this.builder});
+
+  final WidgetBuilder builder;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(themeModeProvider);
+    return builder(context);
   }
 }
 

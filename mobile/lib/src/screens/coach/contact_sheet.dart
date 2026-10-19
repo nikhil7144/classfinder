@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/api_exception.dart';
 import '../../data/models/coach.dart';
 import '../../providers.dart';
+import '../../push.dart';
 import '../../theme/theme.dart';
 import '../../widgets/primary_button.dart';
 
@@ -114,6 +117,11 @@ class _ContactSheetState extends ConsumerState<_ContactSheet> {
         ref.invalidate(inboxProvider);
       }
       ref.invalidate(alertsProvider);
+      // Not on first launch — see push.dart's requestPermission() and
+      // README §11. Raising a query or sending an enquiry is the first
+      // moment a parent would understand why the app wants to notify
+      // them: a coach is about to get in touch.
+      unawaited(ref.read(pushServiceProvider).requestPermission());
       if (mounted) setState(() => _sent = true);
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
