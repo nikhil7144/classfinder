@@ -93,7 +93,7 @@ const SECTIONS: LegalSection[] = [
     id: "photos",
     heading: "Photographs",
     body: [
-      "Profile photos and anything posted to a coach's Space are stored in public buckets. That means the file itself is reachable by anyone who has its address, even though your profile is not listed publicly and is not indexed by search engines.",
+      "Profile photos and anything posted to a coach's Space or to a group are stored in public buckets. That means the file itself is reachable by anyone who has its address, even though your profile is not listed publicly and is not indexed by search engines.",
       "We are telling you this plainly rather than burying it: if you would not want a photograph to be reachable by a link, do not upload it. This applies to a parent's profile photo as much as to a coach's.",
       "Uploads are capped at 5 MB and must be images.",
     ],

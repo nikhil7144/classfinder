@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { MAX_IMAGE_BYTES } from "@/lib/spaces";
 import {
   addGroupPost,
   fetchGroupPosts,
@@ -31,7 +33,9 @@ export default function GroupPosts({ groupId, me, isMember }: Props) {
   const [posts, setPosts] = useState<GroupPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [body, setBody] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [fileKey, setFileKey] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,18 +48,60 @@ export default function GroupPosts({ groupId, me, isMember }: Props) {
     load();
   }, [load]);
 
+  useEffect(() => {
+    if (!file) {
+      setPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
   async function post() {
-    if (!imageUrl.trim()) {
-      setError("A post needs a photo for now.");
+    if (!file) {
+      setError("Choose a photo to post.");
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setError("That photo is over 5 MB. Try a smaller one.");
       return;
     }
     setSaving(true);
     setError(null);
 
+    /**
+     * The photo goes straight to Storage, not through the API, the same way a
+     * Space photo or an event poster does. The first folder segment is the
+     * uploader's own id, which is all the bucket checks; whether they may post
+     * to this group is the insert policy's call.
+     */
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) {
+      setSaving(false);
+      setError("Log in again.");
+      return;
+    }
+
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${auth.user.id}/${groupId}/${crypto.randomUUID()}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("group-media")
+      .upload(path, file, { upsert: false });
+
+    if (uploadError) {
+      setSaving(false);
+      setError(`The photo didn't upload: ${uploadError.message}`);
+      return;
+    }
+
+    const imageUrl = supabase.storage.from("group-media").getPublicUrl(path).data.publicUrl;
+
     const { error: failed } = await addGroupPost(groupId, {
       kind: "photo",
       body: body.trim() || null,
-      imageUrl: imageUrl.trim(),
+      imageUrl,
     });
 
     setSaving(false);
@@ -65,7 +111,9 @@ export default function GroupPosts({ groupId, me, isMember }: Props) {
     }
 
     setBody("");
-    setImageUrl("");
+    setFile(null);
+    // A file input cannot be cleared by state; a new key gives a fresh one.
+    setFileKey((k) => k + 1);
     await load();
   }
 
@@ -94,15 +142,26 @@ export default function GroupPosts({ groupId, me, isMember }: Props) {
           </p>
 
           <label htmlFor="post-image" className="mt-4 block text-sm font-medium text-muted">
-            Photo link
+            Photo
           </label>
           <input
+            key={fileKey}
             id="post-image"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/avif"
             className="cf-input mt-1.5"
-            placeholder="https://…"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           />
+          <p className="mt-1.5 text-xs text-faint">JPEG, PNG, WebP or AVIF, up to 5 MB.</p>
+
+          {preview && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={preview}
+              alt="The photo you're about to post"
+              className="mt-3 max-h-64 rounded-2xl object-cover"
+            />
+          )}
 
           <label htmlFor="post-body" className="mt-4 block text-sm font-medium text-muted">
             Say something about it
