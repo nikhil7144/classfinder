@@ -207,7 +207,7 @@ class Event {
 
   factory Event.fromJson(Map<String, dynamic> json) {
     DateTime? date(Object? v) =>
-        v == null ? null : DateTime.tryParse(v as String);
+        v == null ? null : DateTime.tryParse(v as String)?.toLocal();
 
     return Event(
       id: json['id'] as String?,

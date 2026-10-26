@@ -42,7 +42,7 @@ class EntryMember {
         name: json['name'] as String? ?? '',
         dob: json['dob'] == null
             ? null
-            : DateTime.tryParse(json['dob'] as String),
+            : DateTime.tryParse(json['dob'] as String)?.toLocal(),
         sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
       );
 }
@@ -128,8 +128,13 @@ class Entry {
   }
 
   factory Entry.fromJson(Map<String, dynamic> json) {
+    // .toLocal() is a safe no-op on the plain-date fields here
+    // (participantDob has no time component to begin with) and the fix
+    // this whole sweep is for on the real timestamps (eventStartsAt,
+    // paidAt, enteredAt, cancelledAt) — one helper, used for both kinds of
+    // field, so it has to do the right thing for both.
     DateTime? date(Object? v) =>
-        v == null ? null : DateTime.tryParse(v as String);
+        v == null ? null : DateTime.tryParse(v as String)?.toLocal();
 
     return Entry(
       id: json['id'] as String,

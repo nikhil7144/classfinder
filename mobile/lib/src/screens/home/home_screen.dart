@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/alerts.dart';
+import '../../data/models/coach.dart';
 import '../../data/models/reference.dart';
 import '../../data/models/seeker.dart';
 import '../../data/models/suggestion.dart';
@@ -143,35 +144,46 @@ class _WaitingOnYou extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-        decoration: BoxDecoration(
-          color: A91.surface,
+      child: Material(
+        color: A91.surface,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: A91.border),
-          boxShadow: A91.cardShadow,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Waiting on you',
-                style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 10),
-            for (final (label, count) in items)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 5),
-                child: Text(
-                  '$count $label',
-                  style: TextStyle(color: A91.muted, fontSize: 13.5),
-                ),
-              ),
-            const SizedBox(height: 4),
-            Text(
-              'They are all in Messages.',
-              style: TextStyle(color: A91.faint, fontSize: 12.5),
+          // Every item this card lists lives in Messages — its own closing
+          // line says so — so the whole card goes there rather than needing
+          // its own menu of which item leads where.
+          onTap: () =>
+              ref.read(seekerTabRequestProvider.notifier).request(2),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: A91.border),
+              boxShadow: A91.cardShadow,
             ),
-          ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Waiting on you',
+                    style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 10),
+                for (final (label, count) in items)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 5),
+                    child: Text(
+                      '$count $label',
+                      style: TextStyle(color: A91.muted, fontSize: 13.5),
+                    ),
+                  ),
+                const SizedBox(height: 4),
+                Text(
+                  'They are all in Messages.',
+                  style: TextStyle(color: A91.faint, fontSize: 12.5),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -234,8 +246,13 @@ class _Suggested extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 14),
+            // _SuggestionCard's own card no longer stretches to fill this —
+            // it sizes to its own content, so this is a ceiling, not a
+            // target. 286 covers the worst case: a long area name wrapping
+            // the location line to two lines, a 3-line bio, the tag row,
+            // and a 2-line match reason underneath the card, all at once.
             SizedBox(
-              height: 250,
+              height: 286,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -243,7 +260,7 @@ class _Suggested extends ConsumerWidget {
                 itemBuilder: (context, i) {
                   final suggestion = result.suggestions[i];
                   return SizedBox(
-                    width: 300,
+                    width: 360,
                     child: Padding(
                       padding: const EdgeInsets.only(right: 12),
                       child: _SuggestionCard(
@@ -263,7 +280,9 @@ class _Suggested extends ConsumerWidget {
 
   Widget _suggestionsSkeleton() => const Padding(
         padding: EdgeInsets.only(top: 18),
-        child: SizedBox(height: 210, child: ListSkeleton(rows: 1)),
+        // Matches the real strip's height (see below) so the page does not
+        // visibly grow or shrink the moment the real cards load in.
+        child: SizedBox(height: 286, child: ListSkeleton(rows: 1)),
       );
 
   /// Why there is nothing, said differently depending on whose move it is.
@@ -300,19 +319,23 @@ class _SuggestionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: CoachCard(
-              coach: suggestion.coach,
-              reference: reference,
-              // Suggestions are centred on the family's own location, so a
-              // distance here always means something.
-              showDistance: true,
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => ThemeAware(
-                    builder: (_) => CoachScreen(coachId: suggestion.coach.id),
-                  ),
+          // Not Expanded: the card sizes to its own content. Its tags are
+          // capped to one scrollable row rather than the Wrap the full
+          // CoachCard uses, specifically so that height stays predictable
+          // regardless of how many services a coach lists — Expanded was
+          // forcing the card to stretch and fill the whole strip height
+          // regardless, leaving visible empty space inside the card's own
+          // border whenever a coach's content came in shorter than the
+          // strip's worst case.
+          _SuggestionCoachCard(
+            coach: suggestion.coach,
+            reference: reference,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => ThemeAware(
+                  builder: (_) => CoachScreen(coachId: suggestion.coach.id),
                 ),
               ),
             ),
@@ -334,6 +357,265 @@ class _SuggestionCard extends StatelessWidget {
             ),
         ],
       );
+}
+
+/// The suggestion strip's own compact card — not the full CoachCard search
+/// uses. That one Wraps its tags across however many rows they need; fine in
+/// a vertical list where the card is free to be as tall as it needs, wrong
+/// in a fixed-height horizontal strip where every card has to fit the same
+/// box. This one caps the bio at three lines and the tags at one scrollable
+/// row instead, with a "See more" link underneath, so its height is fixed
+/// and predictable rather than a function of how much a particular coach
+/// wrote or how many services they listed.
+///
+/// "See more" has no onTap of its own — it sits inside the same InkWell as
+/// the rest of the card, so tapping it opens the coach's page exactly like
+/// tapping anywhere else on the card already does. It exists to tell
+/// someone there is more to read, not to be a second, different button.
+class _SuggestionCoachCard extends StatelessWidget {
+  const _SuggestionCoachCard({
+    required this.coach,
+    required this.reference,
+    required this.onTap,
+  });
+
+  final CoachResult coach;
+  final Reference reference;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final fees = formatFees(coach.feeMin, coach.feeMax, coach.feePeriod);
+    // Suggestions are centred on the family's own location, so a distance
+    // here always means something — unlike plain search, which only shows
+    // one once a real lat/lng narrowed the results.
+    final distance = formatDistance(coach.distanceKm);
+    final experience = formatExperience(coach.experienceYears);
+    final helpStatement = coach.helpStatement?.trim();
+    // Four is what CoachCard caps a wrapped row at before the row wraps
+    // into a paragraph; kept here too even though this row never wraps —
+    // more than that in one scrollable line is more scrolling than
+    // reading.
+    final services = coach.serviceCategoryIds.take(4).toList();
+    final moreServices = coach.serviceCategoryIds.length - services.length;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: A91.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: A91.border),
+        boxShadow: A91.cardShadow,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CoachAvatar(coach: coach),
+                    const SizedBox(width: 13),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  coach.displayName ?? 'Unnamed',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: A91.ink,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              if (coach.isFeatured) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 7, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: A91.warn.withValues(alpha: 0.14),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Text(
+                                    'Featured',
+                                    style: TextStyle(
+                                        color: A91.warn,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          // Area and distance on one line when they fit —
+                          // "Indirapuram · 0 m away" — and experience alone
+                          // on the next, rather than distance and experience
+                          // sharing a line: that pair is the one most likely
+                          // to run long enough to wrap onto a third line in
+                          // this card's width.
+                          //
+                          // A Wrap of two whole Text widgets, not one long
+                          // string left to wrap itself: a single Text only
+                          // knows how to break between individual words, so
+                          // "0 m away" could — and did — split into "0 m" on
+                          // one line and "away" alone on the next even with
+                          // visible room to spare, because the line-breaker
+                          // has no idea those three words are one unit. Wrap
+                          // treats each child as indivisible, so "0 m away"
+                          // either sits whole on the first line or moves
+                          // whole to the second — it can never fracture
+                          // itself across the two.
+                          if (coach.nearestAreaName != null ||
+                              distance != null) ...[
+                            const SizedBox(height: 3),
+                            Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                if (coach.nearestAreaName != null)
+                                  Text(
+                                    coach.nearestAreaName!,
+                                    style: TextStyle(
+                                        color: A91.muted, fontSize: 12.5),
+                                  ),
+                                if (coach.nearestAreaName != null &&
+                                    distance != null)
+                                  // Single spaces, not double: every pixel
+                                  // here is one "0 m away" needs to have any
+                                  // chance of fitting on the same line as
+                                  // the area name instead of wrapping whole.
+                                  Text(
+                                    ' · ',
+                                    style: TextStyle(
+                                        color: A91.muted, fontSize: 12.5),
+                                  ),
+                                if (distance != null)
+                                  Text(
+                                    distance,
+                                    style: TextStyle(
+                                        color: A91.muted, fontSize: 12.5),
+                                  ),
+                              ],
+                            ),
+                          ],
+                          if (experience != null) ...[
+                            const SizedBox(height: 3),
+                            Text(
+                              experience,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  color: A91.faint, fontSize: 11.5),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    if (fees != null) ...[
+                      const SizedBox(width: 10),
+                      // Fixed width, wrapping to two lines rather than one
+                      // unconstrained line: "₹1000–₹3000 /hour" at its
+                      // natural width was wide enough to squeeze the name
+                      // and location column in the Expanded sibling down to
+                      // almost nothing, which is why even short text like
+                      // "6 yrs experience" was the one getting cut, not just
+                      // the long combined location line. 84, not 68: the
+                      // amount itself ("₹1000–₹3000") needs that much to fit
+                      // on its own first line — any narrower and it breaks
+                      // mid-number instead of wrapping at the space before
+                      // "/hour", which is the one place it should break.
+                      SizedBox(
+                        width: 84,
+                        child: Text(
+                          fees,
+                          textAlign: TextAlign.right,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: A91.ink,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            height: 1.2,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                if (helpStatement != null && helpStatement.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    helpStatement,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style:
+                        TextStyle(color: A91.muted, fontSize: 13.5, height: 1.5),
+                  ),
+                ],
+                if (services.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  // One scrollable row, not a Wrap: a Wrap wants to run onto
+                  // a second row the moment the tags stop fitting, which is
+                  // exactly the unpredictable height this card's whole
+                  // redesign exists to avoid. Scrolling sideways to see a
+                  // fourth or fifth service costs nothing a fixed-height
+                  // strip can't afford to give back.
+                  // ServiceTag's own padding (5 top + 5 bottom) plus its
+                  // text line reaches a little past 24, so that was clipping
+                  // the top and bottom of every pill instead of showing the
+                  // full rounded shape — 28 clears it with room to spare.
+                  SizedBox(
+                    height: 28,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const ClampingScrollPhysics(),
+                      children: [
+                        for (final id in services) ...[
+                          ServiceTag(
+                            label: reference.serviceName(id),
+                            dot: A91.group(reference.service(id)?.group),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
+                        if (moreServices > 0)
+                          ServiceTag(label: '+$moreServices more'),
+                      ],
+                    ),
+                  ),
+                ],
+                if (helpStatement != null && helpStatement.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      'See more',
+                      style: TextStyle(
+                        color: A91.coral,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _Notice extends StatelessWidget {

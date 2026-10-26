@@ -199,7 +199,6 @@ function GroupPage() {
         {tab === "posts" ? (
           <GroupPosts
             groupId={id}
-            me={me}
             isMember={Boolean(invite?.already_member)}
           />
         ) : tab === "messages" ? (

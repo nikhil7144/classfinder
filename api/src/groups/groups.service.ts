@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
 import { Caller } from "../auth/current-user.decorator";
@@ -98,6 +99,8 @@ export const toPitch = (r: PitchRow): GroupPitchDto => ({
 
 @Injectable()
 export class GroupsService {
+  private readonly log = new Logger(GroupsService.name);
+
   constructor(private readonly supabase: SupabaseService) {}
 
   /** Every group the caller is in, whether they made it or joined it. */
@@ -535,6 +538,27 @@ export class GroupsService {
   }
 
   /**
+   * One group_posts row, in the shape every post-facing method returns.
+   *
+   * `callerId` null always reads as not mine — the signed-out branch of
+   * `posts()` passes rows with no `author_id` on them at all, and this falls
+   * through to `false` for that case the same way it would for a mismatch.
+   */
+  private toPostDto(row: Record<string, unknown>, callerId: string | null): GroupPostDto {
+    return {
+      id: row.id as string,
+      kind: row.kind as string,
+      body: (row.body as string) ?? null,
+      imageUrl: (row.image_url as string) ?? null,
+      youtubeId: (row.youtube_id as string) ?? null,
+      visibility: row.visibility as string,
+      showOrder: (row.show_order as number) ?? null,
+      createdAt: row.created_at as string,
+      isMine: callerId !== null && row.author_id === callerId,
+    };
+  }
+
+  /**
    * The group's posts.
    *
    * A member sees all of them; anybody else sees only what an author opened,
@@ -559,13 +583,14 @@ export class GroupsService {
         visibility: "public",
         showOrder: (r.show_order as number) ?? null,
         createdAt: r.created_at as string,
+        isMine: false,
       }));
     }
 
     const { data, error } = await this.supabase
       .asUser(caller.accessToken)
       .from("group_posts")
-      .select("id, kind, body, image_url, youtube_id, visibility, show_order, created_at")
+      .select("id, kind, body, image_url, youtube_id, visibility, show_order, created_at, author_id")
       .eq("group_id", id)
       .eq("is_hidden", false)
       .order("show_order", { ascending: true, nullsFirst: false })
@@ -573,16 +598,7 @@ export class GroupsService {
       .limit(60);
     if (error) throw new InternalServerErrorException(error.message);
 
-    return ((data as Record<string, unknown>[]) ?? []).map((r) => ({
-      id: r.id as string,
-      kind: r.kind as string,
-      body: (r.body as string) ?? null,
-      imageUrl: (r.image_url as string) ?? null,
-      youtubeId: (r.youtube_id as string) ?? null,
-      visibility: r.visibility as string,
-      showOrder: (r.show_order as number) ?? null,
-      createdAt: r.created_at as string,
-    }));
+    return ((data as Record<string, unknown>[]) ?? []).map((r) => this.toPostDto(r, caller.id));
   }
 
   /**
@@ -610,23 +626,14 @@ export class GroupsService {
         image_url: body.kind === "photo" ? body.imageUrl : null,
         youtube_id: body.kind === "video" ? body.youtubeId : null,
       })
-      .select("id, kind, body, image_url, youtube_id, visibility, show_order, created_at")
+      .select("id, kind, body, image_url, youtube_id, visibility, show_order, created_at, author_id")
       .maybeSingle();
 
     if (error) throw new InternalServerErrorException(error.message);
     const row = data as Record<string, unknown> | null;
     if (!row) throw new ForbiddenException("Only members of the group can post to it.");
 
-    return {
-      id: row.id as string,
-      kind: row.kind as string,
-      body: (row.body as string) ?? null,
-      imageUrl: (row.image_url as string) ?? null,
-      youtubeId: (row.youtube_id as string) ?? null,
-      visibility: row.visibility as string,
-      showOrder: (row.show_order as number) ?? null,
-      createdAt: row.created_at as string,
-    };
+    return this.toPostDto(row, caller.id);
   }
 
   /**
@@ -646,22 +653,56 @@ export class GroupsService {
       .from("group_posts")
       .update({ visibility: body.visibility })
       .eq("id", postId)
-      .select("id, kind, body, image_url, youtube_id, visibility, show_order, created_at")
+      .select("id, kind, body, image_url, youtube_id, visibility, show_order, created_at, author_id")
       .maybeSingle();
 
     if (error) throw new InternalServerErrorException(error.message);
     const row = data as Record<string, unknown> | null;
     if (!row) throw new ForbiddenException("Only the person who posted it can change that.");
 
-    return {
-      id: row.id as string,
-      kind: row.kind as string,
-      body: (row.body as string) ?? null,
-      imageUrl: (row.image_url as string) ?? null,
-      youtubeId: (row.youtube_id as string) ?? null,
-      visibility: row.visibility as string,
-      showOrder: (row.show_order as number) ?? null,
-      createdAt: row.created_at as string,
-    };
+    return this.toPostDto(row, caller.id);
+  }
+
+  /**
+   * Delete your own post. The row policy decides; a miss means it wasn't
+   * yours to delete.
+   *
+   * The photo removal that follows is best effort on purpose: the row is
+   * already gone by the time it runs, and a Storage hiccup here is an
+   * orphaned file to clean up later, not a reason to tell the caller their
+   * delete failed when it didn't.
+   */
+  async deletePost(caller: Caller, postId: string): Promise<void> {
+    const { data, error } = await this.supabase
+      .asUser(caller.accessToken)
+      .from("group_posts")
+      .delete()
+      .eq("id", postId)
+      .select("image_url")
+      .maybeSingle();
+
+    if (error) throw new InternalServerErrorException(error.message);
+    const row = data as Record<string, unknown> | null;
+    if (!row) throw new ForbiddenException("Only the person who posted it can delete it.");
+
+    const imageUrl = row.image_url as string | null;
+    if (!imageUrl) return;
+
+    const marker = "/group-media/";
+    const at = imageUrl.indexOf(marker);
+    if (at === -1) return;
+    const path = imageUrl.slice(at + marker.length);
+
+    try {
+      const { error: storageError } = await this.supabase
+        .asUser(caller.accessToken)
+        .storage.from("group-media")
+        .remove([path]);
+      if (storageError) {
+        this.log.warn(`Could not remove group-media file after delete: ${storageError.message}`);
+      }
+    } catch (error) {
+      this.log.warn(`Could not remove group-media file after delete: ${(error as Error).message}`);
+    }
   }
 }

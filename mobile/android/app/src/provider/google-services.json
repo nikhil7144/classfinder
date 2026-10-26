@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "198476591357",
+    "project_id": "aspire91",
+    "storage_bucket": "aspire91.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:198476591357:android:af1bae87afb5cd4cb04e94",
+        "android_client_info": {
+          "package_name": "com.aspire91.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "198476591357-49fnmise6e2o9t7qkpap6sv519sssjem.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZl2OXT0MyZevjjIN3Bs9_u9GToU-Wv5o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "198476591357-49fnmise6e2o9t7qkpap6sv519sssjem.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:198476591357:android:686be0d2274ee97db04e94",
+        "android_client_info": {
+          "package_name": "com.aspire91.app.coach"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "198476591357-49fnmise6e2o9t7qkpap6sv519sssjem.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZl2OXT0MyZevjjIN3Bs9_u9GToU-Wv5o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "198476591357-49fnmise6e2o9t7qkpap6sv519sssjem.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

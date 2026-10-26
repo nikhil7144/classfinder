@@ -56,7 +56,7 @@ class CoachCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _Avatar(coach: coach),
+                  CoachAvatar(coach: coach),
                   const SizedBox(width: 13),
                   Expanded(
                     child: Column(
@@ -152,13 +152,13 @@ class CoachCard extends StatelessWidget {
                   runSpacing: 6,
                   children: [
                     for (final id in services)
-                      _Tag(
+                      ServiceTag(
                         label: reference.serviceName(id),
                         dot: A91.group(reference.service(id)?.group),
                       ),
-                    if (more > 0) _Tag(label: '+$more more'),
+                    if (more > 0) ServiceTag(label: '+$more more'),
                     for (final id in coach.teachingPlaces)
-                      _Tag(
+                      ServiceTag(
                           label: reference.teachingPlaceLabel(id), faint: true),
                   ],
                 ),
@@ -171,8 +171,11 @@ class CoachCard extends StatelessWidget {
   }
 }
 
-class _Avatar extends StatelessWidget {
-  const _Avatar({required this.coach});
+/// Public: also used by home_screen.dart's suggestion-strip card, which
+/// needs its own compact layout rather than the full CoachCard below but
+/// still wants the same avatar.
+class CoachAvatar extends StatelessWidget {
+  const CoachAvatar({super.key, required this.coach});
 
   final CoachResult coach;
 
@@ -211,8 +214,11 @@ class _Avatar extends StatelessWidget {
 
 /// A taxonomy tag. The colour is a dot, never a fill — globals.css gives those
 /// colours one job and it is not looking like a button.
-class _Tag extends StatelessWidget {
-  const _Tag({required this.label, this.dot, this.faint = false});
+///
+/// Public, same reason as CoachAvatar above: home_screen.dart's suggestion
+/// card reuses it in a single scrollable row rather than the Wrap below.
+class ServiceTag extends StatelessWidget {
+  const ServiceTag({super.key, required this.label, this.dot, this.faint = false});
 
   final String label;
   final Color? dot;

@@ -2161,6 +2161,36 @@
         ]
       }
     },
+    "/api/v1/groups/posts/{postId}": {
+      "delete": {
+        "description": "Only the person who posted it. The photo is removed from Storage too, best effort.",
+        "operationId": "GroupsController_deletePost_v1",
+        "parameters": [
+          {
+            "name": "postId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete your own post",
+        "tags": [
+          "groups"
+        ]
+      }
+    },
     "/api/v1/notifications": {
       "get": {
         "description": "Paged on time rather than an offset: notifications arrive while somebody is scrolling, and an offset would shuffle the page under their thumb each time one did. Pass the previous page's nextBefore to continue.",
@@ -6383,6 +6413,10 @@
           },
           "createdAt": {
             "type": "string"
+          },
+          "isMine": {
+            "type": "boolean",
+            "description": "Whether the caller wrote this post. False for a signed-out reader and for everybody else's posts."
           }
         },
         "required": [
@@ -6393,7 +6427,8 @@
           "youtubeId",
           "visibility",
           "showOrder",
-          "createdAt"
+          "createdAt",
+          "isMine"
         ]
       },
       "CreateGroupPostDto": {

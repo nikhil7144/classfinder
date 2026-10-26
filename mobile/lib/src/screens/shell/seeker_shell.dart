@@ -53,6 +53,14 @@ class _SeekerShellState extends ConsumerState<SeekerShell> {
     ref.watch(themeModeProvider);
     final profile = ref.watch(myProfileProvider);
 
+    // A tab a nested screen asked for — the "Waiting on you" card on Home,
+    // which has no other way to reach this shell's own NavigationBar state.
+    ref.listen(seekerTabRequestProvider, (_, next) {
+      if (next == null) return;
+      setState(() => _tab = next);
+      ref.read(seekerTabRequestProvider.notifier).clear();
+    });
+
     // hasValue, not just isLoading: isLoading is also true while an already-
     // loaded profile is being silently re-fetched — Home's pull-to-refresh
     // does exactly that (ref.invalidate(myProfileProvider)). Checking

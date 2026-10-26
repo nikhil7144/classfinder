@@ -121,18 +121,26 @@ class ListSkeleton extends StatelessWidget {
     this.rows = 4,
     this.avatar = true,
     this.shrinkWrap = false,
+    this.padding = const EdgeInsets.fromLTRB(16, 8, 16, 16),
   });
 
   final int rows;
   final bool avatar;
   final bool shrinkWrap;
 
+  /// The default assumes this is the whole screen's content. A caller that
+  /// drops this into a list of its own that already carries the same
+  /// horizontal padding should pass [EdgeInsets.zero] — otherwise the two
+  /// stack, and the panels sit noticeably narrower than the real rows they
+  /// are standing in for.
+  final EdgeInsets padding;
+
   @override
   Widget build(BuildContext context) => Pulse(
         child: ListView.builder(
           shrinkWrap: shrinkWrap,
           physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          padding: padding,
           itemCount: rows,
           itemBuilder: (context, i) => SkeletonPanel(
             children: [
@@ -226,6 +234,128 @@ class DetailSkeleton extends StatelessWidget {
             ],
           ],
         ),
+      );
+}
+
+/// A conversation, before its messages have arrived.
+///
+/// Shaped after _Bubble in thread_screen.dart — same alignment, same corner
+/// radii, same max-width fraction of the screen — rather than a generic list
+/// of bars, so the page does not reflow once the real bubbles replace these.
+/// Alternating sides and varied widths read as a conversation in progress;
+/// bubbles that were all the same width and side would read as a loading bar
+/// wearing a chat screen's padding.
+class ThreadSkeleton extends StatelessWidget {
+  const ThreadSkeleton({super.key});
+
+  /// (mine, fraction of the real bubble's own max width), cycled for as
+  /// many rows as the screen needs — a fixed six left the bottom half of a
+  /// tall phone bare while messages were still loading.
+  static const _bubbles = <(bool, double)>[
+    (false, 0.6),
+    (false, 0.38),
+    (true, 0.46),
+    (false, 0.68),
+    (true, 0.3),
+    (true, 0.54),
+  ];
+
+  static const _rowHeight = 46.0;
+  static const _rowGap = 10.0;
+
+  @override
+  Widget build(BuildContext context) {
+    // Matches _Bubble's own constraint exactly, so a bubble's fraction below
+    // is relative to the same cap the real one will render at.
+    final maxWidth = MediaQuery.sizeOf(context).width * 0.76;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final rows = constraints.hasBoundedHeight
+            ? (constraints.maxHeight / (_rowHeight + _rowGap)).ceil() + 1
+            : _bubbles.length;
+        return Pulse(
+          child: ListView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            itemCount: rows,
+            itemBuilder: (context, i) {
+              final (mine, fraction) = _bubbles[i % _bubbles.length];
+              return Align(
+                alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
+                child: Container(
+                  width: maxWidth * fraction,
+                  height: _rowHeight,
+                  margin: const EdgeInsets.only(bottom: _rowGap),
+                  decoration: BoxDecoration(
+                    color: A91.surface3,
+                    borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(16),
+                      topRight: const Radius.circular(16),
+                      bottomLeft: Radius.circular(mine ? 16 : 4),
+                      bottomRight: Radius.circular(mine ? 4 : 16),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// A list of notifications, before they arrive.
+///
+/// Shaped after _Row in notifications_screen.dart — same card border,
+/// radius, padding and shadow, a bold title line, two body lines (the
+/// second short, the way a real one reads once it is cut off), and a
+/// timestamp — repeated to fill however tall the screen is, so opening a
+/// long notification history does not show a bare lower half while the
+/// first page is still in flight.
+class NotificationsSkeleton extends StatelessWidget {
+  const NotificationsSkeleton({super.key});
+
+  static const _cardHeight = 100.0;
+  static const _gap = 10.0;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+        builder: (context, constraints) {
+          final rows = constraints.hasBoundedHeight
+              ? (constraints.maxHeight / (_cardHeight + _gap)).ceil() + 1
+              : 6;
+          return Pulse(
+            child: ListView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+              itemCount: rows,
+              itemBuilder: (context, i) => Container(
+                height: _cardHeight,
+                margin: const EdgeInsets.only(bottom: _gap),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: A91.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: A91.border),
+                  boxShadow: A91.cardShadow,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonBox(height: 14, width: 160),
+                    const SizedBox(height: 8),
+                    SkeletonBox(height: 12),
+                    const SizedBox(height: 6),
+                    SkeletonBox(height: 12, width: 120),
+                    const Spacer(),
+                    SkeletonBox(height: 10, width: 40),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       );
 }
 

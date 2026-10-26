@@ -122,15 +122,17 @@ class Group {
       societyName: json['societyName'] as String?,
       studentCount: _count(json['studentCount']),
       memberCount: _count(json['memberCount']),
-      expiresAt: DateTime.tryParse(json['expiresAt'] as String? ?? '') ??
+      expiresAt: DateTime.tryParse(json['expiresAt'] as String? ?? '')
+              ?.toLocal() ??
           DateTime.now(),
       closedAt: json['closedAt'] == null
           ? null
-          : DateTime.tryParse(json['closedAt'] as String),
+          : DateTime.tryParse(json['closedAt'] as String)?.toLocal(),
       isCreator: json['isCreator'] as bool? ?? false,
       isActive: json['isActive'] as bool? ?? false,
       pendingRequests: _count(json['pendingRequests']),
-      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '')
+              ?.toLocal() ??
           DateTime.now(),
     );
   }
@@ -179,7 +181,8 @@ class GroupInvite {
         studentCount: _count(json['studentCount']),
         notes: json['notes'] as String?,
         memberCount: _count(json['memberCount']),
-        expiresAt: DateTime.tryParse(json['expiresAt'] as String? ?? '') ??
+        expiresAt: DateTime.tryParse(json['expiresAt'] as String? ?? '')
+                ?.toLocal() ??
             DateTime.now(),
         isOpen: json['isOpen'] as bool? ?? false,
         alreadyMember: json['alreadyMember'] as bool? ?? false,
@@ -246,15 +249,66 @@ class GroupPitch {
         providerPhotoUrl: json['providerPhotoUrl'] as String?,
         pitch: json['pitch'] as String?,
         status: PitchStatus.parse(json['status'] as String?),
-        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '')
+                ?.toLocal() ??
             DateTime.now(),
         lastMessage: json['lastMessage'] as String?,
         lastMessageAt: json['lastMessageAt'] == null
             ? null
-            : DateTime.tryParse(json['lastMessageAt'] as String),
+            : DateTime.tryParse(json['lastMessageAt'] as String)?.toLocal(),
         messageCount: _count(json['messageCount']),
         unread: json['unread'] as bool? ?? false,
         isCreator: json['isCreator'] as bool? ?? false,
+      );
+}
+
+/// A photo (or, on the API, a video — the app offers photos only, matching
+/// the web) a member has posted to their group.
+///
+/// Starts at `members` always; the app never sends a visibility on create.
+/// Only the author can move it to `public`, and only the author — not the
+/// group's creator, who could otherwise publish another family's child's
+/// photo without asking them.
+class GroupPost {
+  const GroupPost({
+    required this.id,
+    required this.kind,
+    required this.body,
+    required this.imageUrl,
+    required this.youtubeId,
+    required this.visibility,
+    required this.showOrder,
+    required this.createdAt,
+    required this.isMine,
+  });
+
+  final String id;
+  final String kind;
+  final String? body;
+  final String? imageUrl;
+  final String? youtubeId;
+  final String visibility;
+  final int? showOrder;
+  final DateTime createdAt;
+
+  /// False when missing, so the app keeps working against an API that has
+  /// not yet grown this field.
+  final bool isMine;
+
+  bool get isPublic => visibility == 'public';
+
+  factory GroupPost.fromJson(Map<String, dynamic> json) => GroupPost(
+        id: json['id'] as String,
+        kind: json['kind'] as String? ?? 'photo',
+        body: json['body'] as String?,
+        imageUrl: json['imageUrl'] as String?,
+        youtubeId: json['youtubeId'] as String?,
+        visibility: json['visibility'] as String? ?? 'members',
+        showOrder: (json['showOrder'] as num?)?.toInt(),
+        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '')
+                ?.toLocal() ??
+            DateTime.now(),
+        isMine: json['isMine'] as bool? ?? false,
       );
 }
 

@@ -341,4 +341,20 @@ export class GroupsController {
     if (!caller) throw new UnauthorizedException("Sign in first.");
     return this.groups.setPostVisibility(caller, postId, body);
   }
+
+  @Delete("posts/:postId")
+  @HttpCode(204)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "Delete your own post",
+    description:
+      "Only the person who posted it. The photo is removed from Storage too, best effort.",
+  })
+  deletePost(
+    @CurrentUser() caller: Caller | null,
+    @Param("postId", ParseUUIDPipe) postId: string,
+  ): Promise<void> {
+    if (!caller) throw new UnauthorizedException("Sign in first.");
+    return this.groups.deletePost(caller, postId);
+  }
 }

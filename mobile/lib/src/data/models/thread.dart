@@ -87,12 +87,13 @@ class Thread {
         opening: json['opening'] as String?,
         status: json['status'] as String?,
         initiatedBy: json['initiatedBy'] as String? ?? 'seeker',
-        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '')
+                ?.toLocal() ??
             DateTime.now(),
         lastMessage: json['lastMessage'] as String?,
         lastMessageAt: json['lastMessageAt'] == null
             ? null
-            : DateTime.tryParse(json['lastMessageAt'] as String),
+            : DateTime.tryParse(json['lastMessageAt'] as String)?.toLocal(),
         lastSenderId: json['lastSenderId'] as String?,
         messageCount: (json['messageCount'] as num?)?.toInt() ?? 0,
         unread: json['unread'] as bool? ?? false,
@@ -121,7 +122,8 @@ class QueryOrigin {
   factory QueryOrigin.fromJson(Map<String, dynamic> json) => QueryOrigin(
         queryId: json['queryId'] as String,
         serviceName: json['serviceName'] as String?,
-        askedAt: DateTime.tryParse(json['askedAt'] as String? ?? '') ??
+        askedAt: DateTime.tryParse(json['askedAt'] as String? ?? '')
+                ?.toLocal() ??
             DateTime.now(),
       );
 }
@@ -147,7 +149,8 @@ class Message {
         threadId: json['threadId'] as String? ?? '',
         senderId: json['senderId'] as String,
         body: json['body'] as String? ?? '',
-        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '')
+                ?.toLocal() ??
             DateTime.now(),
       );
 
@@ -158,7 +161,8 @@ class Message {
         threadId: (row['request_id'] ?? row['enquiry_id'] ?? '') as String,
         senderId: row['sender_id'] as String,
         body: row['body'] as String? ?? '',
-        createdAt: DateTime.tryParse(row['created_at'] as String? ?? '') ??
+        createdAt: DateTime.tryParse(row['created_at'] as String? ?? '')
+                ?.toLocal() ??
             DateTime.now(),
       );
 }

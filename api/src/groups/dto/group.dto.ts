@@ -406,6 +406,11 @@ export class GroupPostDto {
   showOrder!: number | null;
 
   @ApiProperty() createdAt!: string;
+
+  @ApiProperty({
+    description: "Whether the caller wrote this post. False for a signed-out reader and for everybody else's posts.",
+  })
+  isMine!: boolean;
 }
 
 export class CreateGroupPostDto {

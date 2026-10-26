@@ -164,7 +164,8 @@ class SeekerProfile {
       marketingOptIn: json['marketingOptIn'] as bool? ?? false,
       requirementUpdatedAt: json['requirementUpdatedAt'] == null
           ? null
-          : DateTime.tryParse(json['requirementUpdatedAt'] as String),
+          : DateTime.tryParse(json['requirementUpdatedAt'] as String)
+              ?.toLocal(),
       profileComplete: json['profileComplete'] as bool? ?? false,
     );
   }

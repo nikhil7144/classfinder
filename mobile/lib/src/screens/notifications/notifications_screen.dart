@@ -6,6 +6,7 @@ import '../../data/models/notification.dart';
 import '../../providers.dart';
 import '../../push.dart';
 import '../../theme/theme.dart';
+import '../../widgets/skeleton.dart';
 import '../../widgets/states.dart';
 
 /// Behind the bell — `GET /api/v1/notifications`, paged.
@@ -28,6 +29,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   bool _loadedOnce = false;
   bool _loadingMore = false;
   String? _error;
+
+  /// Guards against a rapid run of taps stacking one pushed thread screen
+  /// per tap — [routeToNotification] awaits a lookup before it pushes
+  /// anywhere, so without this a second tap mid-lookup used to fire that
+  /// lookup again and land on the same thread twice. Not shown on screen:
+  /// the lookup now reads an already-cached inbox (see push.dart), so the
+  /// gap this closes is normally too short to need a loader for at all.
+  bool _opening = false;
 
   @override
   void initState() {
@@ -106,20 +115,28 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   Future<void> _open(AppNotification n) async {
-    if (n.threadId != null) {
-      try {
-        await ref
+    if (_opening) return;
+    _opening = true;
+    try {
+      if (n.threadId != null) {
+        // Fire-and-forget: a read receipt is not worth making the tap wait
+        // on a second network round trip before it can navigate.
+        ref
             .read(notificationsRepositoryProvider)
-            .markRead(threadId: n.threadId);
-        ref.invalidate(alertsProvider);
-      } catch (_) {}
+            .markRead(threadId: n.threadId)
+            .then((_) {
+          if (mounted) ref.invalidate(alertsProvider);
+        }).catchError((_) {});
+      }
+      await ref.read(pushServiceProvider).routeToNotification({
+        'kind': n.kind,
+        'url': n.url ?? '',
+        'threadKind': n.threadKind ?? '',
+        'threadId': n.threadId ?? '',
+      });
+    } finally {
+      _opening = false;
     }
-    await ref.read(pushServiceProvider).routeToNotification({
-      'kind': n.kind,
-      'url': n.url ?? '',
-      'threadKind': n.threadKind ?? '',
-      'threadId': n.threadId ?? '',
-    });
   }
 
   @override
@@ -128,7 +145,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       appBar: AppBar(title: const Text('Notifications')),
       body: SafeArea(
         child: !_loadedOnce && _error == null
-            ? const Loading()
+            ? const NotificationsSkeleton()
             : _error != null && _items.isEmpty
                 ? ErrorState(message: _error!, onRetry: _loadFirstPage)
                 : _items.isEmpty
@@ -160,9 +177,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                 ),
                               );
                             }
+                            final n = _items[i];
                             return _Row(
-                              notification: _items[i],
-                              onTap: () => _open(_items[i]),
+                              notification: n,
+                              onTap: () => _open(n),
                             );
                           },
                         ),

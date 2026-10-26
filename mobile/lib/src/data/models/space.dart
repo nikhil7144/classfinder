@@ -86,7 +86,8 @@ class FollowedSpace {
         photoUrl: json['photoUrl'] as String?,
         headline: json['headline'] as String?,
         postCount: (json['postCount'] as num?)?.toInt() ?? 0,
-        followedAt: DateTime.tryParse(json['followedAt'] as String? ?? '') ??
+        followedAt: DateTime.tryParse(json['followedAt'] as String? ?? '')
+                ?.toLocal() ??
             DateTime.now(),
       );
 }
@@ -200,7 +201,8 @@ class SpacePost {
         body: json['body'] as String?,
         imageUrl: json['imageUrl'] as String?,
         youtubeId: json['youtubeId'] as String?,
-        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '')
+                ?.toLocal() ??
             DateTime.now(),
         isHidden: json['isHidden'] as bool? ?? false,
         hiddenReason: json['hiddenReason'] as String?,

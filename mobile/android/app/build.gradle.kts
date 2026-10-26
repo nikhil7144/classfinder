@@ -26,6 +26,11 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // flutter_local_notifications (see push.dart) needs Java 8+ APIs
+        // desugared for devices below API 26 — without this the release
+        // build fails outright at ":app:checkSeekerReleaseAarMetadata"
+        // rather than at runtime, so there is no way to ship push without it.
+        isCoreLibraryDesugaringEnabled = true
     }
 
     // AGP 9 defaults this to false; the two flavors below set resValue("string",
@@ -92,6 +97,12 @@ kotlin {
     compilerOptions {
         jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
+}
+
+dependencies {
+    // Required by isCoreLibraryDesugaringEnabled above — the version
+    // flutter_local_notifications' own release notes ask for.
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
 // Push notifications — see mobile/README.md §11. google-services.json does

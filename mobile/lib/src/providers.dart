@@ -137,6 +137,11 @@ final groupPitchesProvider = FutureProvider.family<List<GroupPitch>, String>(
   (ref, groupId) => ref.watch(groupsRepositoryProvider).pitches(groupId),
 );
 
+/// What one group has posted.
+final groupPostsProvider = FutureProvider.family<List<GroupPost>, String>(
+  (ref, groupId) => ref.watch(groupsRepositoryProvider).posts(groupId),
+);
+
 final eventsRepositoryProvider = Provider<EventsRepository>(
   (ref) => EventsRepository(ref.watch(apiClientProvider)),
 );
@@ -387,6 +392,26 @@ final alertsProvider = FutureProvider<Alerts>((ref) async {
     return Alerts.none;
   }
 });
+
+/// A tab the seeker shell should switch to, set by a widget nested inside
+/// one of its tabs that has no other way to reach the shell's own
+/// NavigationBar state — the "Waiting on you" card on Home is the first of
+/// these.
+class SeekerTabRequestNotifier extends Notifier<int?> {
+  @override
+  int? build() => null;
+
+  /// The shell resets this back to null once it has acted on it, so
+  /// tapping the same card again still switches even though the value on
+  /// the way in would otherwise look unchanged.
+  void request(int tab) => state = tab;
+
+  void clear() => state = null;
+}
+
+final seekerTabRequestProvider =
+    NotifierProvider<SeekerTabRequestNotifier, int?>(
+        SeekerTabRequestNotifier.new);
 
 /// Names a conversation. threadId is unique within its kind and not across
 /// both, so neither half identifies one on its own.

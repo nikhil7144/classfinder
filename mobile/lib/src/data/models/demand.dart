@@ -97,8 +97,9 @@ class Demand {
         memberCount: _int(json['memberCount']) ?? 0,
         expiresAt: json['expiresAt'] == null
             ? null
-            : DateTime.tryParse(json['expiresAt'] as String),
-        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+            : DateTime.tryParse(json['expiresAt'] as String)?.toLocal(),
+        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '')
+                ?.toLocal() ??
             DateTime.now(),
         contactStatus: json['contactStatus'] as String?,
         threadId: json['threadId'] as String?,

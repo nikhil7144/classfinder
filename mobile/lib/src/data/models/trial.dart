@@ -122,7 +122,8 @@ class Trial {
         seekerOutcome: TrialOutcome.parse(json['seekerOutcome'] as String?),
         providerOutcome: TrialOutcome.parse(json['providerOutcome'] as String?),
         myOutcome: TrialOutcome.parse(json['myOutcome'] as String?),
-        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '')
+                ?.toLocal() ??
             DateTime.now(),
       );
 }

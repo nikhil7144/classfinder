@@ -44,10 +44,10 @@ class AppNotification {
         url: json['url'] as String?,
         threadKind: json['threadKind'] as String?,
         threadId: json['threadId'] as String?,
-        createdAt: DateTime.parse(json['createdAt'] as String),
+        createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
         readAt: json['readAt'] == null
             ? null
-            : DateTime.parse(json['readAt'] as String),
+            : DateTime.parse(json['readAt'] as String).toLocal(),
         unread: json['unread'] as bool? ?? false,
       );
 }
@@ -75,6 +75,11 @@ class NotificationPage {
             .map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
             .toList(),
         unread: json['unread'] as int? ?? 0,
+        // Not .toLocal(): this is a pagination cursor round-tripped back to
+        // the server as `before` (notifications_repository.dart's list()),
+        // not something shown on screen. Converting it would make
+        // toIso8601String() serialize it without a UTC offset, silently
+        // shifting every page boundary by the device's own timezone.
         nextBefore: json['nextBefore'] == null
             ? null
             : DateTime.parse(json['nextBefore'] as String),
@@ -168,7 +173,7 @@ class RegisteredDevice {
         id: json['id'] as String,
         platform: json['platform'] as String,
         appFlavor: json['appFlavor'] as String,
-        lastSeenAt: DateTime.parse(json['lastSeenAt'] as String),
+        lastSeenAt: DateTime.parse(json['lastSeenAt'] as String).toLocal(),
         disabledReason: json['disabledReason'] as String?,
       );
 }

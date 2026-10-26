@@ -6,6 +6,7 @@ import '../../data/models/thread.dart';
 import '../../data/supabase.dart';
 import '../../providers.dart';
 import '../../theme/theme.dart';
+import '../../widgets/skeleton.dart';
 import '../../widgets/states.dart';
 import 'approach_banner.dart';
 import 'trial_card.dart';
@@ -94,6 +95,26 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
     });
   }
 
+  /// Bubbles with a day divider wherever the calendar date changes between
+  /// one message and the next — [_Bubble] shows only a time, with nothing
+  /// else on screen to say which day it was, so without this two messages
+  /// days apart can read as if they were posted "aage peeche" of each
+  /// other even though the order is correct underneath.
+  List<Widget> _timeline(List<Message> all, String? me) {
+    final widgets = <Widget>[];
+    DateTime? lastDay;
+    for (final m in all) {
+      final day =
+          DateTime(m.createdAt.year, m.createdAt.month, m.createdAt.day);
+      if (lastDay == null || day != lastDay) {
+        widgets.add(_DateDivider(date: day));
+        lastDay = day;
+      }
+      widgets.add(_Bubble(message: m, mine: m.senderId == me));
+    }
+    return widgets;
+  }
+
   Future<void> _send() async {
     final body = _draft.text.trim();
     if (body.isEmpty || _sending) return;
@@ -154,9 +175,9 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
           children: [
             Expanded(
               child: history.when(
-                // Not `const`: Loading reads A91.faint.
+                // Not `const`: ThreadSkeleton reads A91.surface3.
                 // ignore: prefer_const_constructors
-                loading: () => Loading(),
+                loading: () => ThreadSkeleton(),
                 error: (error, _) => ErrorState(
                   message: error is ApiException
                       ? error.message
@@ -206,8 +227,7 @@ class _ThreadScreenState extends ConsumerState<ThreadScreen> {
                         _Opening(text: widget.thread.opening!),
                         const SizedBox(height: 14),
                       ],
-                      for (final m in all)
-                        _Bubble(message: m, mine: m.senderId == me),
+                      ..._timeline(all, me),
                     ],
                   );
                 },
@@ -331,6 +351,49 @@ class _Opening extends StatelessWidget {
             const SizedBox(height: 7),
             Text(text, style: TextStyle(color: A91.muted, height: 1.5)),
           ],
+        ),
+      );
+}
+
+/// "Today", "Yesterday", or a full date — a day boundary in the
+/// conversation, the same three cases a phone's own messaging app uses.
+class _DateDivider extends StatelessWidget {
+  const _DateDivider({required this.date});
+
+  final DateTime date;
+
+  static const _months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+
+  String get _label {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    if (date == today) return 'Today';
+    if (date == today.subtract(const Duration(days: 1))) return 'Yesterday';
+    return '${date.day} ${_months[date.month - 1]} ${date.year}';
+  }
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(
+              color: A91.surface3,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              _label,
+              style: TextStyle(
+                color: A91.muted,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         ),
       );
 }

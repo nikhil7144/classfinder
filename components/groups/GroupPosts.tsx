@@ -12,8 +12,6 @@ import {
 
 type Props = {
   groupId: string;
-  /** Null for a signed-out reader, who sees only what authors opened. */
-  me: string | null;
   isMember: boolean;
 };
 
@@ -29,7 +27,7 @@ type Props = {
  * another family's child, and that parent agreed to share with their group
  * rather than with the world. The API enforces it; this only renders it.
  */
-export default function GroupPosts({ groupId, me, isMember }: Props) {
+export default function GroupPosts({ groupId, isMember }: Props) {
   const [posts, setPosts] = useState<GroupPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [body, setBody] = useState("");
@@ -221,7 +219,7 @@ export default function GroupPosts({ groupId, me, isMember }: Props) {
                   </span>
 
                   {/* The author's own post and nobody else's. */}
-                  {me && isMember && (
+                  {p.isMine && (
                     <button
                       onClick={() => toggle(p)}
                       className="text-sm font-semibold text-gold transition hover:text-accent-ink"

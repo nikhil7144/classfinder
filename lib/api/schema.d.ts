@@ -990,6 +990,26 @@ export interface paths {
         patch: operations["GroupsController_setPostVisibility_v1"];
         trace?: never;
     };
+    "/api/v1/groups/posts/{postId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete your own post
+         * @description Only the person who posted it. The photo is removed from Storage too, best effort.
+         */
+        delete: operations["GroupsController_deletePost_v1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/notifications": {
         parameters: {
             query?: never;
@@ -2500,6 +2520,8 @@ export interface components {
             /** @description The creator curates this. Null means unplaced. */
             showOrder: number | null;
             createdAt: string;
+            /** @description Whether the caller wrote this post. False for a signed-out reader and for everybody else's posts. */
+            isMine: boolean;
         };
         CreateGroupPostDto: {
             /** @enum {string} */
@@ -4452,6 +4474,25 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["GroupPostDto"];
                 };
+            };
+        };
+    };
+    GroupsController_deletePost_v1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

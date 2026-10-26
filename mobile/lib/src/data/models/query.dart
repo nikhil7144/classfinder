@@ -98,12 +98,13 @@ class Query {
         status: QueryStatus.parse(json['status'] as String?),
         callbackAt: json['callbackAt'] == null
             ? null
-            : DateTime.tryParse(json['callbackAt'] as String),
-        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+            : DateTime.tryParse(json['callbackAt'] as String)?.toLocal(),
+        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '')
+                ?.toLocal() ??
             DateTime.now(),
         respondedAt: json['respondedAt'] == null
             ? null
-            : DateTime.tryParse(json['respondedAt'] as String),
+            : DateTime.tryParse(json['respondedAt'] as String)?.toLocal(),
         enquiryId: json['enquiryId'] as String?,
         unread: json['unread'] as bool? ?? false,
       );

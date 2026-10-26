@@ -207,7 +207,13 @@ class PushService {
         threadId != null &&
         threadId.isNotEmpty) {
       try {
-        final threads = await _ref.read(threadsRepositoryProvider).inbox();
+        // inboxProvider, not a fresh threadsRepositoryProvider.inbox() call:
+        // this is on the critical path of a tap that should feel instant,
+        // and by the time somebody is in the notification list the inbox
+        // has almost always already been fetched for Messages — reading the
+        // cached Future costs nothing, where a fresh GET was the actual
+        // reason the old loader needed to exist at all.
+        final threads = await _ref.read(inboxProvider.future);
         Thread? match;
         for (final t in threads) {
           if (t.threadId == threadId && t.kind == threadKind) {

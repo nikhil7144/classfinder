@@ -35,11 +35,20 @@ class A91 {
   /// Apply a theme choice before notifying provider listeners. Screen builds
   /// can run before Aspire91App rebuilds, so resolving the palette only in the
   /// app widget allowed one frame to mix old and new colours.
+  ///
+  /// `ThemeMode.system` no longer reads the phone's own setting — a first
+  /// install, or anyone who picks "Auto", lands on dark regardless of what
+  /// the phone is set to. [systemBrightness] is still passed in by both call
+  /// sites (app.dart, providers.dart's ThemeModeNotifier) and still unused
+  /// here on purpose: callers keep watching platform brightness changes for
+  /// the day this reverts, rather than that wiring being torn out and
+  /// rebuilt later. Light and Dark, picked explicitly in Settings, are
+  /// unaffected either way.
   static void resolve(ThemeMode mode, Brightness systemBrightness) {
     isLight = switch (mode) {
       ThemeMode.light => true,
       ThemeMode.dark => false,
-      ThemeMode.system => systemBrightness == Brightness.light,
+      ThemeMode.system => false,
     };
   }
 
